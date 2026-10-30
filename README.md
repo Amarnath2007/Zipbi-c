@@ -1,65 +1,73 @@
-# zipbi
+# ZipBi — Official Website
 
-**ZipBi** is an AI-powered business management platform designed for local businesses like cafés, restaurants, tea shops, and grocery stores.
+> **Smarter operations. Better café experiences.**
 
-This repository contains the simple, modern, and professional SaaS landing page built with **React**, **Vite**, and **Tailwind CSS**.
+The official landing page for **ZipBi**, a café and restaurant operations platform designed to bring orders, menus, kitchen workflows, and sales records into one connected system.
 
-## ✨ Features Included
+---
 
-1. **Navbar**: Brand logo with the glowing green emblem, navigation anchors (Features, How It Works, Pricing, About), direct phone support, and quick "Get Started" CTA.
-2. **Hero Section**:
-   - Headline: *"Run Your Business Smarter with ZipBi."*
-   - Interactive multi-profile dashboard simulator (`Chai & Café`, `Grocery & Kirana`, `Restaurant & Dining`).
-   - Live revenue metrics, UPI vs. Cash breakdown, 3-second billing speed, and plain-English AI advisor card.
-   - Interactive 1-tap quick billing pad simulation.
-3. **Core Features**:
-   - **Sales Tracking**: Real-time sales, cash vs. UPI split, peak hour heatmaps.
-   - **Inventory Management**: Auto stock deduction with each bill, WhatsApp low-stock alerts.
-   - **Expense Tracking**: 2-tap entry for milk, groceries, gas, and staff wages.
-   - **Smart Billing**: 3-second mobile POS, WhatsApp digital receipts, dynamic UPI QR code.
-   - **AI-Powered Business Insights**: Actionable, jargon-free business guidance and evening WhatsApp profit summaries.
-4. **How It Works**:
-   - 4-step daily store operations workflow.
-   - "The Old Manual Way" vs. "The ZipBi Smart Way" comparison.
-5. **Subscription Pricing Plans**:
-   - **Starter — ₹159/month**: Basic sales tracking, expense management, and daily reports.
-   - **Growth — ₹199/month (Most Popular)**: Everything in Starter, plus inventory tracking, billing, and stock management.
-   - **Pro — ₹279/month**: Everything in Growth, plus AI-powered insights, advanced analytics, and low-stock alerts.
-   - Monthly and annual billing toggle with 20% savings.
-   - Collapsible FAQs.
-6. **About Section**:
-   - Built specifically for neighborhood stores, 0% tech learning curve, regional language support, and offline-first mode.
-7. **Social Proof & Testimonials**:
-   - Authentic reviews from café, kirana, and restaurant owners.
-8. **Final CTA**:
-   - *"Simplify Your Business. Grow with ZipBi."* with instant WhatsApp mobile signup.
-9. **Footer**:
-   - Logo, navigation links, industries served, and Bangalore contact placeholders.
-10. **Interactive Get Started Modal**:
-    - Lead capture modal for store name, WhatsApp mobile number, and business category.
+## ☕ Core Highlights
 
-## 🛠️ Tech Stack
+- **Visual Alignment**: Matched directly to the official visual reference layout, spacing, section badges, pill buttons, and typography.
+- **Customer App**: Free to use with minimal in-app ads. Diners discover cafés, view menus, scan table QR codes, and track order progress.
+- **Merchant App**: One unified application with distinct role-based views for Owners, Counter Staff, and Kitchen teams.
+- **Kitchen Display**: An integrated operational mode inside the Merchant App.
+- **Web Dashboard (Phase 2)**: Designed for comprehensive menu management, CSV exports, and administrative controls on larger screens.
+- **Planned AI Capabilities**: 5-node progressive rollout for AI menu import, categorization, intelligent reporting, and stock forecasting.
+- **Two-Tier Pricing**: Basic (₹219/mo or ₹2,365/yr with 10% annual discount) and Advanced (₹289/mo or ₹2,948/yr with 15% annual discount & "More Insights").
+- **Working Contact Form with Resend**: Sales enquiries are validated, backed up to `enquiries.json`, and dispatched via Resend to `amarmicrosoft2021@gmail.com`.
 
-- **Framework**: React 18
-- **Bundler**: Vite
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **Typography**: Plus Jakarta Sans
+---
 
-## 🚀 Getting Started
+## 🎨 Color Tokens & Reference Styling
 
-### 1. Install Dependencies
-```bash
-npm install
+- **Primary Green**: `#0C7744`
+- **Hover Green**: `#085430`
+- **Mint Badges**: `#E8F6EE` with border `#CDEBD8`
+- **Section Band Background**: `#F1F9F4`
+- **Card Background**: Pure white `#FFFFFF` with `rounded-2xl` / `rounded-3xl`
+- **Pill Buttons**: `rounded-full`
+
+---
+
+## 📧 Resend Email Setup
+
+To connect your Resend account so enquiries automatically send to `amarmicrosoft2021@gmail.com`:
+
+1. Sign up or log into [Resend](https://resend.com/api-keys) and generate an API key.
+2. In your terminal (in the project root), run the secure command:
+
+**PowerShell (Windows):**
+```powershell
+$val = Read-Host "Enter RESEND_API_KEY (typing hidden)" -AsSecureString; $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($val); $plain = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR); Add-Content -Path ".env" -Value "RESEND_API_KEY=$plain"; Write-Output "Saved."
 ```
 
-### 2. Run the Development Server
+**Bash / macOS / Linux:**
+```bash
+printf "Enter RESEND_API_KEY (typing hidden): " && read -s val && echo && echo "RESEND_API_KEY=$val" >> ".env" && echo "Saved."
+```
+
+All submissions are automatically logged to [`enquiries.json`](./enquiries.json) as a fail-safe backup.
+
+---
+
+## 🚀 Running the Project
+
+### 1. Development Server
 ```bash
 npm run dev
 ```
-Open `http://localhost:3000` in your browser.
+Accessible at [http://localhost:3000](http://localhost:3000).
 
-### 3. Build for Production
+### 2. Standalone Production Server
 ```bash
 npm run build
+node server.js
 ```
+
+---
+
+## 📍 Headquarters
+
+**ZipBi Technologies**  
+Coimbatore, Tamil Nadu, India.

@@ -5,25 +5,33 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+    color: #111827;
+  }
+
+  body {
+    background-color: #ffffff;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: #D8EFE3;
+    color: #02452C;
   }
 }
 
-/* Custom subtle glass and border helpers */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+/* Restrained subtle transitions */
+.transition-subtle {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.emerald-gradient-text {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.dot-pattern {
-  background-image: radial-gradient(rgba(16, 185, 129, 0.12) 1px, transparent 1px);
+/* Subtle dot background pattern if needed for hero accents */
+.bg-grid-subtle {
   background-size: 24px 24px;
+  background-image: 
+    radial-gradient(circle, rgba(2, 69, 44, 0.05) 1px, transparent 1px);
 }
+
