@@ -15,14 +15,14 @@ export default function PlatformSection() {
     {
       title: 'WEB DASHBOARD',
       description: 'Detailed menu management, reports and settings on a larger screen.',
-      tag: 'PHASE 2',
+      tag: 'COMING SOON',
     },
   ];
 
   return (
     <section id="platform" className="py-20 md:py-24 bg-white border-t border-slate-100">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-        
+
         {/* Header */}
         <div className="text-center space-y-3 mb-14">
           <div className="inline-block">
