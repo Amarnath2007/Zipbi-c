@@ -15,7 +15,7 @@ The official landing page for **ZipBi**, a café and restaurant operations platf
 - **Web Dashboard (Phase 2)**: Designed for comprehensive menu management, CSV exports, and administrative controls on larger screens.
 - **Planned AI Capabilities**: 5-node progressive rollout for AI menu import, categorization, intelligent reporting, and stock forecasting.
 - **Two-Tier Pricing**: Basic (₹219/mo or ₹2,365/yr with 10% annual discount) and Advanced (₹289/mo or ₹2,948/yr with 15% annual discount & "More Insights").
-- **Working Contact Form with Resend**: Sales enquiries are validated, backed up to `enquiries.json`, and dispatched via Resend to `amarmicrosoft2021@gmail.com`.
+- **Working Contact Form with Resend**: Sales enquiries are validated, backed up to `enquiries.json`, and dispatched via Resend to `zipbi.official@gmail.com`.
 
 ---
 
@@ -32,7 +32,7 @@ The official landing page for **ZipBi**, a café and restaurant operations platf
 
 ## 📧 Resend Email Setup
 
-To connect your Resend account so enquiries automatically send to `amarmicrosoft2021@gmail.com`:
+To connect your Resend account so enquiries automatically send to `zipbi.official@gmail.com`:
 
 1. Sign up or log into [Resend](https://resend.com/api-keys) and generate an API key.
 2. In your terminal (in the project root), run the secure command:

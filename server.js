@@ -45,7 +45,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const recipientEmail = process.env.RESEND_TO || 'amarmicrosoft2021@gmail.com';
+        const recipientEmail = process.env.RESEND_TO || 'zipbi.official@gmail.com';
 
         const enquiryRecord = {
           id: 'ENQ-' + Date.now().toString(36).toUpperCase(),

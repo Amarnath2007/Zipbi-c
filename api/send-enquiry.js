@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
-    const recipientEmail = process.env.RESEND_TO || 'amarmicrosoft2021@gmail.com';
+    const recipientEmail = process.env.RESEND_TO || 'zipbi.official@gmail.com';
     const apiKey = process.env.RESEND_API_KEY;
 
     let emailResult = null;

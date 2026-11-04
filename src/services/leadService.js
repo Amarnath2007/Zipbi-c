@@ -1,7 +1,7 @@
 /**
  * ZipBi Sales Enquiry Service
  * Dispatches enquiry to /api/send-enquiry which uses Resend to deliver
- * notification to amarmicrosoft2021@gmail.com.
+ * notification to zipbi.official@gmail.com.
  */
 
 const STORAGE_KEY = 'zipbi_sales_enquiries';
@@ -45,7 +45,7 @@ export async function submitSalesEnquiry(formData) {
         id: 'ENQ-' + Date.now().toString(36).toUpperCase(),
         ...payload,
         submittedAt: new Date().toISOString(),
-        targetEmail: 'amarmicrosoft2021@gmail.com'
+        targetEmail: 'zipbi.official@gmail.com'
       },
       message: 'Thank you for reaching out. We have received your details.',
     };
