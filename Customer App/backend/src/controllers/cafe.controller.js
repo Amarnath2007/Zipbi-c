@@ -1,4 +1,5 @@
 const db = require('../db');
+const { isSuperAdmin } = require('../middleware/auth.middleware');
 
 /**
  * List all cafes with distance sorting and filters
@@ -147,14 +148,29 @@ async function getFavorites(req, res, next) {
 }
 
 /**
- * Update cafe details
+ * Update cafe details (Strictly protected if record is Super Admin owned)
  */
 async function updateCafe(req, res, next) {
   try {
     const { id } = req.params;
-    const updated = db.updateCafe(id, req.body);
+    const existing = db.getCafeById(id);
+    if (!existing) {
+      return res.status(404).json({ success: false, message: `Café '${id}' not found.` });
+    }
+
+    if ((existing.is_protected === true || existing.record_ownership === 'SUPER_ADMIN') && !isSuperAdmin(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: This business listing is protected by the Platform Owner and cannot be modified by merchants.',
+      });
+    }
+
+    const updated = db.updateCafe(id, req.body, req.user);
     if (!updated) {
       return res.status(404).json({ success: false, message: `Café '${id}' not found.` });
+    }
+    if (updated.forbidden) {
+      return res.status(403).json({ success: false, message: updated.message });
     }
     return res.status(200).json({ success: true, cafe: updated });
   } catch (err) {
@@ -163,11 +179,23 @@ async function updateCafe(req, res, next) {
 }
 
 /**
- * Update cafe full menu categories
+ * Update cafe full menu categories (Strictly protected if record is Super Admin owned)
  */
 async function updateCafeMenu(req, res, next) {
   try {
     const { id } = req.params;
+    const existing = db.getCafeById(id);
+    if (!existing) {
+      return res.status(404).json({ success: false, message: `Café '${id}' not found.` });
+    }
+
+    if ((existing.is_protected === true || existing.record_ownership === 'SUPER_ADMIN') && !isSuperAdmin(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: This business menu is protected by the Platform Owner and cannot be modified by merchants.',
+      });
+    }
+
     const categories = req.body.categories || req.body.menu_categories;
     const updated = db.updateCafeMenu(id, categories);
     if (!updated) {
@@ -185,13 +213,28 @@ async function updateCafeMenu(req, res, next) {
 async function addMenuItem(req, res, next) {
   try {
     const { id } = req.params;
+    const existing = db.getCafeById(id);
+    if (!existing) {
+      return res.status(404).json({ success: false, message: `Café '${id}' not found.` });
+    }
+
+    if ((existing.is_protected === true || existing.record_ownership === 'SUPER_ADMIN') && !isSuperAdmin(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: This business menu is protected by the Platform Owner and cannot be modified by merchants.',
+      });
+    }
+
     const { category, item } = req.body;
     if (!item || !item.name) {
       return res.status(400).json({ success: false, message: 'Item name is required.' });
     }
-    const result = db.addMenuItem(id, category, item);
+    const result = db.addMenuItem(id, category, item, req.user);
     if (!result) {
       return res.status(404).json({ success: false, message: `Café '${id}' not found.` });
+    }
+    if (result.forbidden) {
+      return res.status(403).json({ success: false, message: result.message });
     }
     return res.status(201).json({ success: true, item: result.item, cafe: result.cafe });
   } catch (err) {
@@ -205,10 +248,22 @@ async function addMenuItem(req, res, next) {
 async function uploadCafeImage(req, res, next) {
   try {
     const { id } = req.params;
+    const existing = db.getCafeById(id);
+    if (!existing) {
+      return res.status(404).json({ success: false, message: `Café '${id}' not found.` });
+    }
+
+    if ((existing.is_protected === true || existing.record_ownership === 'SUPER_ADMIN') && !isSuperAdmin(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: This business listing is protected by the Platform Owner and photographs cannot be overwritten by merchants.',
+      });
+    }
+
     const { image, base64, filename, imageUrl } = req.body;
 
     if (imageUrl) {
-      const updated = db.updateCafe(id, { cover_image: imageUrl, cover_image_url: imageUrl });
+      const updated = db.updateCafe(id, { cover_image: imageUrl, cover_image_url: imageUrl }, req.user);
       return res.status(200).json({ success: true, cafe: updated });
     }
 

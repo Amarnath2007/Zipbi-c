@@ -15,3 +15,4 @@ fs.copyFileSync(path.resolve(__dirname, '../data/users.json'), usersBackup);
 
 console.log(`[BACKUP CREATED] ${cafesBackup}`);
 console.log(`[BACKUP CREATED] ${usersBackup}`);
+

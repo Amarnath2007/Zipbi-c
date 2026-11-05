@@ -5,8 +5,21 @@
     "phone": "+919876500000",
     "email": "admin@zipbi.com",
     "passwordHash": "$2a$10$KVquP2WmP4CYFg7fYDdJFuH1oamLraffFJpk0w4gt/nTgd6EwN35O",
-    "role": "ADMIN",
+    "role": "SUPER_ADMIN",
+    "isSuperAdmin": true,
+    "isOwner": true,
     "createdAt": "2026-11-04T13:09:33.432Z"
+  },
+  {
+    "id": "usr-staff-admin-2",
+    "fullName": "ZipBi Staff Administrator",
+    "phone": "+919876500001",
+    "email": "staff@zipbi.com",
+    "passwordHash": "$2a$10$KVquP2WmP4CYFg7fYDdJFuH1oamLraffFJpk0w4gt/nTgd6EwN35O",
+    "role": "ADMIN",
+    "isSuperAdmin": false,
+    "isOwner": false,
+    "createdAt": "2026-11-05T18:00:00.000Z"
   },
   {
     "id": "usr-demo-1",
@@ -169,5 +182,32 @@
     "passwordHash": "$2a$10$9uMqi8mYE9j3R8OQHaN/mOBUPaF0u14jXjOyoGRszj4ju/.gs5Aey",
     "role": "CUSTOMER",
     "createdAt": "2026-11-05T17:39:46.509Z"
+  },
+  {
+    "id": "usr-1793903997180-796",
+    "fullName": "Test Customer",
+    "phone": "+919959023073",
+    "email": "test_1793903997004@example.com",
+    "passwordHash": "$2a$10$xanLBpkpPx41ergOckrmP.1sBCQPHPzPxS8B20hy9DZdTUPjM6.NO",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-05T18:39:57.180Z"
+  },
+  {
+    "id": "usr-1793904189188-773",
+    "fullName": "Test Customer",
+    "phone": "+919936496139",
+    "email": "test_1793904189012@example.com",
+    "passwordHash": "$2a$10$bf8x5LDTMS1CUaeG86TY/ukFo479b9KaRmCUdRAhCOFnMiNpWHOLa",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-05T18:43:09.188Z"
+  },
+  {
+    "id": "usr-1793904446400-465",
+    "fullName": "Test Customer",
+    "phone": "+919982805282",
+    "email": "test_1793904446240@example.com",
+    "passwordHash": "$2a$10$rihUIeuknUe4EmxspgBDseWq1TAoaKgiYCqHLU7ymCh7lsyIHsrQO",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-05T18:47:26.400Z"
   }
 ]

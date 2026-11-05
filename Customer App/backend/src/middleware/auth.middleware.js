@@ -49,16 +49,45 @@ function optionalAuth(req, res, next) {
 }
 
 /**
- * Administrator role authorization middleware
+ * Check if user is the immutable Platform Owner / Super Admin
+ */
+function isSuperAdmin(user) {
+  if (!user) return false;
+  const email = (user.email || '').toLowerCase().trim();
+  const ownerEmail = (config.superAdminEmail || 'admin@zipbi.com').toLowerCase().trim();
+  if (email === ownerEmail) return true;
+  if (user.role === 'SUPER_ADMIN' || user.isSuperAdmin === true || user.isOwner === true) return true;
+  return false;
+}
+
+/**
+ * Administrator role authorization middleware (allows both Super Admin and standard Admin)
  */
 function requireAdmin(req, res, next) {
   authenticateToken(req, res, () => {
-    if (!req.user || req.user.role !== 'ADMIN') {
+    if (!req.user || (req.user.role !== 'ADMIN' && req.user.role !== 'SUPER_ADMIN' && !isSuperAdmin(req.user))) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. Administrator privileges required.',
       });
     }
+    req.user.isSuperAdmin = isSuperAdmin(req.user);
+    next();
+  });
+}
+
+/**
+ * Platform Owner / Super Admin authorization middleware (strictly blocks non-Super Admins)
+ */
+function requireSuperAdmin(req, res, next) {
+  authenticateToken(req, res, () => {
+    if (!isSuperAdmin(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Platform Owner (Super Admin) privileges required.',
+      });
+    }
+    req.user.isSuperAdmin = true;
     next();
   });
 }
@@ -67,5 +96,7 @@ module.exports = {
   authenticateToken,
   optionalAuth,
   requireAdmin,
+  requireSuperAdmin,
+  isSuperAdmin,
 };
 

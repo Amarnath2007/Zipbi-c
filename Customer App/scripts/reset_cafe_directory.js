@@ -5,6 +5,7 @@ function resetCafeDirectory() {
   const dataDir = path.resolve(__dirname, '../data');
   const backupDir = path.join(dataDir, 'backups');
   const cafesPath = path.join(dataDir, 'cafes.json');
+  const backendCafesPath = path.resolve(__dirname, '../backend/data/cafes.json');
   const assetCafesPath = path.resolve(__dirname, '../assets/data/cafes.json');
   const buildWebAssetPath = path.resolve(__dirname, '../build/web/assets/data/cafes.json');
   const buildWebNestedAssetPath = path.resolve(__dirname, '../build/web/assets/assets/data/cafes.json');
@@ -58,6 +59,11 @@ function resetCafeDirectory() {
   // 3. Write to primary database file
   fs.writeFileSync(cafesPath, cleanJson, 'utf-8');
   console.log(`[Reset] Reset ${cafesPath} -> cafes: []`);
+
+  if (fs.existsSync(path.dirname(backendCafesPath))) {
+    fs.writeFileSync(backendCafesPath, cleanJson, 'utf-8');
+    console.log(`[Sync] Synced empty directory to: ${backendCafesPath}`);
+  }
 
   // 4. Sync to Flutter assets
   if (fs.existsSync(path.dirname(assetCafesPath))) {

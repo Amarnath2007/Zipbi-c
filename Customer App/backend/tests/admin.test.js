@@ -75,7 +75,7 @@ test('2. Admin Security: Strict Authentication and Role Authorization', async ()
   assert.strictEqual(adminLoginRes.status, 200);
   const adminData = await adminLoginRes.json();
   assert.ok(adminData.token);
-  assert.strictEqual(adminData.user.role, 'ADMIN');
+  assert.ok(adminData.user.role === 'ADMIN' || adminData.user.role === 'SUPER_ADMIN');
 
   // 5. Admin accesses /admin/stats successfully
   const statsRes = await fetch(`${baseUrl}/admin/stats`, {

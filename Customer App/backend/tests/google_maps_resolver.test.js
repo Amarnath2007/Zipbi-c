@@ -132,32 +132,23 @@ test('4. POST /api/v1/admin/resolve-maps-url: Endpoint Verification', async () =
 
 const fs = require('fs');
 const path = require('path');
-function getFiveCafesSnapshot() {
+function getDirectorySnapshot() {
   const dataPath = path.resolve(__dirname, '../../data/cafes.json');
   if (fs.existsSync(dataPath)) {
     try {
-      const d = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-      if (Array.isArray(d.cafes) && d.cafes.length === 5) {
-        return JSON.stringify({ reference_point: d.reference_point, cafes: d.cafes }, null, 2);
-      }
+      return fs.readFileSync(dataPath, 'utf8');
     } catch (_) {}
   }
-  const backupDir = path.resolve(__dirname, '../../data/backups');
-  if (fs.existsSync(backupDir)) {
-    const files = fs.readdirSync(backupDir).filter((f) => f.endsWith('.json')).sort().reverse();
-    for (const f of files) {
-      try {
-        const d = JSON.parse(fs.readFileSync(path.join(backupDir, f), 'utf8'));
-        if (Array.isArray(d.cafes) && d.cafes.length === 5) {
-          return JSON.stringify({ reference_point: d.reference_point, cafes: d.cafes }, null, 2);
-        }
-      } catch (_) {}
-    }
+  const backendDataPath = path.resolve(__dirname, '../data/cafes.json');
+  if (fs.existsSync(backendDataPath)) {
+    try {
+      return fs.readFileSync(backendDataPath, 'utf8');
+    } catch (_) {}
   }
   return null;
 }
 
-const verifiedFiveCafes = getFiveCafesSnapshot();
+const initialDirectorySnapshot = getDirectorySnapshot();
 
 test('5. Directory Reset: POST /api/v1/admin/reset-directory returns 0 counts', async () => {
 
@@ -253,8 +244,8 @@ test('6. Fresh Café Registration with Google Maps Link & Verified Distance', as
     const finalData = await finalCheck.json();
     assert.strictEqual(finalData.count, 0);
   } finally {
-    // Restore original cafes after test completion
-    const snapshotToRestore = verifiedFiveCafes || getFiveCafesSnapshot();
+    // Restore original directory snapshot preserving all cafes and menus
+    const snapshotToRestore = initialDirectorySnapshot || getDirectorySnapshot();
     if (snapshotToRestore) {
       const pathsToRestore = [
         path.resolve(__dirname, '../../data/cafes.json'),

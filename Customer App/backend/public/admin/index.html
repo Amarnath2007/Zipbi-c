@@ -822,6 +822,35 @@
             </form>
           </div>
 
+          <!-- Platform Data Ownership & Recovery Center -->
+          <div class="mt-8 max-w-2xl border border-slate-200 rounded-2xl bg-white overflow-hidden shadow-sm">
+            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between">
+              <div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Settings &gt; Data Governance &gt; Recovery Center</div>
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2 mt-0.5">
+                  <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                  <span>Archived &amp; Soft-Deleted Businesses</span>
+                </h3>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                <i class="fa-solid fa-shield-heart text-[9px] text-emerald-600"></i>
+                <span>Platform Owner Protected</span>
+              </span>
+            </div>
+
+            <div class="p-6 space-y-4">
+              <p class="text-xs text-slate-600 leading-relaxed">
+                When businesses or listings are deleted, ZipBi enforces <strong>safe soft-deletion</strong> by default. The Platform Owner (Super Admin) can restore any archived business and its complete menu hierarchy at any time with zero data loss.
+              </p>
+
+              <div id="archivedCafesContainer" class="space-y-2">
+                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs text-slate-500">
+                  <i class="fa-solid fa-spinner fa-spin mr-1"></i> Checking archived businesses...
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Advanced Settings -> Data Management -> Danger Zone -->
           <div class="mt-8 max-w-2xl border border-slate-200 rounded-2xl bg-white overflow-hidden shadow-sm">
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between">
@@ -1827,7 +1856,36 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
     // State
     const API_BASE = '/api/v1';
     let adminToken = localStorage.getItem('zipbi_admin_token') || null;
+    let currentUser = null;
     let allCafes = [];
+
+    function getCurrentUser() {
+      if (currentUser) return currentUser;
+      try {
+        const saved = localStorage.getItem('zipbi_admin_user');
+        if (saved) {
+          currentUser = JSON.parse(saved);
+          return currentUser;
+        }
+      } catch (_) {}
+      if (adminToken) {
+        try {
+          const payload = JSON.parse(atob(adminToken.split('.')[1]));
+          currentUser = payload;
+          return currentUser;
+        } catch (_) {}
+      }
+      return null;
+    }
+
+    function isCurrentUserSuperAdmin() {
+      const u = getCurrentUser();
+      if (!u) return false;
+      const email = (u.email || '').toLowerCase().trim();
+      if (email === 'admin@zipbi.com') return true;
+      if (u.role === 'SUPER_ADMIN' || u.isSuperAdmin === true || u.isOwner === true) return true;
+      return false;
+    }
 
     // Check token on page load
     window.addEventListener('DOMContentLoaded', () => {
@@ -1876,7 +1934,13 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
     function showAdminApp() {
       document.getElementById('loginView').classList.add('hidden');
       document.getElementById('adminApp').classList.remove('hidden');
+      const u = getCurrentUser();
+      if (u && u.fullName) {
+        const nameEl = document.getElementById('adminNameDisplay');
+        if (nameEl) nameEl.textContent = u.fullName;
+      }
       refreshAllData();
+      loadArchivedCafes();
     }
 
     async function handleLoginSubmit(e) {
@@ -1903,8 +1967,12 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
         if (res.ok && data.success && data.token) {
           adminToken = data.token;
           localStorage.setItem('zipbi_admin_token', adminToken);
-          if (data.user && data.user.fullName) {
-            document.getElementById('adminNameDisplay').textContent = data.user.fullName;
+          if (data.user) {
+            currentUser = data.user;
+            localStorage.setItem('zipbi_admin_user', JSON.stringify(currentUser));
+            if (data.user.fullName) {
+              document.getElementById('adminNameDisplay').textContent = data.user.fullName;
+            }
           }
           showAdminApp();
         } else {
@@ -1937,7 +2005,9 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
 
     function handleLogout() {
       adminToken = null;
+      currentUser = null;
       localStorage.removeItem('zipbi_admin_token');
+      localStorage.removeItem('zipbi_admin_user');
       showLoginView();
     }
 
@@ -1957,6 +2027,7 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
       else if (tabId === 'tab-revenue') loadRevenue();
       else if (tabId === 'tab-subscriptions') loadSubscriptions();
       else if (tabId === 'tab-logs') loadActivityLogs();
+      else if (tabId === 'tab-settings') loadArchivedCafes();
     }
 
     // Refresh all data
@@ -2023,11 +2094,14 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
       }
       empty.classList.add('hidden');
 
+      const isSuper = isCurrentUserSuperAdmin();
+
       for (const cafe of cafes) {
         const tr = document.createElement('tr');
         const isPartner = cafe.verification_status === 'ACTIVE_PARTNER';
         const isVerified = cafe.verification_status === 'VERIFIED';
         const isGoogleVerified = cafe.location_verification_status === 'GOOGLE_MAPS_RESOLVED' || cafe.location_verification_status === 'GOOGLE_MAPS_VERIFIED';
+        const isProtected = cafe.is_protected === true;
 
         let badgeHtml = '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600">Unclaimed</span>';
         if (isPartner) {
@@ -2036,10 +2110,47 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
           badgeHtml = '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800 border border-blue-200">Verified Premises</span>';
         }
 
+        const ownerProtectedBadge = isProtected
+          ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200" title="Created by Platform Owner (${escapeHtml(cafe.created_by || 'admin@zipbi.com')}). Protected against accidental modification or deletion.">
+              <i class="fa-solid fa-shield-halved text-emerald-600"></i> Owner Protected
+             </span>`
+          : '';
+
         const thumb = cafe.cover_image_url || cafe.cover_image || '/assets/images/placeholder_cafe.png';
         const mapsLinkHtml = cafe.google_maps_url
           ? `<a href="${escapeHtml(cafe.google_maps_url)}" target="_blank" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-semibold text-[11px]"><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i> Maps</a>`
           : '<span class="text-slate-300 text-[10px]">No link</span>';
+
+        const canModify = !isProtected || isSuper;
+
+        const actionButtons = canModify
+          ? `
+            <div class="inline-flex items-center gap-1.5">
+              <button onclick="openMenuModal('${cafe.id}')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium transition" title="Manage Menu">
+                <i class="fa-solid fa-utensils mr-1"></i> Menu
+              </button>
+              <button onclick="openEditModal('${cafe.id}')" class="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition" title="Edit Café">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button onclick="handleDeleteCafe('${cafe.id}', '${escapeHtml(cafe.name)}')" class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 transition" title="Archive / Delete">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          `
+          : `
+            <div class="inline-flex items-center gap-1.5">
+              <button onclick="openMenuModal('${cafe.id}')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium transition" title="View Menu (Read-Only)">
+                <i class="fa-solid fa-utensils mr-1"></i> Menu
+              </button>
+              <span class="p-1.5 text-slate-300 cursor-not-allowed inline-flex items-center" title="Protected by Platform Owner">
+                <i class="fa-solid fa-lock text-xs"></i>
+              </span>
+            </div>
+          `;
+
+        const statusCheckbox = canModify
+          ? `<input type="checkbox" ${cafe.is_active !== false ? 'checked' : ''} onchange="toggleCafeStatus('${cafe.id}', this.checked)" class="w-4 h-4 rounded text-brand-primary" />`
+          : `<input type="checkbox" ${cafe.is_active !== false ? 'checked' : ''} disabled title="Protected by Platform Owner" class="w-4 h-4 rounded text-brand-primary opacity-50 cursor-not-allowed" />`;
 
         tr.innerHTML = `
           <td class="py-3 px-4">
@@ -2048,7 +2159,10 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
                 <img src="${thumb}" onerror="this.onerror=null; this.src='/assets/images/placeholder_cafe.png';" class="w-full h-full object-cover" />
               </div>
               <div>
-                <div class="font-bold text-slate-900">${escapeHtml(cafe.name)}</div>
+                <div class="font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                  <span>${escapeHtml(cafe.name)}</span>
+                  ${ownerProtectedBadge}
+                </div>
                 <div class="text-[11px] text-slate-400">★ ${cafe.rating || 'N/A'} • ₹${cafe.cost_for_two || 350} for two</div>
               </div>
             </div>
@@ -2073,20 +2187,10 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
             ${isGoogleVerified ? '<div class="text-[9px] text-emerald-700 font-medium mt-0.5"><i class="fa-brands fa-google text-[8px]"></i> Maps Resolved</div>' : ''}
           </td>
           <td class="py-3 px-3 text-center">
-            <input type="checkbox" ${cafe.is_active !== false ? 'checked' : ''} onchange="toggleCafeStatus('${cafe.id}', this.checked)" class="w-4 h-4 rounded text-brand-primary" />
+            ${statusCheckbox}
           </td>
           <td class="py-3 px-4 text-right">
-            <div class="inline-flex items-center gap-1.5">
-              <button onclick="openMenuModal('${cafe.id}')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium transition" title="Manage Menu">
-                <i class="fa-solid fa-utensils mr-1"></i> Menu
-              </button>
-              <button onclick="openEditModal('${cafe.id}')" class="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition" title="Edit Café">
-                <i class="fa-solid fa-pen-to-square"></i>
-              </button>
-              <button onclick="handleDeleteCafe('${cafe.id}', '${escapeHtml(cafe.name)}')" class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 transition" title="Delete">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </div>
+            ${actionButtons}
           </td>
         `;
         tbody.appendChild(tr);
@@ -2126,6 +2230,13 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
     }
 
     async function toggleCafeStatus(id, isActive) {
+      const targetCafe = allCafes.find((item) => item.id === id);
+      if (targetCafe && targetCafe.is_protected && !isCurrentUserSuperAdmin()) {
+        alert('This business is protected by the Platform Owner. Status changes are restricted to Super Admin.');
+        loadCafes();
+        return;
+      }
+
       try {
         const res = await fetch(`${API_BASE}/admin/cafes/${id}/status`, {
           method: 'PATCH',
@@ -2136,12 +2247,16 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
           body: JSON.stringify({ isActive }),
         });
         if (res.ok) {
-          const c = allCafes.find((item) => item.id === id);
-          if (c) c.is_active = isActive;
+          if (targetCafe) targetCafe.is_active = isActive;
           loadStats();
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          alert(errData.message || 'Failed to update business status.');
+          loadCafes();
         }
       } catch (e) {
         console.error('Failed to toggle status:', e);
+        loadCafes();
       }
     }
 
@@ -2446,6 +2561,11 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
       const cafe = allCafes.find((c) => c.id === id);
       if (!cafe) return;
 
+      if (cafe.is_protected && !isCurrentUserSuperAdmin()) {
+        alert('This business is protected by the Platform Owner. Only the Super Admin can edit it.');
+        return;
+      }
+
       userModifiedFields.clear();
 
       document.getElementById('modalTitle').textContent = `Edit Business: ${cafe.name}`;
@@ -2718,20 +2838,109 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
     }
 
     async function handleDeleteCafe(id, name) {
-      if (!confirm(`Are you sure you want to permanently delete "${name}" from directory?`)) return;
+      const cafe = allCafes.find((c) => c.id === id);
+      if (cafe && cafe.is_protected && !isCurrentUserSuperAdmin()) {
+        alert('This business is protected by the Platform Owner. Only the Super Admin can archive or delete it.');
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to archive "${name}"? It will be safely soft-deleted and can be restored from the Recovery Center at any time.`)) return;
 
       try {
         const res = await fetch(`${API_BASE}/admin/cafes/${id}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${adminToken}` },
         });
-        if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
           refreshAllData();
+          loadArchivedCafes();
         } else {
-          alert('Failed to delete café.');
+          alert(data.message || 'Failed to archive café.');
         }
       } catch (err) {
         alert('Network error.');
+      }
+    }
+
+    async function loadArchivedCafes() {
+      const container = document.getElementById('archivedCafesContainer');
+      if (!container) return;
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes?includeDeleted=true`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        if (!res.ok) {
+          container.innerHTML = '<div class="p-3 text-xs text-red-500">Failed to load archived records.</div>';
+          return;
+        }
+        const data = await res.json();
+        const deleted = (data.cafes || []).filter((c) => c.is_deleted === true);
+        if (deleted.length === 0) {
+          container.innerHTML = `
+            <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 text-center">
+              <i class="fa-solid fa-circle-check text-emerald-600 text-base mb-1"></i>
+              <div class="text-xs font-semibold text-emerald-900">All Businesses Active</div>
+              <div class="text-[11px] text-emerald-700 mt-0.5">No soft-deleted or archived businesses found in the directory.</div>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = deleted
+          .map(
+            (cafe) => `
+          <div class="p-3 rounded-xl border border-amber-200 bg-amber-50/40 flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <div class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <span>${escapeHtml(cafe.name)}</span>
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">Archived</span>
+              </div>
+              <div class="text-[11px] text-slate-500 mt-0.5">
+                ${escapeHtml(cafe.category || 'Café')} • ${escapeHtml(cafe.area || 'Coimbatore')} • Deleted: ${cafe.deleted_at ? new Date(cafe.deleted_at).toLocaleString('en-IN') : 'Recently'}
+              </div>
+            </div>
+            <button
+              type="button"
+              onclick="handleRestoreCafe('${cafe.id}', '${escapeHtml(cafe.name)}')"
+              class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition flex items-center gap-1.5"
+            >
+              <i class="fa-solid fa-rotate-left"></i>
+              <span>Restore Listing</span>
+            </button>
+          </div>
+        `
+          )
+          .join('');
+      } catch (e) {
+        container.innerHTML = '<div class="p-3 text-xs text-red-500">Network error checking archived listings.</div>';
+      }
+    }
+
+    async function handleRestoreCafe(id, name) {
+      if (!isCurrentUserSuperAdmin()) {
+        alert('Only the Platform Owner (Super Admin) can restore archived businesses.');
+        return;
+      }
+      if (!confirm(`Restore "${name}" and all its menus back to the active directory?`)) return;
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${id}/restore`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(`Success: "${name}" has been restored to the directory.`);
+          refreshAllData();
+          loadArchivedCafes();
+        } else {
+          alert(`Failed to restore: ${data.message || 'Unknown error'}`);
+        }
+      } catch (err) {
+        alert(`Error: ${err.message}`);
       }
     }
 
@@ -3107,6 +3316,10 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
       const container = document.getElementById('menuCategoriesContainer');
       container.innerHTML = '';
 
+      const activeCafe = allCafes.find((c) => c.id === currentMenuCafeId);
+      const isSuper = isCurrentUserSuperAdmin();
+      const canEditMenu = !activeCafe || !activeCafe.is_protected || isSuper;
+
       let totalItems = 0;
       let availableItems = 0;
       let unavailableItems = 0;
@@ -3176,9 +3389,26 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
               foodTypeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">🟢 Veg</span>';
             }
 
-            const availBtn = isAvail
-              ? `<button type="button" onclick="handleToggleAvailability('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}', false)" class="px-2.5 py-1 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition inline-flex items-center gap-1 shadow-2xs" title="Click to mark Out of Stock"><span>✅ In Stock</span></button>`
-              : `<button type="button" onclick="handleToggleAvailability('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}', true)" class="px-2.5 py-1 rounded text-[10px] font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition inline-flex items-center gap-1 shadow-2xs" title="Click to mark In Stock"><span>❌ Out of Stock</span></button>`;
+            const availBtn = canEditMenu
+              ? (isAvail
+                  ? `<button type="button" onclick="handleToggleAvailability('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}', false)" class="px-2.5 py-1 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition inline-flex items-center gap-1 shadow-2xs" title="Click to mark Out of Stock"><span>✅ In Stock</span></button>`
+                  : `<button type="button" onclick="handleToggleAvailability('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}', true)" class="px-2.5 py-1 rounded text-[10px] font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition inline-flex items-center gap-1 shadow-2xs" title="Click to mark In Stock"><span>❌ Out of Stock</span></button>`)
+              : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold ${isAvail ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${isAvail ? '✅ In Stock' : '❌ Out of Stock'}</span>`;
+
+            const itemActions = canEditMenu
+              ? `
+                <div class="inline-flex items-center gap-1.5">
+                  <button type="button" onclick="openEditMenuItemModal('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-brand-primary/10 text-slate-700 hover:text-brand-primary font-semibold text-[11px] transition flex items-center gap-1" title="Edit Item">
+                    <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                    <span>Edit</span>
+                  </button>
+                  <button type="button" onclick="handleDeleteMenuItem('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}', '${escapeJsString(it.name)}')" class="px-2.5 py-1 rounded bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-[11px] transition flex items-center gap-1" title="Delete Item">
+                    <i class="fa-solid fa-trash-can text-[10px]"></i>
+                    <span>Delete</span>
+                  </button>
+                </div>
+              `
+              : `<span class="px-2 py-1 text-slate-400 text-[10px] inline-flex items-center gap-1" title="Protected by Platform Owner"><i class="fa-solid fa-lock text-[9px]"></i> Protected</span>`;
 
             const priceDisplay = it.price !== null && it.price !== undefined ? `₹${it.price}` : 'Price not listed';
 
@@ -3201,16 +3431,7 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
                   ${availBtn}
                 </td>
                 <td class="py-2.5 px-3 text-right align-top whitespace-nowrap">
-                  <div class="inline-flex items-center gap-1.5">
-                    <button type="button" onclick="openEditMenuItemModal('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-brand-primary/10 text-slate-700 hover:text-brand-primary font-semibold text-[11px] transition flex items-center gap-1" title="Edit Item">
-                      <i class="fa-solid fa-pen-to-square text-[10px]"></i>
-                      <span>Edit</span>
-                    </button>
-                    <button type="button" onclick="handleDeleteMenuItem('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}', '${escapeJsString(it.name)}')" class="px-2.5 py-1 rounded bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-[11px] transition flex items-center gap-1" title="Delete Item">
-                      <i class="fa-solid fa-trash-can text-[10px]"></i>
-                      <span>Delete</span>
-                    </button>
-                  </div>
+                  ${itemActions}
                 </td>
               </tr>
             `;
@@ -3239,14 +3460,8 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
           itemsTableHtml = '<div class="text-[11px] text-slate-400 py-3 italic text-center bg-white rounded-lg border border-dashed border-slate-200">No items in this category yet. Click "+ Add Item" to add your first dish.</div>';
         }
 
-        catCard.innerHTML = `
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-bold text-sm text-slate-900">${escapeHtml(cat.name)}</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">${items.length} ${items.length === 1 ? 'item' : 'items'}</span>
-              <span class="text-[10px] text-slate-500 font-medium">(${catAvail} in stock, ${catUnavail} out)</span>
-              ${cat.description ? `<span class="text-xs text-slate-400 italic">• ${escapeHtml(cat.description)}</span>` : ''}
-            </div>
+        const categoryActions = canEditMenu
+          ? `
             <div class="flex items-center gap-2 shrink-0">
               <button type="button" onclick="openAddMenuItemModal('${escapeJsString(cat.name)}')" class="px-2.5 py-1 rounded-md bg-brand-primary text-white text-[11px] font-semibold hover:bg-brand-dark transition flex items-center gap-1 shadow-xs">
                 <i class="fa-solid fa-plus text-[9px]"></i>
@@ -3259,6 +3474,18 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
                 <i class="fa-solid fa-trash text-xs"></i>
               </button>
             </div>
+          `
+          : `<div class="shrink-0 text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1"><i class="fa-solid fa-shield-halved text-emerald-600"></i> Owner Protected</div>`;
+
+        catCard.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-bold text-sm text-slate-900">${escapeHtml(cat.name)}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">${items.length} ${items.length === 1 ? 'item' : 'items'}</span>
+              <span class="text-[10px] text-slate-500 font-medium">(${catAvail} in stock, ${catUnavail} out)</span>
+              ${cat.description ? `<span class="text-xs text-slate-400 italic">• ${escapeHtml(cat.description)}</span>` : ''}
+            </div>
+            ${categoryActions}
           </div>
           <div>${itemsTableHtml}</div>
         `;
@@ -3278,6 +3505,11 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
     // Add Category
     async function handleAddMenuCategory() {
       if (!currentMenuCafeId) return;
+      const targetCafe = allCafes.find((c) => c.id === currentMenuCafeId);
+      if (targetCafe && targetCafe.is_protected && !isCurrentUserSuperAdmin()) {
+        alert('This business is protected by the Platform Owner. Menu modifications are restricted to Super Admin.');
+        return;
+      }
       const input = document.getElementById('newCategoryInput');
       const catName = input.value.trim();
       if (!catName) {
@@ -3363,6 +3595,11 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
     // Delete Category with Safe Items Option
     async function handleDeleteCategory(categoryName, itemCount = 0) {
       if (!currentMenuCafeId) return;
+      const targetCafe = allCafes.find((c) => c.id === currentMenuCafeId);
+      if (targetCafe && targetCafe.is_protected && !isCurrentUserSuperAdmin()) {
+        alert('This business is protected by the Platform Owner. Menu modifications are restricted to Super Admin.');
+        return;
+      }
 
       let moveItemsTo = null;
       if (itemCount > 0) {
@@ -3545,6 +3782,11 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
     // Toggle item availability
     async function handleToggleAvailability(catName, itemId, newStatus) {
       if (!currentMenuCafeId) return;
+      const targetCafe = allCafes.find((c) => c.id === currentMenuCafeId);
+      if (targetCafe && targetCafe.is_protected && !isCurrentUserSuperAdmin()) {
+        alert('This business is protected by the Platform Owner. Availability changes are restricted to Super Admin.');
+        return;
+      }
 
       try {
         const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/items/${encodeURIComponent(itemId)}/availability`, {
@@ -3578,6 +3820,11 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
     // Delete item with explicit confirmation
     async function handleDeleteMenuItem(catName, itemId, itemName = '') {
       if (!currentMenuCafeId) return;
+      const targetCafe = allCafes.find((c) => c.id === currentMenuCafeId);
+      if (targetCafe && targetCafe.is_protected && !isCurrentUserSuperAdmin()) {
+        alert('This business is protected by the Platform Owner. Menu modifications are restricted to Super Admin.');
+        return;
+      }
       const label = itemName ? `"${itemName}"` : 'this menu item';
       if (!confirm(`Are you sure you want to delete ${label} from category "${catName}"?`)) return;
 
@@ -4205,6 +4452,10 @@ IMPORTANT:
       if (modeRadio) selectedMode = modeRadio.value;
 
       const cafe = allCafes.find((c) => c.id === currentMenuCafeId);
+      if (cafe && cafe.is_protected && !isCurrentUserSuperAdmin()) {
+        alert('This business is protected by the Platform Owner. Menu imports are restricted to Super Admin.');
+        return;
+      }
       let existingCount = 0;
       (currentMenuCategories || []).forEach((c) => { existingCount += (c.items || []).length; });
 

@@ -9,11 +9,11 @@ router.get('/:id', optionalAuth, cafeController.getCafeById);
 router.get('/:id/menu', cafeController.getCafeMenu);
 router.post('/:id/favorite', authenticateToken, cafeController.toggleFavorite);
 
-// Business updates, menus and image upload persistence
-router.put('/:id', cafeController.updateCafe);
-router.put('/:id/menu', cafeController.updateCafeMenu);
-router.post('/:id/menu/items', cafeController.addMenuItem);
-router.post('/:id/image', cafeController.uploadCafeImage);
+// Business updates, menus and image upload persistence (Requires Authentication & Ownership Check)
+router.put('/:id', authenticateToken, cafeController.updateCafe);
+router.put('/:id/menu', authenticateToken, cafeController.updateCafeMenu);
+router.post('/:id/menu/items', authenticateToken, cafeController.addMenuItem);
+router.post('/:id/image', authenticateToken, cafeController.uploadCafeImage);
 
 module.exports = router;
 

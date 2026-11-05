@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/admin.controller');
-const { requireAdmin } = require('../middleware/auth.middleware');
+const { requireAdmin, requireSuperAdmin } = require('../middleware/auth.middleware');
 
 // Public Admin Login endpoint (checks admin role)
 router.post('/login', adminController.adminLogin);
@@ -18,6 +18,8 @@ router.get('/cafes/:id', adminController.getCafe);
 router.post('/cafes', adminController.createCafe);
 router.put('/cafes/:id', adminController.updateCafe);
 router.delete('/cafes/:id', adminController.deleteCafe);
+router.post('/cafes/:id/restore', requireSuperAdmin, adminController.restoreCafe);
+router.delete('/cafes/:id/purge', requireSuperAdmin, adminController.purgeCafe);
 router.patch('/cafes/:id/status', adminController.toggleStatus);
 
 // Image Import & Upload
@@ -48,8 +50,8 @@ router.post('/cafes/:id/menu/import', adminController.importStructuredMenu);
 router.post('/resolve-maps-url', adminController.resolveMapsUrl);
 router.post('/geocode-coordinates', adminController.geocodeCoordinates);
 
-// Directory Reset (Development / Admin)
-router.post('/reset-directory', adminController.resetDirectory);
+// Directory Reset (Strict Super Admin Only)
+router.post('/reset-directory', requireSuperAdmin, adminController.resetDirectory);
 
 // Customer Users & Merchant Partners
 router.get('/users', adminController.listUsers);

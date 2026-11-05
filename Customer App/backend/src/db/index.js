@@ -35,6 +35,48 @@ const orders = new Map();
 const favorites = new Map(); // customerId -> Set of cafeIds
 
 /**
+ * Immutable identity check for the Platform Owner (Super Admin)
+ */
+function isSuperAdminUser(user) {
+  if (!user) return false;
+  const email = (user.email || '').toLowerCase().trim();
+  const ownerEmail = (config.superAdminEmail || 'admin@zipbi.com').toLowerCase().trim();
+  if (email === ownerEmail) return true;
+  if (user.role === 'SUPER_ADMIN' || user.isSuperAdmin === true || user.isOwner === true) return true;
+  return false;
+}
+
+/**
+ * Automated backup helper invoked before any destructive or bulk operation
+ */
+function createAutomatedBackup(reason = 'operation') {
+  try {
+    const backupDir = path.resolve(path.dirname(dataFilePath), 'backups');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    const safeReason = String(reason).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+    const backupPath = path.join(backupDir, `cafes_auto_backup_${safeReason}_${ts}.json`);
+
+    const payload = {
+      backup_timestamp: new Date().toISOString(),
+      backup_reason: reason,
+      total_cafes: cafesData.length,
+      reference_point: referencePoint,
+      cafes: cafesData,
+    };
+
+    fs.writeFileSync(backupPath, JSON.stringify(payload, null, 2), 'utf-8');
+    console.log(`[Backup] Automated snapshot saved: ${backupPath}`);
+    return backupPath;
+  } catch (err) {
+    console.warn('[Backup] Failed to create automated snapshot:', err.message);
+    return null;
+  }
+}
+
+/**
  * Helper to calculate current time in India (Asia/Kolkata)
  */
 function getIndiaTime() {
@@ -258,8 +300,11 @@ module.exports = {
     const userLat = typeof options.lat === 'number' ? options.lat : referencePoint.latitude;
     const userLon = typeof options.lon === 'number' ? options.lon : referencePoint.longitude;
 
+    // Filter out soft-deleted businesses unless explicitly requested (Super Admin audit)
+    let list = options.includeDeleted === true ? cafesData : cafesData.filter((c) => c.is_deleted !== true);
+
     // Filter out inactive businesses for customers unless includeInactive requested (admin)
-    let list = options.includeInactive === true ? cafesData : cafesData.filter((c) => c.is_active !== false);
+    list = options.includeInactive === true ? list : list.filter((c) => c.is_active !== false);
 
     let result = list.map((cafe) => {
       const dist = calculateHaversineDistance(userLat, userLon, cafe.latitude, cafe.longitude);
@@ -330,9 +375,10 @@ module.exports = {
     return result;
   },
 
-  getCafeById: (id) => {
+  getCafeById: (id, options = {}) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
     if (!cafe) return null;
+    if (cafe.is_deleted === true && options.includeDeleted !== true) return null;
     return {
       ...cafe,
       is_open_now: computeIsOpenNow(cafe),
@@ -340,13 +386,16 @@ module.exports = {
   },
 
   // Admin CRUD for Businesses
-  createCafe: (cafeData) => {
+  createCafe: (cafeData, requestingUser = null) => {
     const slug = (cafeData.slug || cafeData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
     const id = cafeData.id || `cafe-${slug}`;
 
     const isOthers = (cafeData.category || '').toLowerCase() === 'others' || (cafeData.category || '').toLowerCase() === 'other';
     const category = isOthers ? 'Others' : (cafeData.category || 'Cafés');
     const specified_business_type = isOthers && cafeData.specified_business_type ? cafeData.specified_business_type.trim() : null;
+
+    const userEmail = requestingUser ? (requestingUser.email || requestingUser.id || 'admin@zipbi.com') : 'admin@zipbi.com';
+    const isSuper = isSuperAdminUser(requestingUser);
 
     const newCafe = {
       id,
@@ -389,8 +438,16 @@ module.exports = {
       is_ordering_enabled: cafeData.is_ordering_enabled === true,
       has_published_menu: Array.isArray(cafeData.menu_categories) && cafeData.menu_categories.length > 0,
       menu_categories: Array.isArray(cafeData.menu_categories) ? cafeData.menu_categories : [],
+      // Ownership & Protection Metadata
+      created_by: userEmail,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      last_modified_by: userEmail,
+      last_modified_at: new Date().toISOString(),
+      record_ownership: isSuper ? 'SUPER_ADMIN' : 'ADMIN',
+      is_protected: isSuper || cafeData.is_protected === true,
+      is_deleted: false,
+      deleted_at: null,
+      deleted_by: null,
     };
 
     cafesData.push(newCafe);
@@ -398,26 +455,45 @@ module.exports = {
     return newCafe;
   },
 
-  updateCafe: (id, updates) => {
+  updateCafe: (id, updates, requestingUser = null) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
     if (!cafe) return null;
 
-    if (updates.category !== undefined) {
-      const isOthers = updates.category.toLowerCase() === 'others' || updates.category.toLowerCase() === 'other';
-      updates.category = isOthers ? 'Others' : updates.category;
-      if (isOthers) {
-        updates.specified_business_type = updates.specified_business_type
-          ? updates.specified_business_type.trim()
-          : (cafe.specified_business_type || 'Other Food Business');
-      } else {
-        updates.specified_business_type = null;
-      }
-    } else if (updates.specified_business_type !== undefined && cafe.category === 'Others') {
-      updates.specified_business_type = updates.specified_business_type ? updates.specified_business_type.trim() : cafe.specified_business_type;
+    // Strict Ownership Enforcement: Protected records can ONLY be modified by Super Admin
+    if ((cafe.is_protected === true || cafe.record_ownership === 'SUPER_ADMIN') && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: This business listing is protected by the Platform Owner and cannot be modified by other users.',
+      };
     }
 
-    Object.assign(cafe, updates, { updated_at: new Date().toISOString() });
-    if (updates.latitude !== undefined || updates.longitude !== undefined) {
+    // Preserve immutable ownership metadata
+    const safeUpdates = { ...updates };
+    delete safeUpdates.is_protected;
+    delete safeUpdates.record_ownership;
+    delete safeUpdates.created_by;
+    delete safeUpdates.created_at;
+
+    const userEmail = requestingUser ? (requestingUser.email || requestingUser.id || 'admin@zipbi.com') : 'admin@zipbi.com';
+    safeUpdates.last_modified_by = userEmail;
+    safeUpdates.last_modified_at = new Date().toISOString();
+
+    if (safeUpdates.category !== undefined) {
+      const isOthers = safeUpdates.category.toLowerCase() === 'others' || safeUpdates.category.toLowerCase() === 'other';
+      safeUpdates.category = isOthers ? 'Others' : safeUpdates.category;
+      if (isOthers) {
+        safeUpdates.specified_business_type = safeUpdates.specified_business_type
+          ? safeUpdates.specified_business_type.trim()
+          : (cafe.specified_business_type || 'Other Food Business');
+      } else {
+        safeUpdates.specified_business_type = null;
+      }
+    } else if (safeUpdates.specified_business_type !== undefined && cafe.category === 'Others') {
+      safeUpdates.specified_business_type = safeUpdates.specified_business_type ? safeUpdates.specified_business_type.trim() : cafe.specified_business_type;
+    }
+
+    Object.assign(cafe, safeUpdates, { updated_at: new Date().toISOString() });
+    if (safeUpdates.latitude !== undefined || safeUpdates.longitude !== undefined) {
       cafe.calculated_distance_km = calculateHaversineDistance(
         referencePoint.latitude,
         referencePoint.longitude,
@@ -429,19 +505,76 @@ module.exports = {
     return cafe;
   },
 
-  deleteCafe: (id) => {
-    const index = cafesData.findIndex((c) => c.id === id || c.slug === id);
-    if (index === -1) return false;
+  deleteCafe: (id, requestingUser = null, options = {}) => {
+    const cafe = cafesData.find((c) => c.id === id || c.slug === id);
+    if (!cafe) return false;
 
-    const removed = cafesData.splice(index, 1)[0];
-
-    // Clean up dependent favorites
-    for (const [userId, favSet] of favorites.entries()) {
-      favSet.delete(removed.id);
+    // Strict Ownership Enforcement: Protected records can ONLY be deleted by Super Admin
+    if ((cafe.is_protected === true || cafe.record_ownership === 'SUPER_ADMIN') && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: This business listing is protected by the Platform Owner and cannot be deleted by other users.',
+      };
     }
 
+    const userEmail = requestingUser ? (requestingUser.email || requestingUser.id || 'admin@zipbi.com') : 'admin@zipbi.com';
+
+    // Automatic backup before any deletion
+    createAutomatedBackup(`delete_${options.purge ? 'purge' : 'soft'}_${cafe.slug}`);
+
+    // If permanent purge requested by Super Admin with explicit confirmation
+    if (options.purge === true && isSuperAdminUser(requestingUser)) {
+      const index = cafesData.findIndex((c) => c.id === id || c.slug === id);
+      if (index !== -1) {
+        const removed = cafesData.splice(index, 1)[0];
+        for (const [userId, favSet] of favorites.entries()) {
+          favSet.delete(removed.id);
+        }
+        module.exports.saveData();
+        return { success: true, purged: true, cafe: removed };
+      }
+      return false;
+    }
+
+    // Safe Soft-Deletion / Archival by default:
+    cafe.is_deleted = true;
+    cafe.is_active = false;
+    cafe.deleted_at = new Date().toISOString();
+    cafe.deleted_by = userEmail;
+    cafe.updated_at = new Date().toISOString();
+    cafe.last_modified_by = userEmail;
+    cafe.last_modified_at = new Date().toISOString();
+
     module.exports.saveData();
-    return true;
+    return { success: true, softDeleted: true, cafe };
+  },
+
+  restoreCafe: (id, requestingUser = null) => {
+    if (!isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: Only the Platform Owner (Super Admin) can restore archived records.',
+      };
+    }
+
+    const cafe = cafesData.find((c) => c.id === id || c.slug === id);
+    if (!cafe) return null;
+
+    cafe.is_deleted = false;
+    cafe.deleted_at = null;
+    cafe.deleted_by = null;
+    cafe.is_active = true;
+    cafe.updated_at = new Date().toISOString();
+    cafe.last_modified_by = requestingUser ? (requestingUser.email || 'admin@zipbi.com') : 'admin@zipbi.com';
+    cafe.last_modified_at = new Date().toISOString();
+
+    createAutomatedBackup(`restore_${cafe.slug}`);
+    module.exports.saveData();
+    return cafe;
+  },
+
+  purgeCafe: (id, requestingUser = null, options = {}) => {
+    return module.exports.deleteCafe(id, requestingUser, { ...options, purge: true });
   },
 
   clearAllCafes: () => {
@@ -451,10 +584,20 @@ module.exports = {
     return true;
   },
 
-  toggleCafeStatus: (id, isActive) => {
+  toggleCafeStatus: (id, isActive, requestingUser = null) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
     if (!cafe) return null;
+
+    if (cafe.is_protected && requestingUser && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Platform Owner protected listing. Only Super Admin can change status of this business.',
+      };
+    }
+
     cafe.is_active = Boolean(isActive);
+    cafe.last_modified_by = requestingUser ? (requestingUser.email || requestingUser.id || 'SUPER_ADMIN') : 'SUPER_ADMIN';
+    cafe.last_modified_at = new Date().toISOString();
     cafe.updated_at = new Date().toISOString();
     module.exports.saveData();
     return cafe;
@@ -704,23 +847,43 @@ module.exports = {
     return cafe;
   },
 
-  updateMenuStatus: (id, menuStatus, menuStatusNotes) => {
+  updateMenuStatus: (id, menuStatus, menuStatusNotes, requestingUser = null) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
     if (!cafe) return null;
+
+    if ((cafe.is_protected === true || cafe.record_ownership === 'SUPER_ADMIN') && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: This business menu is protected by the Platform Owner and cannot be modified by other users.',
+      };
+    }
+
     cafe.menu_status = menuStatus;
     if (menuStatusNotes !== undefined) cafe.menu_status_notes = menuStatusNotes;
+    cafe.last_modified_by = requestingUser ? (requestingUser.email || requestingUser.id || 'SUPER_ADMIN') : 'SUPER_ADMIN';
+    cafe.last_modified_at = new Date().toISOString();
     cafe.updated_at = new Date().toISOString();
     module.exports.saveData();
     return cafe;
   },
 
-  addMenuCategory: (id, categoryData) => {
+  addMenuCategory: (id, categoryData, requestingUser = null) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
     if (!cafe) return null;
+
+    if ((cafe.is_protected === true || cafe.record_ownership === 'SUPER_ADMIN') && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: This business menu is protected by the Platform Owner and cannot be modified by other users.',
+      };
+    }
 
     if (!Array.isArray(cafe.menu_categories)) cafe.menu_categories = [];
     const catName = typeof categoryData === 'string' ? categoryData.trim() : ((categoryData && categoryData.name) || '').trim();
     if (!catName) return cafe.menu_categories;
+
+    const userEmail = requestingUser ? (requestingUser.email || requestingUser.id || 'admin@zipbi.com') : 'admin@zipbi.com';
+    const isSuper = isSuperAdminUser(requestingUser);
 
     const exists = cafe.menu_categories.find((c) => c.name.toLowerCase() === catName.toLowerCase());
     if (!exists) {
@@ -731,17 +894,29 @@ module.exports = {
         is_enabled: categoryData && categoryData.is_enabled !== undefined ? categoryData.is_enabled : true,
         display_order: cafe.menu_categories.length + 1,
         items: [],
+        created_by: userEmail,
+        record_ownership: isSuper ? 'SUPER_ADMIN' : 'ADMIN',
+        is_protected: isSuper,
       };
       cafe.menu_categories.push(newCat);
       cafe.updated_at = new Date().toISOString();
+      cafe.last_modified_by = userEmail;
+      cafe.last_modified_at = new Date().toISOString();
       module.exports.saveData();
     }
     return cafe.menu_categories;
   },
 
-  renameMenuCategory: (id, oldName, newName, description, isEnabled) => {
+  renameMenuCategory: (id, oldName, newName, description, isEnabled, requestingUser = null) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
     if (!cafe || !Array.isArray(cafe.menu_categories)) return null;
+
+    if ((cafe.is_protected === true || cafe.record_ownership === 'SUPER_ADMIN') && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: This business menu is protected by the Platform Owner and cannot be modified by other users.',
+      };
+    }
 
     const cat = cafe.menu_categories.find(
       (c) => c.name.toLowerCase() === oldName.trim().toLowerCase() || c.id === oldName
@@ -757,19 +932,33 @@ module.exports = {
     if (isEnabled !== undefined) {
       cat.is_enabled = Boolean(isEnabled);
     }
+    const userEmail = requestingUser ? (requestingUser.email || requestingUser.id || 'admin@zipbi.com') : 'admin@zipbi.com';
+    cat.last_modified_by = userEmail;
+    cat.last_modified_at = new Date().toISOString();
     cafe.updated_at = new Date().toISOString();
+    cafe.last_modified_by = userEmail;
+    cafe.last_modified_at = new Date().toISOString();
     module.exports.saveData();
     return cafe.menu_categories;
   },
 
-  deleteMenuCategory: (id, categoryName, options = {}) => {
+  deleteMenuCategory: (id, categoryName, options = {}, requestingUser = null) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
     if (!cafe || !Array.isArray(cafe.menu_categories)) return null;
+
+    if ((cafe.is_protected === true || cafe.record_ownership === 'SUPER_ADMIN') && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: This business menu is protected by the Platform Owner and cannot be deleted by other users.',
+      };
+    }
 
     const targetCat = cafe.menu_categories.find(
       (c) => c.name.toLowerCase() === categoryName.trim().toLowerCase() || c.id === categoryName
     );
     if (!targetCat) return cafe.menu_categories;
+
+    createAutomatedBackup(`delete_cat_${cafe.slug}_${categoryName}`);
 
     // If options.moveItemsTo is provided, move items to the destination category
     if (options && options.moveItemsTo && Array.isArray(targetCat.items) && targetCat.items.length > 0) {
@@ -785,6 +974,9 @@ module.exports = {
           is_enabled: true,
           display_order: cafe.menu_categories.length + 1,
           items: [],
+          created_by: requestingUser ? requestingUser.email : 'admin@zipbi.com',
+          record_ownership: isSuperAdminUser(requestingUser) ? 'SUPER_ADMIN' : 'ADMIN',
+          is_protected: isSuperAdminUser(requestingUser),
         };
         cafe.menu_categories.push(destCat);
       }
@@ -798,8 +990,16 @@ module.exports = {
     return cafe.menu_categories;
   },
 
-  reorderMenuCategories: (id, categoryNames) => {
+  reorderMenuCategories: (id, categoryNames, requestingUser = null) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
+    if (!cafe || !Array.isArray(cafe.menu_categories) || !Array.isArray(categoryNames)) return null;
+
+    if ((cafe.is_protected === true || cafe.record_ownership === 'SUPER_ADMIN') && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: This business menu is protected by the Platform Owner and cannot be modified by other users.',
+      };
+    }
     if (!cafe || !Array.isArray(cafe.menu_categories) || !Array.isArray(categoryNames)) return null;
 
     const ordered = [];
@@ -818,9 +1018,19 @@ module.exports = {
     return cafe.menu_categories;
   },
 
-  addMenuItem: (id, categoryName, itemData) => {
+  addMenuItem: (id, categoryName, itemData, requestingUser = null) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
     if (!cafe) return null;
+
+    if ((cafe.is_protected === true || cafe.record_ownership === 'SUPER_ADMIN') && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: This business menu is protected by the Platform Owner and cannot be modified by other users.',
+      };
+    }
+
+    const userEmail = requestingUser ? (requestingUser.email || requestingUser.id || 'admin@zipbi.com') : 'admin@zipbi.com';
+    const isSuper = isSuperAdminUser(requestingUser);
 
     if (!Array.isArray(cafe.menu_categories)) cafe.menu_categories = [];
     const targetCatName = (categoryName || 'General').trim();
@@ -833,6 +1043,9 @@ module.exports = {
         is_enabled: true,
         display_order: cafe.menu_categories.length + 1,
         items: [],
+        created_by: userEmail,
+        record_ownership: isSuper ? 'SUPER_ADMIN' : 'ADMIN',
+        is_protected: isSuper,
       };
       cafe.menu_categories.push(cat);
     }
@@ -853,16 +1066,24 @@ module.exports = {
       source: itemData.source || 'Admin Upload',
       verified_date: new Date().toISOString().split('T')[0],
       variants: Array.isArray(itemData.variants) ? itemData.variants : [],
+      created_by: userEmail,
+      record_ownership: isSuper ? 'SUPER_ADMIN' : 'ADMIN',
+      is_protected: isSuper,
+      is_deleted: false,
+      deleted_at: null,
+      deleted_by: null,
     };
 
     cat.items.push(newItem);
     cafe.has_published_menu = true;
     cafe.updated_at = new Date().toISOString();
+    cafe.last_modified_by = userEmail;
+    cafe.last_modified_at = new Date().toISOString();
     module.exports.saveData();
     return { cafe, item: newItem, categories: cafe.menu_categories };
   },
 
-  updateMenuItem: (cafeId, categoryName, itemId, updates, newCategoryName) => {
+  updateMenuItem: (cafeId, categoryName, itemId, updates, newCategoryName, requestingUser = null) => {
     const cafe = cafesData.find((c) => c.id === cafeId || c.slug === cafeId);
     if (!cafe || !Array.isArray(cafe.menu_categories)) return null;
 
@@ -897,6 +1118,16 @@ module.exports = {
 
     if (!targetItem) return null;
 
+    // Strict Ownership Enforcement: Protected items can ONLY be modified by Super Admin
+    if ((targetItem.is_protected === true || cafe.is_protected === true || targetItem.record_ownership === 'SUPER_ADMIN') && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: This menu item is protected by the Platform Owner and cannot be modified by other users.',
+      };
+    }
+
+    const userEmail = requestingUser ? (requestingUser.email || requestingUser.id || 'admin@zipbi.com') : 'admin@zipbi.com';
+
     // Apply updates
     if (updates.name !== undefined && String(updates.name).trim()) targetItem.name = String(updates.name).trim();
     if (updates.description !== undefined) targetItem.description = String(updates.description).trim();
@@ -918,6 +1149,9 @@ module.exports = {
       targetItem.is_enabled = updates.is_enabled !== false && updates.isEnabled !== false;
     }
 
+    targetItem.last_modified_by = userEmail;
+    targetItem.last_modified_at = new Date().toISOString();
+
     // Move to new category if requested
     const destCatName = (newCategoryName || '').trim();
     if (destCatName && currentCat && currentCat.name.toLowerCase() !== destCatName.toLowerCase() && currentCat.id !== destCatName) {
@@ -931,6 +1165,9 @@ module.exports = {
           is_enabled: true,
           display_order: cafe.menu_categories.length + 1,
           items: [],
+          created_by: userEmail,
+          record_ownership: isSuperAdminUser(requestingUser) ? 'SUPER_ADMIN' : 'ADMIN',
+          is_protected: isSuperAdminUser(requestingUser),
         };
         cafe.menu_categories.push(destCat);
       }
@@ -938,33 +1175,53 @@ module.exports = {
     }
 
     cafe.updated_at = new Date().toISOString();
+    cafe.last_modified_by = userEmail;
+    cafe.last_modified_at = new Date().toISOString();
     module.exports.saveData();
     return { item: targetItem, categories: cafe.menu_categories, cafe };
   },
 
-  deleteMenuItem: (cafeId, itemId) => {
+  deleteMenuItem: (cafeId, itemId, requestingUser = null, options = {}) => {
     const cafe = cafesData.find((c) => c.id === cafeId || c.slug === cafeId);
     if (!cafe || !Array.isArray(cafe.menu_categories)) return false;
 
     const strId = String(itemId).trim().toLowerCase();
     const matchItem = (i) => i && (String(i.id).toLowerCase() === strId || (i.name && String(i.name).trim().toLowerCase() === strId));
 
-    let removed = false;
+    let targetItem = null;
+    let targetCat = null;
+    let targetIdx = -1;
+
     for (const cat of cafe.menu_categories) {
       const idx = (cat.items || []).findIndex(matchItem);
       if (idx !== -1) {
-        cat.items.splice(idx, 1);
-        removed = true;
+        targetItem = cat.items[idx];
+        targetCat = cat;
+        targetIdx = idx;
         break;
       }
     }
 
-    if (removed) {
-      cafe.has_published_menu = cafe.menu_categories.some((c) => Array.isArray(c.items) && c.items.length > 0);
-      cafe.updated_at = new Date().toISOString();
-      module.exports.saveData();
+    if (!targetItem) return false;
+
+    // Strict Ownership Enforcement: Protected items can ONLY be deleted by Super Admin
+    if ((targetItem.is_protected === true || cafe.is_protected === true || targetItem.record_ownership === 'SUPER_ADMIN') && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: This menu item is protected by the Platform Owner and cannot be deleted by other users.',
+      };
     }
-    return removed;
+
+    createAutomatedBackup(`delete_item_${cafe.slug}_${targetItem.id}`);
+    const userEmail = requestingUser ? (requestingUser.email || requestingUser.id || 'admin@zipbi.com') : 'admin@zipbi.com';
+
+    targetCat.items.splice(targetIdx, 1);
+    cafe.has_published_menu = cafe.menu_categories.some((c) => Array.isArray(c.items) && c.items.length > 0);
+    cafe.updated_at = new Date().toISOString();
+    cafe.last_modified_by = userEmail;
+    cafe.last_modified_at = new Date().toISOString();
+    module.exports.saveData();
+    return true;
   },
 
   toggleMenuItemAvailability: (cafeId, itemId, isAvailable) => {
@@ -994,6 +1251,18 @@ module.exports = {
   importStructuredMenu: (cafeId, parsedData, options = {}) => {
     const cafe = cafesData.find((c) => c.id === cafeId || c.slug === cafeId);
     if (!cafe) return null;
+
+    const requestingUser = options.requestingUser || null;
+    if ((cafe.is_protected === true || cafe.record_ownership === 'SUPER_ADMIN') && !isSuperAdminUser(requestingUser)) {
+      return {
+        forbidden: true,
+        message: 'Access denied: This business menu is protected by the Platform Owner and cannot be modified or imported by other users.',
+      };
+    }
+
+    createAutomatedBackup(`menu_import_${options.mode || 'replace'}_${cafe.slug}`);
+    const userEmail = requestingUser ? (requestingUser.email || requestingUser.id || 'admin@zipbi.com') : 'admin@zipbi.com';
+    const isSuper = isSuperAdminUser(requestingUser);
 
     const mode = options.mode || 'replace'; // 'replace' or 'merge'
     const adminName = options.adminName || 'ZipBi Administrator';
@@ -1036,6 +1305,12 @@ module.exports = {
         source: 'AI Structured Paste',
         verified_date: new Date().toISOString().split('T')[0],
         variants: [],
+        created_by: userEmail,
+        record_ownership: isSuper ? 'SUPER_ADMIN' : 'ADMIN',
+        is_protected: isSuper,
+        is_deleted: false,
+        deleted_at: null,
+        deleted_by: null,
       };
     };
 
@@ -1055,6 +1330,9 @@ module.exports = {
           is_enabled: true,
           display_order: catIdx + 1,
           items,
+          created_by: userEmail,
+          record_ownership: isSuper ? 'SUPER_ADMIN' : 'ADMIN',
+          is_protected: isSuper,
         });
         importedCategoriesCount++;
       });
@@ -1072,6 +1350,9 @@ module.exports = {
             is_enabled: true,
             display_order: cafe.menu_categories.length + 1,
             items: [],
+            created_by: userEmail,
+            record_ownership: isSuper ? 'SUPER_ADMIN' : 'ADMIN',
+            is_protected: isSuper,
           };
           cafe.menu_categories.push(existingCat);
           importedCategoriesCount++;
@@ -1090,6 +1371,8 @@ module.exports = {
               existingItem.food_type = b.food_type;
               existingItem.is_veg = b.is_veg;
             }
+            existingItem.last_modified_by = userEmail;
+            existingItem.last_modified_at = new Date().toISOString();
           } else {
             existingCat.items.push(buildItem(rawItem, catIdx, itemIdx));
             importedItemsCount++;
@@ -1107,6 +1390,8 @@ module.exports = {
     cafe.menu_imported_categories_count = importedCategoriesCount;
     cafe.menu_imported_items_count = importedItemsCount;
     cafe.updated_at = new Date().toISOString();
+    cafe.last_modified_by = userEmail;
+    cafe.last_modified_at = new Date().toISOString();
 
     module.exports.saveData();
 
@@ -1202,4 +1487,7 @@ module.exports = {
     }
     return result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   },
+
+  isSuperAdminUser,
+  createAutomatedBackup,
 };

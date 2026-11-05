@@ -6,6 +6,8 @@ module.exports = {
   jwtSecret: process.env.JWT_SECRET || 'zipbi_dev_jwt_secret_psg_sitra_2026',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   corsOrigin: process.env.CORS_ORIGIN || '*',
+  superAdminEmail: (process.env.SUPER_ADMIN_EMAIL || 'admin@zipbi.com').toLowerCase().trim(),
+  superAdminRole: 'SUPER_ADMIN',
   defaultLocation: {
     name: 'PSG College of Arts and Science Main Gate',
     area: 'SITRA / Civil Aerodrome Post, Coimbatore',

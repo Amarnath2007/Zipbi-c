@@ -206,9 +206,22 @@ test('7. Order Placement Enforcement: Active partner accepts valid table order',
 });
 
 test('8. Cafe & Menu Persistence - Update and Fetching', async () => {
+  const adminLoginRes = await fetch(`${baseUrl}/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: 'admin@zipbi.com',
+      password: 'Admin@ZipBi2026',
+    }),
+  });
+  const adminData = await adminLoginRes.json();
+
   const updateRes = await fetch(`${baseUrl}/cafes/test-partner-cafe`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${adminData.token}`,
+    },
     body: JSON.stringify({
       phone: '+91 99760 99999',
     }),

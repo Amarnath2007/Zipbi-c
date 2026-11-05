@@ -5,8 +5,21 @@
     "phone": "+919876500000",
     "email": "admin@zipbi.com",
     "passwordHash": "$2a$10$KVquP2WmP4CYFg7fYDdJFuH1oamLraffFJpk0w4gt/nTgd6EwN35O",
-    "role": "ADMIN",
+    "role": "SUPER_ADMIN",
+    "isSuperAdmin": true,
+    "isOwner": true,
     "createdAt": "2026-11-04T13:09:33.432Z"
+  },
+  {
+    "id": "usr-staff-admin-2",
+    "fullName": "ZipBi Staff Administrator",
+    "phone": "+919876500001",
+    "email": "staff@zipbi.com",
+    "passwordHash": "$2a$10$KVquP2WmP4CYFg7fYDdJFuH1oamLraffFJpk0w4gt/nTgd6EwN35O",
+    "role": "ADMIN",
+    "isSuperAdmin": false,
+    "isOwner": false,
+    "createdAt": "2026-11-05T18:00:00.000Z"
   },
   {
     "id": "usr-demo-1",
@@ -160,5 +173,14 @@
     "passwordHash": "$2a$10$9s9jazCIp0DOfeFdBNWyuObTYzpJ9M8AplsLW8vhyeGaB/jIxTnBe",
     "role": "CUSTOMER",
     "createdAt": "2026-11-05T17:29:19.517Z"
+  },
+  {
+    "id": "usr-1793900386509-146",
+    "fullName": "Test Customer",
+    "phone": "+919956077267",
+    "email": "test_1793900386310@example.com",
+    "passwordHash": "$2a$10$9uMqi8mYE9j3R8OQHaN/mOBUPaF0u14jXjOyoGRszj4ju/.gs5Aey",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-05T17:39:46.509Z"
   }
 ]

@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 const db = require('../db');
+const { isSuperAdmin } = require('../middleware/auth.middleware');
 const { importImageFromGoogleDrive } = require('../utils/googleDrive');
 const { resolveGoogleMapsUrl, reverseGeocodeCoordinates } = require('../utils/googleMapsResolver');
 const { parseMenuText, SAMPLE_MENU_TEXT, AI_EXTRACTION_PROMPT } = require('../utils/menuTextParser');
@@ -31,7 +32,8 @@ async function adminLogin(req, res, next) {
       });
     }
 
-    if (user.role !== 'ADMIN') {
+    const isSuper = isSuperAdmin(user);
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && !isSuper) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. Account does not have administrator privileges.',
@@ -47,7 +49,13 @@ async function adminLogin(req, res, next) {
     }
 
     const token = jwt.sign(
-      { id: user.id, fullName: user.fullName, email: user.email, role: 'ADMIN' },
+      {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        role: isSuper ? 'SUPER_ADMIN' : 'ADMIN',
+        isSuperAdmin: isSuper,
+      },
       config.jwtSecret,
       { expiresIn: '24h' }
     );
@@ -60,7 +68,8 @@ async function adminLogin(req, res, next) {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
-        role: user.role,
+        role: isSuper ? 'SUPER_ADMIN' : user.role,
+        isSuperAdmin: isSuper,
       },
     });
   } catch (err) {
@@ -88,9 +97,10 @@ async function getStats(req, res, next) {
  */
 async function listCafes(req, res, next) {
   try {
-    const { q, category } = req.query;
+    const { q, category, includeDeleted } = req.query;
     const cafes = db.getAllCafes({
       includeInactive: true,
+      includeDeleted: includeDeleted === 'true',
       q,
       category,
     });
@@ -164,7 +174,7 @@ async function createCafe(req, res, next) {
       });
     }
 
-    const created = db.createCafe(req.body);
+    const created = db.createCafe(req.body, req.user);
     return res.status(201).json({
       success: true,
       message: 'Business created successfully.',
@@ -202,11 +212,17 @@ async function updateCafe(req, res, next) {
       }
     }
 
-    const updated = db.updateCafe(id, req.body);
+    const updated = db.updateCafe(id, req.body, req.user);
     if (!updated) {
       return res.status(404).json({
         success: false,
         message: `Business '${id}' not found.`,
+      });
+    }
+    if (updated.forbidden) {
+      return res.status(403).json({
+        success: false,
+        message: updated.message || 'Access denied: This record is protected by the Platform Owner and cannot be modified by other users.',
       });
     }
     return res.status(200).json({
@@ -220,21 +236,89 @@ async function updateCafe(req, res, next) {
 }
 
 /**
- * Delete business
+ * Delete business (Safe Soft-Deletion by default)
  */
 async function deleteCafe(req, res, next) {
   try {
     const { id } = req.params;
-    const success = db.deleteCafe(id);
-    if (!success) {
+    const purge = req.query.purge === 'true';
+    const result = db.deleteCafe(id, req.user, { purge });
+    if (!result) {
       return res.status(404).json({
         success: false,
         message: `Business '${id}' not found.`,
       });
     }
+    if (result.forbidden) {
+      return res.status(403).json({
+        success: false,
+        message: result.message || 'Access denied: This record is protected by the Platform Owner and cannot be deleted by other users.',
+      });
+    }
     return res.status(200).json({
       success: true,
-      message: `Business '${id}' deleted successfully.`,
+      message: purge
+        ? `Business '${id}' permanently purged from database.`
+        : `Business '${id}' archived (soft-deleted) successfully.`,
+      softDeleted: !purge,
+      soft_deleted: !purge,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Restore archived / soft-deleted business (Super Admin only)
+ */
+async function restoreCafe(req, res, next) {
+  try {
+    const { id } = req.params;
+    const restored = db.restoreCafe(id, req.user);
+    if (!restored) {
+      return res.status(404).json({
+        success: false,
+        message: `Business '${id}' not found.`,
+      });
+    }
+    if (restored.forbidden) {
+      return res.status(403).json({
+        success: false,
+        message: restored.message || 'Access denied. Platform Owner privileges required to restore archived records.',
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: `Business '${restored.name}' restored successfully.`,
+      cafe: restored,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Permanently purge business (Super Admin only with confirmation)
+ */
+async function purgeCafe(req, res, next) {
+  try {
+    const { id } = req.params;
+    const result = db.purgeCafe(id, req.user, { confirmed: true });
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: `Business '${id}' not found.`,
+      });
+    }
+    if (result.forbidden) {
+      return res.status(403).json({
+        success: false,
+        message: result.message || 'Access denied. Platform Owner privileges required to purge records.',
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: `Business '${id}' permanently purged from database.`,
     });
   } catch (err) {
     next(err);
@@ -248,11 +332,17 @@ async function toggleStatus(req, res, next) {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
-    const updated = db.toggleCafeStatus(id, isActive);
+    const updated = db.toggleCafeStatus(id, isActive, req.user);
     if (!updated) {
       return res.status(404).json({
         success: false,
         message: `Business '${id}' not found.`,
+      });
+    }
+    if (updated.forbidden) {
+      return res.status(403).json({
+        success: false,
+        message: updated.message,
       });
     }
     return res.status(200).json({
@@ -411,9 +501,12 @@ async function updateMenuStatus(req, res, next) {
       });
     }
 
-    const updated = db.updateMenuStatus(id, targetStatus, notes);
+    const updated = db.updateMenuStatus(id, targetStatus, notes, req.user);
     if (!updated) {
       return res.status(404).json({ success: false, message: `Business '${id}' not found.` });
+    }
+    if (updated.forbidden) {
+      return res.status(403).json({ success: false, message: updated.message });
     }
 
     return res.status(200).json({
@@ -441,7 +534,10 @@ async function addCategory(req, res, next) {
       return res.status(400).json({ success: false, message: 'Category name is required.' });
     }
 
-    const categories = db.addMenuCategory(id, { name, description, is_enabled });
+    const categories = db.addMenuCategory(id, { name, description, is_enabled }, req.user);
+    if (categories && categories.forbidden) {
+      return res.status(403).json({ success: false, message: categories.message });
+    }
     const cafe = db.getCafeById(id);
 
     return res.status(200).json({
@@ -469,11 +565,15 @@ async function renameCategory(req, res, next) {
       categoryName,
       targetNewName || categoryName,
       description,
-      is_enabled !== undefined ? is_enabled : isEnabled
+      is_enabled !== undefined ? is_enabled : isEnabled,
+      req.user
     );
 
     if (!categories) {
       return res.status(404).json({ success: false, message: `Category '${categoryName}' not found.` });
+    }
+    if (categories.forbidden) {
+      return res.status(403).json({ success: false, message: categories.message });
     }
 
     const cafe = db.getCafeById(id);
@@ -495,7 +595,10 @@ async function deleteCategory(req, res, next) {
   try {
     const { id, categoryName } = req.params;
     const { moveItemsTo } = req.body || {};
-    const categories = db.deleteMenuCategory(id, categoryName, { moveItemsTo });
+    const categories = db.deleteMenuCategory(id, categoryName, { moveItemsTo }, req.user);
+    if (categories && categories.forbidden) {
+      return res.status(403).json({ success: false, message: categories.message });
+    }
     const cafe = db.getCafeById(id);
 
     return res.status(200).json({
@@ -519,7 +622,10 @@ async function reorderCategories(req, res, next) {
     if (!Array.isArray(categoryNames)) {
       return res.status(400).json({ success: false, message: 'categoryNames array is required.' });
     }
-    const categories = db.reorderMenuCategories(id, categoryNames);
+    const categories = db.reorderMenuCategories(id, categoryNames, req.user);
+    if (categories && categories.forbidden) {
+      return res.status(403).json({ success: false, message: categories.message });
+    }
     const cafe = db.getCafeById(id);
     return res.status(200).json({
       success: true,
@@ -550,9 +656,12 @@ async function addMenuItem(req, res, next) {
       return res.status(400).json({ success: false, message: 'Price must be a valid non-negative number.' });
     }
 
-    const result = db.addMenuItem(id, categoryName, item);
+    const result = db.addMenuItem(id, categoryName, item, req.user);
     if (!result) {
       return res.status(404).json({ success: false, message: `Business '${id}' not found.` });
+    }
+    if (result.forbidden) {
+      return res.status(403).json({ success: false, message: result.message });
     }
 
     return res.status(201).json({
@@ -584,9 +693,12 @@ async function updateMenuItem(req, res, next) {
       }
     }
 
-    const result = db.updateMenuItem(id, categoryName, itemId, updates, newCategoryName);
+    const result = db.updateMenuItem(id, categoryName, itemId, updates, newCategoryName, req.user);
     if (!result) {
       return res.status(404).json({ success: false, message: 'Menu item not found.' });
+    }
+    if (result.forbidden) {
+      return res.status(403).json({ success: false, message: result.message });
     }
 
     return res.status(200).json({
@@ -607,9 +719,12 @@ async function updateMenuItem(req, res, next) {
 async function deleteMenuItem(req, res, next) {
   try {
     const { id, itemId } = req.params;
-    const removed = db.deleteMenuItem(id, itemId);
-    if (!removed) {
+    const result = db.deleteMenuItem(id, itemId, req.user);
+    if (!result) {
       return res.status(404).json({ success: false, message: 'Menu item not found.' });
+    }
+    if (result.forbidden) {
+      return res.status(403).json({ success: false, message: result.message });
     }
 
     const cafe = db.getCafeById(id);
@@ -813,11 +928,10 @@ async function geocodeCoordinates(req, res, next) {
 async function resetDirectory(req, res, next) {
   try {
     // 1. Strict Super Admin Authorization Check
-    const userRole = req.user && req.user.role;
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    if (!isSuperAdmin(req.user)) {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. Only Super Administrator can execute directory reset.',
+        message: 'Access denied: Only the Platform Owner (Super Admin) can perform a directory reset.',
       });
     }
 
@@ -1007,7 +1121,15 @@ async function importStructuredMenuHandler(req, res, next) {
       mode: mode === 'merge' ? 'merge' : 'replace',
       status: menu_status || 'Verified Menu',
       adminName,
+      requestingUser: req.user,
     });
+
+    if (importResult && importResult.forbidden) {
+      return res.status(403).json({
+        success: false,
+        message: importResult.message,
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -1028,6 +1150,8 @@ module.exports = {
   createCafe,
   updateCafe,
   deleteCafe,
+  restoreCafe,
+  purgeCafe,
   toggleStatus,
   importDriveImage,
   uploadImage,
