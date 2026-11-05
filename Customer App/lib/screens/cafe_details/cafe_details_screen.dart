@@ -5,10 +5,12 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/haversine.dart';
 import '../../core/utils/map_launcher.dart';
 import '../../data/models/cafe_model.dart';
+import '../../data/models/menu_model.dart';
 import '../../providers/cafe_provider.dart';
 import '../../widgets/cafe_image_view.dart';
 import '../../widgets/app_toast.dart';
 import 'menu_items_screen.dart';
+import 'menu_categories_screen.dart';
 
 class CafeDetailsScreen extends StatefulWidget {
   final CafeModel cafe;
@@ -417,43 +419,91 @@ class _CafeDetailsScreenState extends State<CafeDetailsScreen> {
           ),
 
         if (hasItems) ...[
-          // Menu Categories List preview
-          Text(
-            'Categories (${cafe.menuCategories.length})',
-            style: AppTypography.heading3,
-          ),
-          const SizedBox(height: 10),
-          ...cafe.menuCategories.map((cat) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: ListTile(
-                title: Text(cat.name, style: AppTypography.heading3.copyWith(fontSize: 15)),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
+          // Safe category deduplication & Two-Column Grid Preview
+          () {
+            final Map<String, MenuCategoryModel> uniqueMap = {};
+            for (final cat in cafe.menuCategories) {
+              final key = cat.name.trim().toLowerCase();
+              if (key.isEmpty) continue;
+              if (!uniqueMap.containsKey(key)) {
+                uniqueMap[key] = cat;
+              } else {
+                final existing = uniqueMap[key]!;
+                final existingIds = existing.items.map((i) => i.id).toSet();
+                final merged = List<MenuItemModel>.from(existing.items);
+                for (final item in cat.items) {
+                  if (!existingIds.contains(item.id)) {
+                    merged.add(item);
+                    existingIds.add(item.id);
+                  }
+                }
+                uniqueMap[key] = MenuCategoryModel(
+                  id: existing.id,
+                  name: existing.name,
+                  description: existing.description ?? cat.description,
+                  items: merged,
+                );
+              }
+            }
+            final displayCats = uniqueMap.values.toList();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${cat.itemCount} items',
-                      style: AppTypography.caption.copyWith(color: AppColors.primary),
+                      'Categories (${displayCats.length})',
+                      style: AppTypography.heading3,
                     ),
-                    const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textMuted),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => MenuCategoriesScreen(cafe: cafe),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'View All',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => MenuItemsScreen(cafe: cafe, initialCategory: cat.name),
-                    ),
-                  );
-                },
-              ),
+                const SizedBox(height: 8),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 340;
+                    final crossAxisCount = isNarrow ? 1 : 2;
+                    final childAspectRatio = isNarrow ? 3.2 : 1.55;
+
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: displayCats.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: childAspectRatio,
+                      ),
+                      itemBuilder: (context, index) {
+                        final cat = displayCats[index];
+                        return _buildCategoryGridCard(context, cafe, cat);
+                      },
+                    );
+                  },
+                ),
+              ],
             );
-          }),
-          const SizedBox(height: 12),
+          }(),
+          const SizedBox(height: 16),
 
           // Button to Open Full Text-Only Menu
           SizedBox(
@@ -682,6 +732,83 @@ class _CafeDetailsScreenState extends State<CafeDetailsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCategoryGridCard(BuildContext context, CafeModel cafe, MenuCategoryModel cat) {
+    return Container(
+      key: ValueKey(cat.id),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => MenuItemsScreen(cafe: cafe, initialCategory: cat.name),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: AppColors.textMuted,
+                    ),
+                  ],
+                ),
+                Text(
+                  cat.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    height: 1.2,
+                  ),
+                ),
+                Text(
+                  '${cat.itemCount} ${cat.itemCount == 1 ? 'item' : 'items'}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -650,6 +650,30 @@ module.exports = {
     if (!cafe) return null;
     const status = cafe.menu_status || (cafe.has_published_menu ? 'Partially Verified' : 'Awaiting Merchant Confirmation');
     const notes = cafe.menu_status_notes || null;
+    const categories = Array.isArray(cafe.menu_categories) ? cafe.menu_categories : [];
+
+    let totalItems = 0;
+    let availableItems = 0;
+    let unavailableItems = 0;
+
+    categories.forEach((cat, cIdx) => {
+      if (!cat.id) {
+        cat.id = `cat-${Date.now()}-${cIdx}-${Math.floor(Math.random() * 1000)}`;
+      }
+      if (!Array.isArray(cat.items)) cat.items = [];
+      cat.items.forEach((it, iIdx) => {
+        if (!it.id) {
+          it.id = `item-${Date.now()}-${cIdx}-${iIdx}-${Math.floor(Math.random() * 1000)}`;
+        }
+        totalItems++;
+        if (it.is_available !== false) {
+          availableItems++;
+        } else {
+          unavailableItems++;
+        }
+      });
+    });
+
     return {
       cafeId: cafe.id,
       cafeName: cafe.name,
@@ -659,7 +683,11 @@ module.exports = {
       menu_status_notes: notes,
       hasPublishedMenu: cafe.has_published_menu || false,
       isOrderingEnabled: cafe.is_ordering_enabled || false,
-      categories: Array.isArray(cafe.menu_categories) ? cafe.menu_categories : [],
+      totalCategories: categories.length,
+      totalItems,
+      availableItems,
+      unavailableItems,
+      categories,
     };
   },
 
@@ -734,13 +762,36 @@ module.exports = {
     return cafe.menu_categories;
   },
 
-  deleteMenuCategory: (id, categoryName) => {
+  deleteMenuCategory: (id, categoryName, options = {}) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
-    if (!cafe) return null;
+    if (!cafe || !Array.isArray(cafe.menu_categories)) return null;
 
-    cafe.menu_categories = (cafe.menu_categories || []).filter(
-      (c) => c.name.toLowerCase() !== categoryName.trim().toLowerCase() && c.id !== categoryName
+    const targetCat = cafe.menu_categories.find(
+      (c) => c.name.toLowerCase() === categoryName.trim().toLowerCase() || c.id === categoryName
     );
+    if (!targetCat) return cafe.menu_categories;
+
+    // If options.moveItemsTo is provided, move items to the destination category
+    if (options && options.moveItemsTo && Array.isArray(targetCat.items) && targetCat.items.length > 0) {
+      const destCatName = options.moveItemsTo.trim().toLowerCase();
+      let destCat = cafe.menu_categories.find(
+        (c) => (c.name.toLowerCase() === destCatName || c.id === options.moveItemsTo) && c !== targetCat
+      );
+      if (!destCat) {
+        destCat = {
+          id: `cat-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          name: options.moveItemsTo.trim(),
+          description: '',
+          is_enabled: true,
+          display_order: cafe.menu_categories.length + 1,
+          items: [],
+        };
+        cafe.menu_categories.push(destCat);
+      }
+      destCat.items.push(...targetCat.items);
+    }
+
+    cafe.menu_categories = cafe.menu_categories.filter((c) => c !== targetCat);
     cafe.has_published_menu = cafe.menu_categories.some((c) => Array.isArray(c.items) && c.items.length > 0);
     cafe.updated_at = new Date().toISOString();
     module.exports.saveData();
@@ -817,13 +868,15 @@ module.exports = {
 
     let targetItem = null;
     let currentCat = null;
+    const strId = String(itemId).trim().toLowerCase();
+    const matchItem = (i) => i && (String(i.id).toLowerCase() === strId || (i.name && String(i.name).trim().toLowerCase() === strId));
 
     // Find the item across categories
     for (const cat of cafe.menu_categories) {
       if (categoryName && cat.name.toLowerCase() !== categoryName.toLowerCase() && cat.id !== categoryName) {
         continue;
       }
-      const item = cat.items.find((i) => i.id === itemId);
+      const item = (cat.items || []).find(matchItem);
       if (item) {
         targetItem = item;
         currentCat = cat;
@@ -833,7 +886,7 @@ module.exports = {
 
     if (!targetItem) {
       for (const cat of cafe.menu_categories) {
-        const item = cat.items.find((i) => i.id === itemId);
+        const item = (cat.items || []).find(matchItem);
         if (item) {
           targetItem = item;
           currentCat = cat;
@@ -845,8 +898,8 @@ module.exports = {
     if (!targetItem) return null;
 
     // Apply updates
-    if (updates.name !== undefined) targetItem.name = updates.name.trim();
-    if (updates.description !== undefined) targetItem.description = updates.description.trim();
+    if (updates.name !== undefined && String(updates.name).trim()) targetItem.name = String(updates.name).trim();
+    if (updates.description !== undefined) targetItem.description = String(updates.description).trim();
     if (updates.price !== undefined) {
       const p = parseFloat(updates.price);
       if (!isNaN(p) && p >= 0) targetItem.price = p;
@@ -867,9 +920,9 @@ module.exports = {
 
     // Move to new category if requested
     const destCatName = (newCategoryName || '').trim();
-    if (destCatName && currentCat && currentCat.name.toLowerCase() !== destCatName.toLowerCase()) {
-      currentCat.items = currentCat.items.filter((i) => i.id !== itemId);
-      let destCat = cafe.menu_categories.find((c) => c.name.toLowerCase() === destCatName.toLowerCase());
+    if (destCatName && currentCat && currentCat.name.toLowerCase() !== destCatName.toLowerCase() && currentCat.id !== destCatName) {
+      currentCat.items = currentCat.items.filter((i) => i !== targetItem);
+      let destCat = cafe.menu_categories.find((c) => c.name.toLowerCase() === destCatName.toLowerCase() || c.id === destCatName);
       if (!destCat) {
         destCat = {
           id: `cat-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -893,9 +946,12 @@ module.exports = {
     const cafe = cafesData.find((c) => c.id === cafeId || c.slug === cafeId);
     if (!cafe || !Array.isArray(cafe.menu_categories)) return false;
 
+    const strId = String(itemId).trim().toLowerCase();
+    const matchItem = (i) => i && (String(i.id).toLowerCase() === strId || (i.name && String(i.name).trim().toLowerCase() === strId));
+
     let removed = false;
     for (const cat of cafe.menu_categories) {
-      const idx = cat.items.findIndex((i) => i.id === itemId);
+      const idx = (cat.items || []).findIndex(matchItem);
       if (idx !== -1) {
         cat.items.splice(idx, 1);
         removed = true;
@@ -915,9 +971,12 @@ module.exports = {
     const cafe = cafesData.find((c) => c.id === cafeId || c.slug === cafeId);
     if (!cafe || !Array.isArray(cafe.menu_categories)) return null;
 
+    const strId = String(itemId).trim().toLowerCase();
+    const matchItem = (i) => i && (String(i.id).toLowerCase() === strId || (i.name && String(i.name).trim().toLowerCase() === strId));
+
     let targetItem = null;
     for (const cat of cafe.menu_categories) {
-      const item = cat.items.find((i) => i.id === itemId);
+      const item = (cat.items || []).find(matchItem);
       if (item) {
         item.is_available = isAvailable !== undefined ? Boolean(isAvailable) : !item.is_available;
         targetItem = item;

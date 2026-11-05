@@ -5,25 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ZipBi Admin Portal | Private Business & Location Management</title>
   
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              primary: '#1B4D3E',
-              dark: '#143A2F',
-              light: '#2D6A4F',
-              accent: '#52B788',
-              surface: '#F4F7F5',
-            }
-          }
-        }
-      }
-    };
-  </script>
+  <!-- Compiled Production Tailwind CSS (No CDN Warning) -->
+  <link rel="stylesheet" href="/admin/css/tailwind.min.css" />
 
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -1297,6 +1280,26 @@
         <span id="menuStatusFeedback" class="text-[11px] text-emerald-700 font-medium hidden">Status updated</span>
       </div>
 
+      <!-- Menu Live Inventory KPI Stats Bar -->
+      <div class="px-6 py-3 bg-slate-50 border-b border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+          <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Total Items</div>
+          <div id="menuStatTotalItems" class="text-base font-bold text-slate-900 mt-0.5">0</div>
+        </div>
+        <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+          <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Categories</div>
+          <div id="menuStatTotalCategories" class="text-base font-bold text-slate-900 mt-0.5">0</div>
+        </div>
+        <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+          <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">In Stock</div>
+          <div id="menuStatAvailableItems" class="text-base font-bold text-emerald-700 mt-0.5">0</div>
+        </div>
+        <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+          <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Out of Stock</div>
+          <div id="menuStatUnavailableItems" class="text-base font-bold text-amber-700 mt-0.5">0</div>
+        </div>
+      </div>
+
       <!-- Modal Body -->
       <div class="p-6 overflow-y-auto flex-1 space-y-5 custom-scroll">
         <input type="hidden" id="menuCafeId" />
@@ -1483,30 +1486,6 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
                 </button>
               </div>
             </div>
-                  <i class="fa-solid fa-arrow-left"></i>
-                  <span>Back to JSON</span>
-                </button>
-                <div class="border-l border-slate-200 pl-3">
-                  <div class="text-xs font-bold text-slate-900" id="previewCafeTitle">Previewing Menu</div>
-                  <div class="text-[11px] text-slate-500" id="previewStatsSubtitle">0 categories, 0 items</div>
-                </div>
-              </div>
-
-              <!-- Import Action Buttons -->
-              <div class="flex items-center gap-2">
-                <button type="button" onclick="cancelPastePreview()" class="px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-700 text-xs font-semibold transition">
-                  Cancel
-                </button>
-                <button type="button" onclick="handleExecuteImport('Awaiting Merchant Confirmation')" class="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 transition shadow-xs flex items-center gap-1">
-                  <i class="fa-solid fa-floppy-disk text-[10px]"></i>
-                  <span>Import as Draft</span>
-                </button>
-                <button type="button" onclick="handleExecuteImport('Verified Menu')" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition shadow-xs flex items-center gap-1.5">
-                  <i class="fa-solid fa-cloud-arrow-up text-[10px]"></i>
-                  <span>Import & Publish Menu</span>
-                </button>
-              </div>
-            </div>
 
             <!-- Warnings / Notice Banner (e.g. Existing Menu Mode or Name Mismatch) -->
             <div id="previewWarningBanner" class="hidden"></div>
@@ -1567,7 +1546,7 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
         </button>
       </div>
 
-      <form id="menuItemForm" onsubmit="handleSaveMenuItemSubmit(event)" class="p-6 space-y-4">
+      <form id="menuItemForm" novalidate onsubmit="handleSaveMenuItemSubmit(event)" class="p-6 space-y-4">
         <input type="hidden" id="itemModalItemId" />
         <input type="hidden" id="itemModalOriginalCategory" />
 
@@ -3129,9 +3108,33 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
       container.innerHTML = '';
 
       let totalItems = 0;
-      (categories || []).forEach((c) => { totalItems += (c.items || []).length; });
+      let availableItems = 0;
+      let unavailableItems = 0;
+      const totalCats = (categories || []).length;
+
+      (categories || []).forEach((c) => {
+        (c.items || []).forEach((it) => {
+          totalItems++;
+          if (it.is_available !== false) {
+            availableItems++;
+          } else {
+            unavailableItems++;
+          }
+        });
+      });
+
+      // Update Header Badges & KPI Stats
       const countBadge = document.getElementById('menuModalCountBadge');
       if (countBadge) countBadge.textContent = `${totalItems} ${totalItems === 1 ? 'Item' : 'Items'}`;
+
+      const elTotalItems = document.getElementById('menuStatTotalItems');
+      if (elTotalItems) elTotalItems.textContent = totalItems;
+      const elTotalCats = document.getElementById('menuStatTotalCategories');
+      if (elTotalCats) elTotalCats.textContent = totalCats;
+      const elAvail = document.getElementById('menuStatAvailableItems');
+      if (elAvail) elAvail.textContent = availableItems;
+      const elUnavail = document.getElementById('menuStatUnavailableItems');
+      if (elUnavail) elUnavail.textContent = unavailableItems;
 
       if (!categories || categories.length === 0) {
         container.innerHTML = `
@@ -3146,77 +3149,118 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
 
       categories.forEach((cat) => {
         const catCard = document.createElement('div');
-        catCard.className = 'p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3';
+        catCard.className = 'p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3 shadow-2xs';
 
         const items = cat.items || [];
-        let itemsHtml = '';
+        let catAvail = 0;
+        let catUnavail = 0;
+        items.forEach((it) => {
+          if (it.is_available !== false) catAvail++;
+          else catUnavail++;
+        });
 
+        let itemsTableHtml = '';
         if (items.length > 0) {
-          itemsHtml = items.map((it) => {
+          const rows = items.map((it) => {
             const isAvail = it.is_available !== false;
 
             let foodTypeBadge = '';
-            if (it.food_type === 'NON_VEG') {
-              foodTypeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">🔴 Non-Veg</span>';
-            } else if (it.food_type === 'EGG') {
-              foodTypeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">🟡 Egg</span>';
-            } else if (it.food_type === 'VEGAN') {
-              foodTypeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">🌱 Vegan</span>';
+            const ft = (it.food_type || (it.is_veg ? 'VEG' : 'NON_VEG')).toUpperCase();
+            if (ft === 'NON_VEG' || ft.includes('NON')) {
+              foodTypeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">🔴 Non-Veg</span>';
+            } else if (ft === 'EGG') {
+              foodTypeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">🟡 Egg</span>';
+            } else if (ft === 'VEGAN') {
+              foodTypeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">🌱 Vegan</span>';
             } else {
-              foodTypeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">🟢 Veg</span>';
+              foodTypeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">🟢 Veg</span>';
             }
 
             const availBtn = isAvail
-              ? `<button type="button" onclick="handleToggleAvailability('${escapeJsString(cat.name)}', '${it.id}', false)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition" title="Click to mark Out of Stock">✅ In Stock</button>`
-              : `<button type="button" onclick="handleToggleAvailability('${escapeJsString(cat.name)}', '${it.id}', true)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition" title="Click to mark In Stock">❌ Out of Stock</button>`;
+              ? `<button type="button" onclick="handleToggleAvailability('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}', false)" class="px-2.5 py-1 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition inline-flex items-center gap-1 shadow-2xs" title="Click to mark Out of Stock"><span>✅ In Stock</span></button>`
+              : `<button type="button" onclick="handleToggleAvailability('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}', true)" class="px-2.5 py-1 rounded text-[10px] font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition inline-flex items-center gap-1 shadow-2xs" title="Click to mark In Stock"><span>❌ Out of Stock</span></button>`;
+
+            const priceDisplay = it.price !== null && it.price !== undefined ? `₹${it.price}` : 'Price not listed';
 
             return `
-              <div class="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200 text-xs shadow-xs hover:border-slate-300 transition">
-                <div class="flex-1 pr-3">
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900">${escapeHtml(it.name)}</span>
-                    ${foodTypeBadge}
-                  </div>
-                  ${it.description ? `<p class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(it.description)}</p>` : ''}
-                </div>
-                <div class="flex items-center gap-2.5 shrink-0">
-                  <span class="font-bold text-slate-900 text-xs font-mono">₹${it.price}</span>
+              <tr class="hover:bg-slate-50/70 transition">
+                <td class="py-2.5 px-3 font-bold text-slate-900 min-w-[180px] align-top">
+                  <div>${escapeHtml(it.name)}</div>
+                  ${it.source ? `<span class="text-[9px] text-slate-400 font-normal">Source: ${escapeHtml(it.source)}</span>` : ''}
+                </td>
+                <td class="py-2.5 px-3 text-slate-600 text-[11px] leading-relaxed min-w-[220px] align-top">
+                  ${it.description ? escapeHtml(it.description) : '<span class="text-slate-300 italic">No description provided</span>'}
+                </td>
+                <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 align-top whitespace-nowrap">
+                  ${priceDisplay}
+                </td>
+                <td class="py-2.5 px-3 text-center align-top whitespace-nowrap">
+                  ${foodTypeBadge}
+                </td>
+                <td class="py-2.5 px-3 text-center align-top whitespace-nowrap">
                   ${availBtn}
-                  <button type="button" onclick="openEditMenuItemModal('${escapeJsString(cat.name)}', '${it.id}')" class="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition" title="Edit Item">
-                    <i class="fa-solid fa-pen text-[11px]"></i>
-                  </button>
-                  <button type="button" onclick="handleDeleteMenuItem('${escapeJsString(cat.name)}', '${it.id}')" class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 transition" title="Delete Item">
-                    <i class="fa-solid fa-trash-can text-[11px]"></i>
-                  </button>
-                </div>
-              </div>
+                </td>
+                <td class="py-2.5 px-3 text-right align-top whitespace-nowrap">
+                  <div class="inline-flex items-center gap-1.5">
+                    <button type="button" onclick="openEditMenuItemModal('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-brand-primary/10 text-slate-700 hover:text-brand-primary font-semibold text-[11px] transition flex items-center gap-1" title="Edit Item">
+                      <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                      <span>Edit</span>
+                    </button>
+                    <button type="button" onclick="handleDeleteMenuItem('${escapeJsString(cat.name)}', '${escapeJsString(it.id)}', '${escapeJsString(it.name)}')" class="px-2.5 py-1 rounded bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-[11px] transition flex items-center gap-1" title="Delete Item">
+                      <i class="fa-solid fa-trash-can text-[10px]"></i>
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
             `;
           }).join('');
+
+          itemsTableHtml = `
+            <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+              <table class="w-full text-left border-collapse min-w-[720px]">
+                <thead>
+                  <tr class="bg-slate-100/70 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                    <th class="py-2 px-3">Item Name</th>
+                    <th class="py-2 px-3">Description</th>
+                    <th class="py-2 px-3 text-right">Price</th>
+                    <th class="py-2 px-3 text-center">Food Type</th>
+                    <th class="py-2 px-3 text-center">Availability</th>
+                    <th class="py-2 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${rows}
+                </tbody>
+              </table>
+            </div>
+          `;
         } else {
-          itemsHtml = '<div class="text-[11px] text-slate-400 py-2 italic text-center bg-white/60 rounded-lg border border-dashed border-slate-200">No items in this category yet. Click "+ Add Item" below.</div>';
+          itemsTableHtml = '<div class="text-[11px] text-slate-400 py-3 italic text-center bg-white rounded-lg border border-dashed border-slate-200">No items in this category yet. Click "+ Add Item" to add your first dish.</div>';
         }
 
         catCard.innerHTML = `
-          <div class="flex items-center justify-between pb-2 border-b border-slate-200">
-            <div class="flex items-center gap-2">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200">
+            <div class="flex items-center gap-2 flex-wrap">
               <span class="font-bold text-sm text-slate-900">${escapeHtml(cat.name)}</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">${items.length} items</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">${items.length} ${items.length === 1 ? 'item' : 'items'}</span>
+              <span class="text-[10px] text-slate-500 font-medium">(${catAvail} in stock, ${catUnavail} out)</span>
               ${cat.description ? `<span class="text-xs text-slate-400 italic">• ${escapeHtml(cat.description)}</span>` : ''}
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 shrink-0">
               <button type="button" onclick="openAddMenuItemModal('${escapeJsString(cat.name)}')" class="px-2.5 py-1 rounded-md bg-brand-primary text-white text-[11px] font-semibold hover:bg-brand-dark transition flex items-center gap-1 shadow-xs">
                 <i class="fa-solid fa-plus text-[9px]"></i>
                 <span>Add Item</span>
               </button>
-              <button type="button" onclick="openRenameCategoryModal('${escapeJsString(cat.name)}', '${escapeJsString(cat.description || '')}', ${cat.is_enabled !== false})" class="p-1.5 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition" title="Rename / Edit Category">
+              <button type="button" onclick="openRenameCategoryModal('${escapeJsString(cat.name)}', '${escapeJsString(cat.description || '')}', ${cat.is_enabled !== false})" class="p-1.5 rounded hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition" title="Rename / Edit Category">
                 <i class="fa-solid fa-pen-to-square text-xs"></i>
               </button>
-              <button type="button" onclick="handleDeleteCategory('${escapeJsString(cat.name)}')" class="p-1.5 rounded hover:bg-red-100 text-slate-400 hover:text-red-600 transition" title="Delete Category">
+              <button type="button" onclick="handleDeleteCategory('${escapeJsString(cat.name)}', ${items.length})" class="p-1.5 rounded hover:bg-red-100 text-slate-400 hover:text-red-600 transition" title="Delete Category">
                 <i class="fa-solid fa-trash text-xs"></i>
               </button>
             </div>
           </div>
-          <div class="space-y-1.5 pt-1">${itemsHtml}</div>
+          <div>${itemsTableHtml}</div>
         `;
         container.appendChild(catCard);
       });
@@ -3316,15 +3360,40 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
       }
     }
 
-    // Delete Category
-    async function handleDeleteCategory(categoryName) {
+    // Delete Category with Safe Items Option
+    async function handleDeleteCategory(categoryName, itemCount = 0) {
       if (!currentMenuCafeId) return;
-      if (!confirm(`Are you sure you want to permanently delete category "${categoryName}" and all its items?`)) return;
+
+      let moveItemsTo = null;
+      if (itemCount > 0) {
+        const otherCats = (currentMenuCategories || []).filter(c => c.name.toLowerCase() !== categoryName.toLowerCase());
+        let promptMsg = `Category "${categoryName}" contains ${itemCount} menu item(s).\n\n`;
+        if (otherCats.length > 0) {
+          promptMsg += `Enter the name of another category to MOVE these items to (e.g. "${otherCats[0].name}")\nOR type "DELETE ALL" to permanently delete the category and all its items:`;
+          const answer = prompt(promptMsg, otherCats[0].name);
+          if (!answer) return; // Cancelled
+          if (answer.trim().toUpperCase() === 'DELETE ALL') {
+            moveItemsTo = null;
+          } else {
+            moveItemsTo = answer.trim();
+          }
+        } else {
+          if (!confirm(`Category "${categoryName}" contains ${itemCount} menu items.\n\nAre you sure you want to permanently delete this category and ALL its items?`)) {
+            return;
+          }
+        }
+      } else {
+        if (!confirm(`Are you sure you want to delete empty category "${categoryName}"?`)) return;
+      }
 
       try {
         const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/categories/${encodeURIComponent(categoryName)}`, {
           method: 'DELETE',
-          headers: { Authorization: `Bearer ${adminToken}` },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ moveItemsTo }),
         });
         const data = await res.json();
         if (res.ok && data.success) {
@@ -3370,21 +3439,25 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
 
     function openEditMenuItemModal(catName, itemId) {
       let foundItem = null;
+      const targetId = String(itemId).trim().toLowerCase();
       for (const cat of currentMenuCategories) {
-        const it = (cat.items || []).find((i) => i.id === itemId);
+        const it = (cat.items || []).find((i) => String(i.id).toLowerCase() === targetId || String(i.name).trim().toLowerCase() === targetId);
         if (it) {
           foundItem = it;
           break;
         }
       }
 
-      if (!foundItem) return;
+      if (!foundItem) {
+        alert(`Menu item could not be found for editing. Please reload.`);
+        return;
+      }
 
       document.getElementById('menuItemModalTitle').textContent = `Edit Menu Item: ${foundItem.name}`;
       document.getElementById('itemModalItemId').value = foundItem.id;
       document.getElementById('itemModalOriginalCategory').value = catName;
       document.getElementById('itemModalName').value = foundItem.name || '';
-      document.getElementById('itemModalPrice').value = foundItem.price || '';
+      document.getElementById('itemModalPrice').value = foundItem.price !== null && foundItem.price !== undefined ? foundItem.price : '';
       document.getElementById('itemModalDesc').value = foundItem.description || '';
       document.getElementById('itemModalFoodType').value = foundItem.food_type || (foundItem.is_veg ? 'VEG' : 'NON_VEG');
       document.getElementById('itemModalAvailability').value = String(foundItem.is_available !== false);
@@ -3405,13 +3478,14 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
       const origCat = document.getElementById('itemModalOriginalCategory').value;
       const targetCat = document.getElementById('itemModalCategory').value;
       const name = document.getElementById('itemModalName').value.trim();
-      const priceVal = parseFloat(document.getElementById('itemModalPrice').value);
+      const rawPrice = document.getElementById('itemModalPrice').value.trim();
+      const priceVal = rawPrice !== '' ? parseFloat(rawPrice) : null;
       const desc = document.getElementById('itemModalDesc').value.trim();
       const foodType = document.getElementById('itemModalFoodType').value;
       const isAvail = document.getElementById('itemModalAvailability').value === 'true';
 
       if (!name) return alert('Item name is required.');
-      if (isNaN(priceVal) || priceVal < 0) return alert('Please enter a valid price.');
+      if (priceVal !== null && (isNaN(priceVal) || priceVal < 0)) return alert('Please enter a valid price.');
 
       const itemPayload = {
         name,
@@ -3426,7 +3500,7 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
         let res;
         if (itemId) {
           // Update item (and move across category if changed)
-          res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/items/${itemId}`, {
+          res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/items/${encodeURIComponent(itemId)}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -3473,7 +3547,7 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
       if (!currentMenuCafeId) return;
 
       try {
-        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/items/${itemId}/availability`, {
+        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/items/${encodeURIComponent(itemId)}/availability`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -3484,8 +3558,9 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
         const data = await res.json();
         if (res.ok && data.success) {
           // Update in local state
+          const targetId = String(itemId).trim().toLowerCase();
           for (const cat of currentMenuCategories) {
-            const it = (cat.items || []).find((i) => i.id === itemId);
+            const it = (cat.items || []).find((i) => String(i.id).toLowerCase() === targetId || String(i.name).trim().toLowerCase() === targetId);
             if (it) {
               it.is_available = newStatus;
               break;
@@ -3500,13 +3575,14 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
       }
     }
 
-    // Delete item
-    async function handleDeleteMenuItem(catName, itemId) {
+    // Delete item with explicit confirmation
+    async function handleDeleteMenuItem(catName, itemId, itemName = '') {
       if (!currentMenuCafeId) return;
-      if (!confirm('Are you sure you want to delete this menu item?')) return;
+      const label = itemName ? `"${itemName}"` : 'this menu item';
+      if (!confirm(`Are you sure you want to delete ${label} from category "${catName}"?`)) return;
 
       try {
-        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/items/${itemId}`, {
+        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/items/${encodeURIComponent(itemId)}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${adminToken}` },
         });

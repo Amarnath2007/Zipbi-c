@@ -151,5 +151,23 @@
     "passwordHash": "$2a$10$hrucvrZGe15CKd4aT42GoeCsbr7FuVA6phIWzdOlq0TmH6s4CPWe6",
     "role": "CUSTOMER",
     "createdAt": "2026-11-04T17:08:47.430Z"
+  },
+  {
+    "id": "usr-1793899759517-286",
+    "fullName": "Test Customer",
+    "phone": "+919940522060",
+    "email": "test_1793899759331@example.com",
+    "passwordHash": "$2a$10$9s9jazCIp0DOfeFdBNWyuObTYzpJ9M8AplsLW8vhyeGaB/jIxTnBe",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-05T17:29:19.517Z"
+  },
+  {
+    "id": "usr-1793900386509-146",
+    "fullName": "Test Customer",
+    "phone": "+919956077267",
+    "email": "test_1793900386310@example.com",
+    "passwordHash": "$2a$10$9uMqi8mYE9j3R8OQHaN/mOBUPaF0u14jXjOyoGRszj4ju/.gs5Aey",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-05T17:39:46.509Z"
   }
 ]

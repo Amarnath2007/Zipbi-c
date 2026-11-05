@@ -52,20 +52,31 @@ class MenuItemModel {
 }
 
 class MenuCategoryModel {
+  final String id;
   final String name;
+  final String? description;
   final List<MenuItemModel> items;
 
   MenuCategoryModel({
+    String? id,
     required this.name,
+    this.description,
     required this.items,
-  });
+  }) : id = (id != null && id.isNotEmpty)
+            ? id
+            : 'cat-${name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}';
 
   int get itemCount => items.length;
 
   factory MenuCategoryModel.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'] as List<dynamic>? ?? [];
+    final nameStr = json['name']?.toString() ?? '';
+    final idStr = json['id']?.toString() ??
+        'cat-${nameStr.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}';
     return MenuCategoryModel(
-      name: json['name']?.toString() ?? '',
+      id: idStr,
+      name: nameStr,
+      description: json['description']?.toString(),
       items: rawItems
           .map((i) => MenuItemModel.fromJson(i as Map<String, dynamic>))
           .toList(),
@@ -74,7 +85,9 @@ class MenuCategoryModel {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
+      if (description != null) 'description': description,
       'items': items.map((i) => i.toJson()).toList(),
     };
   }

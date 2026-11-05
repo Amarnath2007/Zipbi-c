@@ -39,8 +39,36 @@ class _MenuItemsScreenState extends State<MenuItemsScreen> {
   Future<void> _loadMenu() async {
     setState(() => _isLoading = true);
     final cats = await ApiService.getCafeMenu(widget.cafe.id);
+
+    // Deduplicate categories and aggregate items
+    final Map<String, MenuCategoryModel> uniqueMap = {};
+    for (final cat in cats) {
+      final key = cat.name.trim().toLowerCase();
+      if (key.isEmpty) continue;
+      if (!uniqueMap.containsKey(key)) {
+        uniqueMap[key] = cat;
+      } else {
+        final existing = uniqueMap[key]!;
+        final existingIds = existing.items.map((i) => i.id).toSet();
+        final mergedItems = List<MenuItemModel>.from(existing.items);
+        for (final item in cat.items) {
+          if (!existingIds.contains(item.id)) {
+            mergedItems.add(item);
+            existingIds.add(item.id);
+          }
+        }
+        uniqueMap[key] = MenuCategoryModel(
+          id: existing.id,
+          name: existing.name,
+          description: existing.description ?? cat.description,
+          items: mergedItems,
+        );
+      }
+    }
+    final deduped = uniqueMap.values.toList();
+
     setState(() {
-      _categories = cats;
+      _categories = deduped;
       _isLoading = false;
       if (_categories.isNotEmpty && _selectedCategory != 'All') {
         final exists = _categories.any(
@@ -180,175 +208,56 @@ class _MenuItemsScreenState extends State<MenuItemsScreen> {
 
                       // Text-Only Menu Items List (Strictly NO Food Photographs!)
                       Expanded(
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                          itemCount: _displayedItems.length,
-                          separatorBuilder: (context, index) => const Divider(height: 24),
-                          itemBuilder: (context, index) {
-                            final item = _displayedItems[index];
-                            final qty = cart.getItemQuantity(item.id);
-
-                            return Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Item Info (Name, Description, Veg icon, Price, Source)
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          // Veg / Non-Veg Indicator Icon
-                                          Container(
-                                            padding: const EdgeInsets.all(2),
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                color: item.isVeg
-                                                    ? const Color(0xFF16A34A)
-                                                    : const Color(0xFFDC2626),
-                                                width: 1.5,
-                                              ),
-                                              borderRadius: BorderRadius.circular(4),
-                                            ),
-                                            child: Icon(
-                                              Icons.circle,
-                                              size: 8,
-                                              color: item.isVeg
-                                                  ? const Color(0xFF16A34A)
-                                                  : const Color(0xFFDC2626),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              item.name,
-                                              style: AppTypography.heading3.copyWith(fontSize: 15),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-
-                                      // Description
-                                      if (item.description != null && item.description!.isNotEmpty)
-                                        Text(
-                                          item.description!,
-                                          style: AppTypography.bodySmall,
-                                        ),
-                                      const SizedBox(height: 6),
-
-                                      // Price & Source Row
-                                      Row(
-                                        children: [
-                                          Text(
-                                            '₹${item.price.toStringAsFixed(0)}',
-                                            style: AppTypography.price,
-                                          ),
-                                          if (item.source != null) ...[
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: AppColors.surfaceLight,
-                                                borderRadius: BorderRadius.circular(4),
-                                                border: Border.all(color: AppColors.border),
-                                              ),
-                                              child: Text(
-                                                item.source!,
-                                                style: const TextStyle(
-                                                  fontSize: 10,
-                                                  color: AppColors.textMuted,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ],
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            if (_displayedItems.isEmpty) {
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Text(
+                                    _searchFilter.isNotEmpty
+                                        ? 'No items found matching "$_searchFilter"'
+                                        : 'No items in this category',
+                                    style: AppTypography.bodySmall,
                                   ),
                                 ),
+                              );
+                            }
 
-                                const SizedBox(width: 16),
+                            final isWide = constraints.maxWidth >= 550;
+                            if (isWide) {
+                              return GridView.builder(
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 14,
+                                  mainAxisSpacing: 14,
+                                  childAspectRatio: 2.3,
+                                ),
+                                itemCount: _displayedItems.length,
+                                itemBuilder: (context, index) {
+                                  return _buildMenuItemCard(
+                                    context,
+                                    _displayedItems[index],
+                                    cart,
+                                    isGrid: true,
+                                  );
+                                },
+                              );
+                            }
 
-                                // Add Button or Stepper (Only active if café ordering is enabled)
-                                if (widget.cafe.isOrderingEnabled) ...[
-                                  if (qty == 0)
-                                    SizedBox(
-                                      height: 36,
-                                      child: OutlinedButton(
-                                        onPressed: () {
-                                          cart.addItem(widget.cafe, item);
-                                        },
-                                        style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(horizontal: 18),
-                                          side: const BorderSide(color: AppColors.primary, width: 1.5),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(18),
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'ADD',
-                                          style: TextStyle(
-                                            color: AppColors.primary,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  else
-                                    Container(
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary,
-                                        borderRadius: BorderRadius.circular(18),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.remove, color: Colors.white, size: 16),
-                                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                                            constraints: const BoxConstraints(),
-                                            onPressed: () => cart.removeOne(item),
-                                          ),
-                                          Text(
-                                            '$qty',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.add, color: Colors.white, size: 16),
-                                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                                            constraints: const BoxConstraints(),
-                                            onPressed: () => cart.addItem(widget.cafe, item),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                ] else ...[
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.surfaceLight,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: AppColors.border),
-                                    ),
-                                    child: const Text(
-                                      'In-Store Only',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.textMuted,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
+                            return ListView.separated(
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                              itemCount: _displayedItems.length,
+                              separatorBuilder: (context, index) => const Divider(height: 24),
+                              itemBuilder: (context, index) {
+                                return _buildMenuItemCard(
+                                  context,
+                                  _displayedItems[index],
+                                  cart,
+                                  isGrid: false,
+                                );
+                              },
                             );
                           },
                         ),
@@ -486,6 +395,249 @@ class _MenuItemsScreenState extends State<MenuItemsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildMenuItemCard(
+    BuildContext context,
+    MenuItemModel item,
+    CartProvider cart, {
+    required bool isGrid,
+  }) {
+    final qty = cart.getItemQuantity(item.id);
+    final isAvailable = item.isAvailable;
+
+    final content = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Item Info (Name, Description, Veg icon, Price, Source)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  // Veg / Non-Veg Indicator Icon
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: item.isVeg
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFFDC2626),
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Icon(
+                      Icons.circle,
+                      size: 8,
+                      color: item.isVeg
+                          ? const Color(0xFF16A34A)
+                          : const Color(0xFFDC2626),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      item.name,
+                      style: AppTypography.heading3.copyWith(
+                        fontSize: 15,
+                        color: isAvailable ? AppColors.textPrimary : AppColors.textMuted,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+
+              // Description
+              if (item.description != null && item.description!.isNotEmpty)
+                Text(
+                  item.description!,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: isAvailable ? AppColors.textSecondary : AppColors.textMuted,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              const SizedBox(height: 6),
+
+              // Price & Status Row
+              Row(
+                children: [
+                  Text(
+                    '₹${item.price.toStringAsFixed(0)}',
+                    style: AppTypography.price.copyWith(
+                      color: isAvailable ? AppColors.textPrimary : AppColors.textMuted,
+                    ),
+                  ),
+                  if (!isAvailable) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: const Color(0xFFFCA5A5)),
+                      ),
+                      child: const Text(
+                        'Out of Stock',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFFB91C1C),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ] else if (item.source != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceLight,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Text(
+                        item.source!,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.textMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
+        // Action Buttons (Add, Stepper, Out of Stock, or In-Store Only)
+        if (!isAvailable) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Text(
+              'Unavailable',
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ] else if (widget.cafe.isOrderingEnabled) ...[
+          if (qty == 0)
+            SizedBox(
+              height: 36,
+              child: OutlinedButton(
+                onPressed: () {
+                  cart.addItem(widget.cafe, item);
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  side: const BorderSide(color: AppColors.primary, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: const Text(
+                  'ADD',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove, color: Colors.white, size: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    constraints: const BoxConstraints(),
+                    onPressed: () => cart.removeOne(item),
+                  ),
+                  Text(
+                    '$qty',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, color: Colors.white, size: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    constraints: const BoxConstraints(),
+                    onPressed: () => cart.addItem(widget.cafe, item),
+                  ),
+                ],
+              ),
+            ),
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Text(
+              'In-Store Only',
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+
+    if (isGrid) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isAvailable ? AppColors.border : AppColors.border.withValues(alpha: 0.5),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: content,
+      );
+    }
+
+    return content;
   }
 
   Widget _buildCategoryPill(String name) {

@@ -39,6 +39,13 @@ app.use(express.static(path.resolve(__dirname, '../public')));
 // Private Admin Dashboard Web App
 const adminStaticDir = path.resolve(__dirname, '../public/admin');
 app.use('/admin', express.static(adminStaticDir));
+
+// Handle prompts.json requests gracefully to prevent 404/HTML syntax errors in modern DevTools
+app.get(['/admin/prompts.json', '/prompts.json'], (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.json({ prompts: [] });
+});
+
 app.get('/admin*', (req, res, next) => {
   if (path.extname(req.path)) {
     return next();

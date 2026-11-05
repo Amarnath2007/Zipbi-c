@@ -494,12 +494,13 @@ async function renameCategory(req, res, next) {
 async function deleteCategory(req, res, next) {
   try {
     const { id, categoryName } = req.params;
-    const categories = db.deleteMenuCategory(id, categoryName);
+    const { moveItemsTo } = req.body || {};
+    const categories = db.deleteMenuCategory(id, categoryName, { moveItemsTo });
     const cafe = db.getCafeById(id);
 
     return res.status(200).json({
       success: true,
-      message: `Category '${categoryName}' deleted successfully.`,
+      message: `Category '${categoryName}' deleted successfully.${moveItemsTo ? ` Items moved to '${moveItemsTo}'.` : ''}`,
       categories,
       cafe,
     });
