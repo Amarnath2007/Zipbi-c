@@ -4,6 +4,7 @@ const config = require('../config');
 const db = require('../db');
 const { importImageFromGoogleDrive } = require('../utils/googleDrive');
 const { resolveGoogleMapsUrl, reverseGeocodeCoordinates } = require('../utils/googleMapsResolver');
+const { parseMenuText, SAMPLE_MENU_TEXT, AI_EXTRACTION_PROMPT } = require('../utils/menuTextParser');
 const { validateMenuJson, SAMPLE_MENU_JSON } = require('../utils/menuJsonValidator');
 const path = require('path');
 const fs = require('fs');
@@ -882,20 +883,22 @@ async function resetDirectory(req, res, next) {
 }
 
 /**
- * Get Sample Menu JSON schema for external AI prompts
+ * Get Sample Menu plain-English format and AI extraction prompt
  */
-function getSampleMenuJson(req, res) {
+function getSampleMenuFormat(req, res) {
   return res.status(200).json({
     success: true,
     sample: SAMPLE_MENU_JSON,
-    ai_prompt_suggestion: "Extract this complete menu into ZipBi's JSON format according to this exact schema.",
+    sample_text: SAMPLE_MENU_TEXT,
+    ai_extraction_prompt: AI_EXTRACTION_PROMPT,
+    ai_prompt_suggestion: AI_EXTRACTION_PROMPT,
   });
 }
 
 /**
- * Validate pasted menu JSON against schema and target cafe
+ * Validate pasted plain-English menu against schema and target cafe
  */
-async function validateMenuJsonHandler(req, res, next) {
+async function validateMenuTextHandler(req, res, next) {
   try {
     const { id } = req.params;
     const cafe = db.getCafeById(id);
@@ -903,8 +906,21 @@ async function validateMenuJsonHandler(req, res, next) {
       return res.status(404).json({ success: false, message: `Café '${id}' not found.` });
     }
 
-    const rawInput = req.body.raw_json !== undefined ? req.body.raw_json : (req.body.menu || req.body);
-    const result = validateMenuJson(rawInput, cafe.name);
+    const rawInput = req.body.raw_text !== undefined
+      ? req.body.raw_text
+      : (req.body.text !== undefined
+        ? req.body.text
+        : (req.body.menu_text !== undefined
+          ? req.body.menu_text
+          : (req.body.raw_json !== undefined ? req.body.raw_json : '')));
+
+    let result;
+    if (typeof rawInput === 'string' && rawInput.trim().startsWith('{')) {
+      // Legacy JSON fallback if passed
+      result = validateMenuJson(rawInput, cafe.name);
+    } else {
+      result = parseMenuText(rawInput, cafe.name);
+    }
 
     return res.status(200).json({
       success: true,
@@ -928,33 +944,72 @@ async function importStructuredMenuHandler(req, res, next) {
       return res.status(404).json({ success: false, message: `Café '${id}' not found.` });
     }
 
-    const { menu, raw_json, mode, menu_status, allow_name_mismatch } = req.body;
-    const inputToValidate = menu !== undefined ? menu : raw_json;
-    if (!inputToValidate) {
-      return res.status(400).json({ success: false, message: 'Menu data or raw_json is required.' });
-    }
+    const { menu, raw_text, text, raw_json, mode, menu_status, allow_name_mismatch } = req.body;
+    let menuToImport = null;
 
-    const validation = validateMenuJson(inputToValidate, cafe.name);
-    if (!validation.valid) {
-      return res.status(400).json({
-        success: false,
-        message: 'Menu validation failed.',
-        errors: validation.errors,
-        warnings: validation.warnings,
+    if (menu && typeof menu === 'object' && Array.isArray(menu.categories)) {
+      // Validate structured menu object from editable preview
+      const catErrors = [];
+      if (menu.categories.length === 0) {
+        catErrors.push('At least one category is required.');
+      }
+      menu.categories.forEach((cat, cIdx) => {
+        if (!cat.name || !cat.name.trim()) {
+          catErrors.push(`Category #${cIdx + 1} name is required.`);
+        }
+        (cat.items || []).forEach((item, iIdx) => {
+          if (!item.name || !item.name.trim()) {
+            catErrors.push(`Item #${iIdx + 1} in category "${cat.name}" has an empty name.`);
+          }
+          if (item.price !== null && item.price !== undefined && (isNaN(Number(item.price)) || Number(item.price) < 0)) {
+            catErrors.push(`Item "${item.name}" has an invalid price.`);
+          }
+        });
       });
-    }
 
-    if (validation.nameMismatch && allow_name_mismatch !== true) {
-      return res.status(409).json({
-        success: false,
-        nameMismatch: true,
-        message: `Pasted menu is labeled for "${validation.pastedCafeName}", but current café is "${cafe.name}". Please confirm import.`,
-        warnings: validation.warnings,
-      });
+      if (catErrors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Menu validation failed.',
+          errors: catErrors,
+        });
+      }
+      menuToImport = menu;
+    } else {
+      const textInput = raw_text !== undefined ? raw_text : (text !== undefined ? text : raw_json);
+      if (!textInput) {
+        return res.status(400).json({ success: false, message: 'Menu data or raw_text is required.' });
+      }
+
+      let validation;
+      if (typeof textInput === 'string' && textInput.trim().startsWith('{')) {
+        validation = validateMenuJson(textInput, cafe.name);
+      } else {
+        validation = parseMenuText(textInput, cafe.name);
+      }
+
+      if (!validation.valid) {
+        return res.status(400).json({
+          success: false,
+          message: 'Menu validation failed.',
+          errors: validation.errors,
+          warnings: validation.warnings,
+        });
+      }
+
+      if (validation.nameMismatch && allow_name_mismatch !== true) {
+        return res.status(409).json({
+          success: false,
+          nameMismatch: true,
+          message: `Pasted menu is labeled for "${validation.pastedCafeName}", but current café is "${cafe.name}". Please confirm import.`,
+          warnings: validation.warnings,
+        });
+      }
+      menuToImport = validation.sanitizedMenu;
     }
 
     const adminName = req.user && req.user.fullName ? req.user.fullName : 'ZipBi Administrator';
-    const importResult = db.importStructuredMenu(id, validation.sanitizedMenu, {
+    const importResult = db.importStructuredMenu(id, menuToImport, {
       mode: mode === 'merge' ? 'merge' : 'replace',
       status: menu_status || 'Verified Menu',
       adminName,
@@ -993,8 +1048,10 @@ module.exports = {
   updateMenuItem,
   deleteMenuItem,
   toggleMenuItemAvailability,
-  getSampleMenuJson,
-  validateMenuJson: validateMenuJsonHandler,
+  getSampleMenuFormat,
+  getSampleMenuJson: getSampleMenuFormat,
+  validateMenuText: validateMenuTextHandler,
+  validateMenuJson: validateMenuTextHandler,
   importStructuredMenu: importStructuredMenuHandler,
   listUsers,
   listPartners,

@@ -1043,7 +1043,7 @@ module.exports = {
     cafe.menu_status = menuStatus;
     cafe.menu_imported_at = new Date().toISOString();
     cafe.menu_imported_by = adminName;
-    cafe.menu_import_source = 'Structured JSON Paste (AI Extracted)';
+    cafe.menu_import_source = 'Plain-English Text Paste (AI Extracted)';
     cafe.menu_items_count = cafe.menu_categories.reduce((acc, c) => acc + (c.items ? c.items.length : 0), 0);
     cafe.menu_imported_categories_count = importedCategoriesCount;
     cafe.menu_imported_items_count = importedItemsCount;
@@ -1052,7 +1052,7 @@ module.exports = {
     module.exports.saveData();
 
     module.exports.logActivity(
-      'MENU_STRUCTURED_IMPORT',
+      'MENU_TEXT_IMPORT',
       `Imported ${importedItemsCount} items across ${incomingCategories.length} categories for "${cafe.name}" (${mode} mode).`,
       adminName
     );

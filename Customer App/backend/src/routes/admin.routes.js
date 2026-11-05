@@ -37,9 +37,11 @@ router.put('/cafes/:id/menu/items/:itemId', adminController.updateMenuItem);
 router.delete('/cafes/:id/menu/items/:itemId', adminController.deleteMenuItem);
 router.patch('/cafes/:id/menu/items/:itemId/availability', adminController.toggleMenuItemAvailability);
 
-// Menu Management (Option 2: Structured JSON Paste)
-router.get('/menu/sample-json', adminController.getSampleMenuJson);
-router.post('/cafes/:id/menu/validate-json', adminController.validateMenuJson);
+// Menu Management (Option 2: Paste Full Menu - Plain English)
+router.get('/menu/sample-format', adminController.getSampleMenuFormat);
+router.get('/menu/sample-json', adminController.getSampleMenuFormat);
+router.post('/cafes/:id/menu/validate-text', adminController.validateMenuText);
+router.post('/cafes/:id/menu/validate-json', adminController.validateMenuText);
 router.post('/cafes/:id/menu/import', adminController.importStructuredMenu);
 
 // Location & Google Maps Resolver
