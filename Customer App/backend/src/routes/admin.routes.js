@@ -24,7 +24,7 @@ router.patch('/cafes/:id/status', adminController.toggleStatus);
 router.post('/import-drive-image', adminController.importDriveImage);
 router.post('/upload-image', adminController.uploadImage);
 
-// Menu Management
+// Menu Management (Option 1: Manual Entry)
 router.get('/cafes/:id/menu', adminController.getCafeMenu);
 router.put('/cafes/:id/menu', adminController.updateMenu);
 router.patch('/cafes/:id/menu/status', adminController.updateMenuStatus);
@@ -36,6 +36,11 @@ router.post('/cafes/:id/menu/items', adminController.addMenuItem);
 router.put('/cafes/:id/menu/items/:itemId', adminController.updateMenuItem);
 router.delete('/cafes/:id/menu/items/:itemId', adminController.deleteMenuItem);
 router.patch('/cafes/:id/menu/items/:itemId/availability', adminController.toggleMenuItemAvailability);
+
+// Menu Management (Option 2: Structured JSON Paste)
+router.get('/menu/sample-json', adminController.getSampleMenuJson);
+router.post('/cafes/:id/menu/validate-json', adminController.validateMenuJson);
+router.post('/cafes/:id/menu/import', adminController.importStructuredMenu);
 
 // Location & Google Maps Resolver
 router.post('/resolve-maps-url', adminController.resolveMapsUrl);

@@ -1301,25 +1301,226 @@
       <div class="p-6 overflow-y-auto flex-1 space-y-5 custom-scroll">
         <input type="hidden" id="menuCafeId" />
 
-        <!-- Add Category Form -->
-        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
-          <div class="relative flex-1">
-            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-              <i class="fa-solid fa-layer-group text-xs"></i>
-            </span>
-            <input type="text" id="newCategoryInput" onkeydown="if(event.key==='Enter'){event.preventDefault();handleAddMenuCategory();}" placeholder="New category name (e.g. Pasta, Snacks, Burgers, Beverages)..." class="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white" />
+        <!-- Dual Method Selection Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          <!-- Option 1: Manual Entry Card -->
+          <div id="methodCard-manual" onclick="switchMenuMethod('manual')" class="p-4 rounded-xl border-2 cursor-pointer transition flex items-start gap-3 bg-white border-brand-primary ring-2 ring-brand-primary/10 shadow-xs">
+            <div class="w-10 h-10 rounded-lg bg-brand-primary/10 text-brand-primary flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-list-check text-base"></i>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-bold text-slate-900">OPTION 1 — Manual Entry</h4>
+                <span id="badge-manual" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-primary text-white">Active</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                Add, organize, edit prices, descriptions, and toggle availability item by item.
+              </p>
+            </div>
           </div>
-          <button type="button" onclick="handleAddMenuCategory()" class="px-4 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition shadow-sm flex items-center justify-center gap-1.5 shrink-0">
-            <i class="fa-solid fa-plus text-[10px]"></i>
-            <span>Add Category</span>
-          </button>
+
+          <!-- Option 2: Paste Full Menu Card -->
+          <div id="methodCard-paste" onclick="switchMenuMethod('paste')" class="p-4 rounded-xl border-2 cursor-pointer transition flex items-start gap-3 bg-white border-slate-200 hover:border-slate-300">
+            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-file-code text-base"></i>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-bold text-slate-900">OPTION 2 — Paste Full Menu</h4>
+                <span id="badge-paste" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">AI Import</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                Paste structured JSON extracted by ChatGPT or Gemini, validate, preview & import into DB.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div id="menuFeedback" class="hidden text-xs p-2.5 rounded-lg font-medium"></div>
+        <!-- ==================== METHOD 1 CONTAINER: MANUAL ENTRY ==================== -->
+        <div id="menuView-manual" class="space-y-4">
+          <!-- Add Category Form -->
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
+            <div class="relative flex-1">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                <i class="fa-solid fa-layer-group text-xs"></i>
+              </span>
+              <input type="text" id="newCategoryInput" onkeydown="if(event.key==='Enter'){event.preventDefault();handleAddMenuCategory();}" placeholder="New category name (e.g. Pasta, Snacks, Burgers, Beverages)..." class="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white" />
+            </div>
+            <button type="button" onclick="handleAddMenuCategory()" class="px-4 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition shadow-sm flex items-center justify-center gap-1.5 shrink-0">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>Add Category</span>
+            </button>
+          </div>
 
-        <!-- Categories & Items list -->
-        <div id="menuCategoriesContainer" class="space-y-4">
-          <!-- Rendered dynamically -->
+          <div id="menuFeedback" class="hidden text-xs p-2.5 rounded-lg font-medium"></div>
+
+          <!-- Categories & Items list -->
+          <div id="menuCategoriesContainer" class="space-y-4">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- ==================== METHOD 2 CONTAINER: PASTE FULL MENU ==================== -->
+        <div id="menuView-paste" class="hidden space-y-4">
+          <!-- Step 1: Input & Validation -->
+          <div id="pasteInputStep" class="space-y-3">
+            <div class="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-100 flex items-start gap-3 text-xs text-indigo-900">
+              <i class="fa-solid fa-wand-magic-sparkles text-indigo-600 mt-0.5 text-sm"></i>
+              <div class="flex-1">
+                <span class="font-bold">Extract menu using ChatGPT / Gemini:</span>
+                <p class="text-[11px] text-indigo-800 mt-0.5 leading-relaxed">
+                  Provide your menu photo or PDF to ChatGPT or Gemini with the prompt: <em>"Extract this menu into ZipBi's JSON format"</em>. Then copy the JSON and paste it below. Food photographs are prohibited per design specification.
+                </p>
+              </div>
+            </div>
+
+            <!-- Standard Format Accordion -->
+            <div class="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+              <div class="px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-slate-100/60 transition" onclick="toggleSampleFormatAccordion()">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-code text-xs text-slate-500"></i>
+                  <span class="text-xs font-bold text-slate-800">Standard ZipBi Menu JSON Schema</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="event.stopPropagation(); copySampleJsonToClipboard();" class="px-2.5 py-1 rounded bg-white border border-slate-300 hover:border-slate-400 text-slate-700 text-[11px] font-semibold transition flex items-center gap-1 shadow-2xs">
+                    <i class="fa-solid fa-copy text-[10px]"></i>
+                    <span id="copySampleBtnText">Copy Sample Format</span>
+                  </button>
+                  <button type="button" onclick="event.stopPropagation(); loadSampleIntoTextarea();" class="px-2.5 py-1 rounded bg-white border border-slate-300 hover:border-slate-400 text-slate-700 text-[11px] font-semibold transition flex items-center gap-1 shadow-2xs">
+                    <i class="fa-solid fa-paste text-[10px]"></i>
+                    <span>Load Sample</span>
+                  </button>
+                  <i id="sampleAccordionChevron" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
+                </div>
+              </div>
+              <div id="sampleAccordionBody" class="hidden px-4 pb-3 pt-1 border-t border-slate-200 bg-white">
+                <pre id="sampleJsonDisplay" class="text-[11px] font-mono text-emerald-400 bg-slate-900 p-3 rounded-lg overflow-x-auto max-h-48"></pre>
+              </div>
+            </div>
+
+            <!-- JSON Editor Textarea -->
+            <div>
+              <div class="flex items-center justify-between pb-1.5 text-xs">
+                <label for="menuJsonTextarea" class="font-bold text-slate-700 flex items-center gap-1.5">
+                  <i class="fa-solid fa-align-left text-slate-400"></i>
+                  <span>Paste JSON Here</span>
+                </label>
+                <div class="flex items-center gap-2 text-[11px]">
+                  <span id="jsonCharCount" class="text-slate-400">0 characters</span>
+                  <button type="button" onclick="clearMenuJsonTextarea()" class="text-slate-400 hover:text-red-600 transition">Clear</button>
+                </div>
+              </div>
+              <textarea id="menuJsonTextarea" rows="12" oninput="handleJsonTextareaInput()" placeholder='{
+  "cafe_name": "The German Cafe",
+  "currency": "INR",
+  "categories": [
+    {
+      "name": "Pasta",
+      "items": [
+        { "name": "Pink Sauce Penne", "description": "Creamy pink sauce pasta", "price": 180, "food_type": "unknown" },
+        { "name": "White Sauce Pasta", "description": null, "price": 170, "food_type": "unknown" }
+      ]
+    },
+    {
+      "name": "Snacks",
+      "items": [
+        { "name": "Crispy Corn", "description": null, "price": 120, "food_type": "vegetarian" }
+      ]
+    }
+  ]
+}' class="w-full font-mono text-xs p-3 rounded-xl border border-slate-300 bg-slate-900 text-emerald-400 focus:outline-none focus:border-brand-primary custom-scroll"></textarea>
+            </div>
+
+            <!-- Validation Feedback Box -->
+            <div id="jsonValidationBox" class="hidden p-3 rounded-xl text-xs space-y-1.5"></div>
+
+            <!-- Action Buttons for Step 1 -->
+            <div class="flex items-center justify-between pt-1">
+              <div class="text-[11px] text-slate-400">
+                <i class="fa-solid fa-circle-info"></i> Validates café name match, non-negative INR prices, and schema.
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="handleValidateMenuJsonClick()" class="px-3.5 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition shadow-xs flex items-center gap-1.5">
+                  <i class="fa-solid fa-shield-check text-emerald-600"></i>
+                  <span>Validate JSON</span>
+                </button>
+                <button type="button" onclick="handlePreviewMenuClick()" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition shadow-sm flex items-center gap-1.5">
+                  <i class="fa-solid fa-eye"></i>
+                  <span>Preview Menu &rarr;</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Interactive Editable Preview Step -->
+          <div id="pastePreviewStep" class="hidden space-y-4">
+            <!-- Header bar with summary & actions -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="handleBackToJsonEditor()" class="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:border-slate-400 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs">
+                  <i class="fa-solid fa-arrow-left"></i>
+                  <span>Back to JSON</span>
+                </button>
+                <div class="border-l border-slate-200 pl-3">
+                  <div class="text-xs font-bold text-slate-900" id="previewCafeTitle">Previewing Menu</div>
+                  <div class="text-[11px] text-slate-500" id="previewStatsSubtitle">0 categories, 0 items</div>
+                </div>
+              </div>
+
+              <!-- Import Action Buttons -->
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="cancelPastePreview()" class="px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-700 text-xs font-semibold transition">
+                  Cancel
+                </button>
+                <button type="button" onclick="handleExecuteImport('Awaiting Merchant Confirmation')" class="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 transition shadow-xs flex items-center gap-1">
+                  <i class="fa-solid fa-floppy-disk text-[10px]"></i>
+                  <span>Import as Draft</span>
+                </button>
+                <button type="button" onclick="handleExecuteImport('Verified Menu')" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition shadow-xs flex items-center gap-1.5">
+                  <i class="fa-solid fa-cloud-arrow-up text-[10px]"></i>
+                  <span>Import & Publish Menu</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Warnings / Notice Banner (e.g. Existing Menu Mode or Name Mismatch) -->
+            <div id="previewWarningBanner" class="hidden"></div>
+
+            <!-- Existing Menu Options (Replace vs Merge) -->
+            <div id="previewExistingMenuNotice" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div class="flex items-center gap-2 text-amber-900">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 text-sm"></i>
+                <div>
+                  <span class="font-bold">Existing Menu Detected:</span>
+                  <span id="previewExistingCountText" class="text-amber-800 text-[11px] ml-1">Café already has menu items.</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-amber-300">
+                <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                  <input type="radio" name="previewImportMode" value="replace" checked class="text-brand-primary" />
+                  <span>Replace Existing Menu</span>
+                </label>
+                <span class="text-slate-300">|</span>
+                <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                  <input type="radio" name="previewImportMode" value="merge" class="text-brand-primary" />
+                  <span>Merge with Existing</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Container for category preview cards & editable tables -->
+            <div id="previewCategoriesContainer" class="space-y-4">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Add Category to Preview button -->
+            <div class="pt-2 flex justify-center">
+              <button type="button" onclick="previewAddCategory()" class="px-4 py-2 rounded-xl border border-dashed border-slate-300 hover:border-brand-primary bg-white hover:bg-brand-primary/5 text-slate-700 hover:text-brand-primary text-xs font-bold transition flex items-center gap-1.5 shadow-2xs">
+                <i class="fa-solid fa-plus text-[10px]"></i>
+                <span>Add Category to Preview</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2825,6 +3026,9 @@
       currentMenuCafeId = cafeId;
       document.getElementById('menuCafeId').value = cafeId;
 
+      switchMenuMethod('manual');
+      resetPasteMenuState();
+
       const cafe = allCafes.find((c) => c.id === cafeId);
       document.getElementById('menuModalTitle').textContent = `Manage Menu: ${cafe ? cafe.name : ''}`;
 
@@ -2905,6 +3109,11 @@
     function renderMenuCategories(categories) {
       const container = document.getElementById('menuCategoriesContainer');
       container.innerHTML = '';
+
+      let totalItems = 0;
+      (categories || []).forEach((c) => { totalItems += (c.items || []).length; });
+      const countBadge = document.getElementById('menuModalCountBadge');
+      if (countBadge) countBadge.textContent = `${totalItems} ${totalItems === 1 ? 'Item' : 'Items'}`;
 
       if (!categories || categories.length === 0) {
         container.innerHTML = `
@@ -3294,6 +3503,644 @@
         }
       } catch (err) {
         alert('Network error while deleting item.');
+      }
+    }
+
+    // ==================== OPTION 2: PASTE FULL MENU (STRUCTURED JSON) ====================
+    let previewMenuState = null;
+    const SAMPLE_SCHEMA_FALLBACK = {
+      cafe_name: "The German Cafe",
+      currency: "INR",
+      categories: [
+        {
+          name: "Pasta",
+          items: [
+            {
+              name: "Pink Sauce Penne",
+              description: "Creamy pink sauce pasta",
+              price: 180,
+              food_type: "unknown"
+            },
+            {
+              name: "White Sauce Pasta",
+              description: null,
+              price: 170,
+              food_type: "unknown"
+            }
+          ]
+        },
+        {
+          name: "Snacks",
+          items: [
+            {
+              name: "Crispy Corn",
+              description: null,
+              price: 120,
+              food_type: "vegetarian"
+            }
+          ]
+        }
+      ]
+    };
+
+    function switchMenuMethod(method) {
+      const manualCard = document.getElementById('methodCard-manual');
+      const pasteCard = document.getElementById('methodCard-paste');
+      const manualBadge = document.getElementById('badge-manual');
+      const pasteBadge = document.getElementById('badge-paste');
+      const manualView = document.getElementById('menuView-manual');
+      const pasteView = document.getElementById('menuView-paste');
+
+      if (!manualCard || !pasteCard || !manualView || !pasteView) return;
+
+      if (method === 'paste') {
+        manualCard.className = 'p-4 rounded-xl border-2 cursor-pointer transition flex items-start gap-3 bg-white border-slate-200 hover:border-slate-300';
+        pasteCard.className = 'p-4 rounded-xl border-2 cursor-pointer transition flex items-start gap-3 bg-white border-indigo-600 ring-2 ring-indigo-600/10 shadow-xs';
+        if (manualBadge) {
+          manualBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600';
+          manualBadge.textContent = 'Manual';
+        }
+        if (pasteBadge) {
+          pasteBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-600 text-white';
+          pasteBadge.textContent = 'Active';
+        }
+        manualView.classList.add('hidden');
+        pasteView.classList.remove('hidden');
+
+        // Populate sample code block if empty
+        const samplePre = document.getElementById('sampleJsonDisplay');
+        if (samplePre && !samplePre.textContent.trim()) {
+          samplePre.textContent = JSON.stringify(SAMPLE_SCHEMA_FALLBACK, null, 2);
+        }
+      } else {
+        manualCard.className = 'p-4 rounded-xl border-2 cursor-pointer transition flex items-start gap-3 bg-white border-brand-primary ring-2 ring-brand-primary/10 shadow-xs';
+        pasteCard.className = 'p-4 rounded-xl border-2 cursor-pointer transition flex items-start gap-3 bg-white border-slate-200 hover:border-slate-300';
+        if (manualBadge) {
+          manualBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-primary text-white';
+          manualBadge.textContent = 'Active';
+        }
+        if (pasteBadge) {
+          pasteBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600';
+          pasteBadge.textContent = 'AI Import';
+        }
+        manualView.classList.remove('hidden');
+        pasteView.classList.add('hidden');
+      }
+    }
+
+    function resetPasteMenuState() {
+      previewMenuState = null;
+      const step1 = document.getElementById('pasteInputStep');
+      const step2 = document.getElementById('pastePreviewStep');
+      if (step1) step1.classList.remove('hidden');
+      if (step2) step2.classList.add('hidden');
+      const valBox = document.getElementById('jsonValidationBox');
+      if (valBox) {
+        valBox.innerHTML = '';
+        valBox.classList.add('hidden');
+      }
+      const warnBanner = document.getElementById('previewWarningBanner');
+      if (warnBanner) {
+        warnBanner.innerHTML = '';
+        warnBanner.classList.add('hidden');
+      }
+    }
+
+    function toggleSampleFormatAccordion() {
+      const body = document.getElementById('sampleAccordionBody');
+      const chevron = document.getElementById('sampleAccordionChevron');
+      if (body) {
+        const isHidden = body.classList.toggle('hidden');
+        if (chevron) {
+          chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+      }
+    }
+
+    async function copySampleJsonToClipboard() {
+      const cafe = allCafes.find((c) => c.id === currentMenuCafeId);
+      const sampleObj = JSON.parse(JSON.stringify(SAMPLE_SCHEMA_FALLBACK));
+      if (cafe) sampleObj.cafe_name = cafe.name;
+      const textToCopy = JSON.stringify(sampleObj, null, 2);
+
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        const btnText = document.getElementById('copySampleBtnText');
+        if (btnText) {
+          const orig = btnText.textContent;
+          btnText.textContent = 'Copied!';
+          setTimeout(() => { btnText.textContent = orig; }, 2000);
+        }
+      } catch (err) {
+        alert('Could not copy to clipboard. Please copy manually from the sample box.');
+      }
+    }
+
+    function loadSampleIntoTextarea() {
+      const cafe = allCafes.find((c) => c.id === currentMenuCafeId);
+      const sampleObj = JSON.parse(JSON.stringify(SAMPLE_SCHEMA_FALLBACK));
+      if (cafe) sampleObj.cafe_name = cafe.name;
+      const textarea = document.getElementById('menuJsonTextarea');
+      if (textarea) {
+        textarea.value = JSON.stringify(sampleObj, null, 2);
+        handleJsonTextareaInput();
+      }
+    }
+
+    function clearMenuJsonTextarea() {
+      const textarea = document.getElementById('menuJsonTextarea');
+      if (textarea) {
+        textarea.value = '';
+        handleJsonTextareaInput();
+      }
+      const valBox = document.getElementById('jsonValidationBox');
+      if (valBox) valBox.classList.add('hidden');
+    }
+
+    function handleJsonTextareaInput() {
+      const textarea = document.getElementById('menuJsonTextarea');
+      const charCount = document.getElementById('jsonCharCount');
+      if (textarea && charCount) {
+        const len = (textarea.value || '').length;
+        charCount.textContent = `${len.toLocaleString()} characters`;
+      }
+    }
+
+    async function handleValidateMenuJsonClick() {
+      if (!currentMenuCafeId) return;
+      const textarea = document.getElementById('menuJsonTextarea');
+      const valBox = document.getElementById('jsonValidationBox');
+      const rawText = (textarea ? textarea.value : '').trim();
+
+      if (!rawText) {
+        valBox.className = 'p-3 rounded-xl text-xs space-y-1.5 bg-red-50 border border-red-200 text-red-800';
+        valBox.innerHTML = '<div class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-circle-exclamation text-red-600"></i> JSON Editor is empty</div><p>Please paste valid JSON menu data into the editor before validating.</p>';
+        valBox.classList.remove('hidden');
+        return;
+      }
+
+      valBox.className = 'p-3 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-600';
+      valBox.innerHTML = '<div class="flex items-center gap-2"><i class="fa-solid fa-spinner fa-spin text-brand-primary"></i><span>Validating JSON against standard ZipBi schema...</span></div>';
+      valBox.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/validate-json`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ raw_json: rawText }),
+        });
+        const data = await res.json();
+
+        if (data.valid) {
+          let warningsHtml = '';
+          if (data.warnings && data.warnings.length > 0) {
+            warningsHtml = `
+              <div class="mt-2 pt-2 border-t border-amber-200 text-amber-800 space-y-1">
+                <div class="font-bold flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Warnings:</div>
+                <ul class="list-disc pl-5 space-y-0.5 text-[11px]">
+                  ${data.warnings.map(w => `<li>${escapeHtml(w)}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+
+          valBox.className = 'p-3 rounded-xl text-xs bg-emerald-50 border border-emerald-200 text-emerald-900';
+          valBox.innerHTML = `
+            <div class="font-bold flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
+              <span>Valid ZipBi Menu Schema (${data.categoriesCount} categories, ${data.itemsCount} total items)</span>
+            </div>
+            <p class="text-[11px] text-emerald-800 mt-1">Structure is valid and ready for preview. Click "Preview Menu &rarr;" to review and edit before importing.</p>
+            ${warningsHtml}
+          `;
+        } else {
+          valBox.className = 'p-3 rounded-xl text-xs bg-red-50 border border-red-200 text-red-900';
+          valBox.innerHTML = `
+            <div class="font-bold flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-xmark text-red-600 text-sm"></i>
+              <span>Validation Failed (${(data.errors || []).length} issue${(data.errors || []).length === 1 ? '' : 's'} found)</span>
+            </div>
+            <ul class="list-disc pl-5 space-y-1 mt-1 text-[11px] text-red-800">
+              ${(data.errors || ['Invalid menu format']).map(e => `<li>${escapeHtml(e)}</li>`).join('')}
+            </ul>
+          `;
+        }
+        valBox.classList.remove('hidden');
+      } catch (err) {
+        valBox.className = 'p-3 rounded-xl text-xs bg-red-50 border border-red-200 text-red-800';
+        valBox.innerHTML = '<div class="font-bold">Network or server error validating JSON. Please try again.</div>';
+        valBox.classList.remove('hidden');
+      }
+    }
+
+    async function handlePreviewMenuClick() {
+      if (!currentMenuCafeId) return;
+      const textarea = document.getElementById('menuJsonTextarea');
+      const valBox = document.getElementById('jsonValidationBox');
+      const rawText = (textarea ? textarea.value : '').trim();
+
+      if (!rawText) {
+        handleValidateMenuJsonClick();
+        return;
+      }
+
+      const cafe = allCafes.find((c) => c.id === currentMenuCafeId);
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/validate-json`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ raw_json: rawText }),
+        });
+        const data = await res.json();
+
+        if (!data.valid) {
+          handleValidateMenuJsonClick();
+          return;
+        }
+
+        if (data.nameMismatch) {
+          const proceed = confirm(`⚠️ Warning: The pasted menu is labeled for "${data.pastedCafeName}", while the selected café in ZipBi is "${cafe ? cafe.name : ''}".\n\nDo you want to proceed to preview and import into "${cafe ? cafe.name : ''}"?`);
+          if (!proceed) return;
+        }
+
+        // Store sanitized preview state
+        previewMenuState = JSON.parse(JSON.stringify(data.sanitizedMenu));
+        // Ensure cafe_name is consistent
+        if (cafe) previewMenuState.cafe_name = cafe.name;
+
+        // Switch to Step 2: Preview
+        document.getElementById('pasteInputStep').classList.add('hidden');
+        document.getElementById('pastePreviewStep').classList.remove('hidden');
+
+        // Display warning banner if name mismatch was accepted
+        const warnBanner = document.getElementById('previewWarningBanner');
+        if (data.nameMismatch) {
+          warnBanner.className = 'p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2';
+          warnBanner.innerHTML = `
+            <i class="fa-solid fa-triangle-exclamation text-amber-600"></i>
+            <span>Importing menu into <strong>${escapeHtml(cafe ? cafe.name : '')}</strong> (originally labeled "${escapeHtml(data.pastedCafeName)}").</span>
+          `;
+          warnBanner.classList.remove('hidden');
+        } else {
+          warnBanner.classList.add('hidden');
+        }
+
+        renderEditablePreview();
+      } catch (err) {
+        alert('Network error preparing menu preview.');
+      }
+    }
+
+    function handleBackToJsonEditor() {
+      syncPreviewInputsToState();
+      document.getElementById('pastePreviewStep').classList.add('hidden');
+      document.getElementById('pasteInputStep').classList.remove('hidden');
+    }
+
+    function cancelPastePreview() {
+      if (confirm('Discard preview changes and return to Manual Entry?')) {
+        resetPasteMenuState();
+        switchMenuMethod('manual');
+      }
+    }
+
+    function syncPreviewInputsToState() {
+      if (!previewMenuState || !previewMenuState.categories) return;
+
+      previewMenuState.categories.forEach((cat, cIdx) => {
+        const catNameInput = document.getElementById(`previewCatName_${cIdx}`);
+        if (catNameInput) cat.name = catNameInput.value.trim();
+
+        (cat.items || []).forEach((item, iIdx) => {
+          const nameInput = document.getElementById(`previewItemName_${cIdx}_${iIdx}`);
+          const descInput = document.getElementById(`previewItemDesc_${cIdx}_${iIdx}`);
+          const priceInput = document.getElementById(`previewItemPrice_${cIdx}_${iIdx}`);
+          const foodSelect = document.getElementById(`previewItemFood_${cIdx}_${iIdx}`);
+
+          if (nameInput) item.name = nameInput.value.trim();
+          if (descInput) item.description = descInput.value.trim() || null;
+          if (priceInput) {
+            const p = parseFloat(priceInput.value);
+            item.price = !isNaN(p) && p >= 0 ? p : null;
+          }
+          if (foodSelect) {
+            item.food_type = foodSelect.value;
+            item.is_veg = foodSelect.value === 'vegetarian' || foodSelect.value === 'vegan' || foodSelect.value === 'VEG' || foodSelect.value === 'VEGAN';
+          }
+        });
+      });
+    }
+
+    function renderEditablePreview() {
+      if (!previewMenuState) return;
+
+      const cafe = allCafes.find((c) => c.id === currentMenuCafeId);
+      document.getElementById('previewCafeTitle').textContent = `Previewing: ${previewMenuState.cafe_name || (cafe ? cafe.name : '')}`;
+
+      const categories = previewMenuState.categories || [];
+      let totalItems = 0;
+      categories.forEach((c) => { totalItems += (c.items || []).length; });
+      document.getElementById('previewStatsSubtitle').textContent = `${categories.length} categories, ${totalItems} items • Currency: ${previewMenuState.currency || 'INR'}`;
+
+      // Check existing menu items in database
+      let existingCount = 0;
+      (currentMenuCategories || []).forEach((c) => { existingCount += (c.items || []).length; });
+      const existingNotice = document.getElementById('previewExistingMenuNotice');
+      if (existingCount > 0) {
+        existingNotice.classList.remove('hidden');
+        document.getElementById('previewExistingCountText').textContent = `Café currently has ${existingCount} items in database across ${currentMenuCategories.length} categories. Choose whether to replace or merge.`;
+      } else {
+        existingNotice.classList.add('hidden');
+      }
+
+      const container = document.getElementById('previewCategoriesContainer');
+      container.innerHTML = '';
+
+      if (categories.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            No categories in this menu. Click "+ Add Category to Preview" below.
+          </div>
+        `;
+        return;
+      }
+
+      categories.forEach((cat, cIdx) => {
+        const catCard = document.createElement('div');
+        catCard.className = 'p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3';
+
+        // Category Header with editable name
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100';
+        headerDiv.innerHTML = `
+          <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+            <span class="text-xs font-bold text-slate-400 font-mono">#${cIdx + 1}</span>
+            <input type="text" id="previewCatName_${cIdx}" value="${escapeHtml(cat.name)}" onchange="previewUpdateCategoryName(${cIdx}, this.value)" placeholder="Category name..." class="text-xs font-bold text-slate-900 px-2 py-1 rounded border border-slate-200 focus:border-brand-primary outline-none flex-1 max-w-sm" />
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${(cat.items || []).length} items</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="previewAddItem(${cIdx})" class="px-2.5 py-1 rounded bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary text-xs font-bold transition flex items-center gap-1">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>Add Item</span>
+            </button>
+            <button type="button" onclick="previewDeleteCategory(${cIdx})" class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 transition" title="Delete Category">
+              <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+          </div>
+        `;
+        catCard.appendChild(headerDiv);
+
+        // Table of items
+        const items = cat.items || [];
+        if (items.length === 0) {
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'p-4 text-center text-xs text-slate-400 italic bg-slate-50 rounded-lg border border-dashed border-slate-200';
+          emptyDiv.innerHTML = 'No items in this category. Click "+ Add Item" above to add one.';
+          catCard.appendChild(emptyDiv);
+        } else {
+          const tableWrap = document.createElement('div');
+          tableWrap.className = 'overflow-x-auto';
+          let rowsHtml = '';
+
+          items.forEach((item, iIdx) => {
+            const priceVal = item.price !== null && item.price !== undefined ? item.price : '';
+            const foodType = (item.food_type || 'unknown').toLowerCase();
+
+            // Build category move options
+            let moveOptions = '';
+            categories.forEach((targetCat, targetIdx) => {
+              moveOptions += `<option value="${targetIdx}" ${targetIdx === cIdx ? 'selected' : ''}>${targetIdx === cIdx ? '• Current: ' : 'Move to: '} ${escapeHtml(targetCat.name)}</option>`;
+            });
+
+            rowsHtml += `
+              <tr class="border-b border-slate-100 hover:bg-slate-50/50 text-xs">
+                <td class="py-2 pr-2">
+                  <input type="text" id="previewItemName_${cIdx}_${iIdx}" value="${escapeHtml(item.name || '')}" onchange="previewUpdateItemField(${cIdx}, ${iIdx}, 'name', this.value)" placeholder="Item name*" class="w-full px-2 py-1 rounded border border-slate-200 text-xs text-slate-900 font-semibold focus:border-brand-primary outline-none" />
+                </td>
+                <td class="py-2 pr-2">
+                  <input type="text" id="previewItemDesc_${cIdx}_${iIdx}" value="${escapeHtml(item.description || '')}" onchange="previewUpdateItemField(${cIdx}, ${iIdx}, 'description', this.value)" placeholder="Description (optional)" class="w-full px-2 py-1 rounded border border-slate-200 text-[11px] text-slate-600 focus:border-brand-primary outline-none" />
+                </td>
+                <td class="py-2 pr-2 w-24">
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 font-bold text-xs">₹</span>
+                    <input type="number" step="any" min="0" id="previewItemPrice_${cIdx}_${iIdx}" value="${priceVal}" onchange="previewUpdateItemField(${cIdx}, ${iIdx}, 'price', this.value)" placeholder="Price" class="w-full pl-6 pr-2 py-1 rounded border border-slate-200 text-xs font-mono font-bold text-slate-900 focus:border-brand-primary outline-none" />
+                  </div>
+                </td>
+                <td class="py-2 pr-2 w-32">
+                  <select id="previewItemFood_${cIdx}_${iIdx}" onchange="previewUpdateItemField(${cIdx}, ${iIdx}, 'food_type', this.value)" class="w-full px-2 py-1 rounded border border-slate-200 text-[11px] font-semibold bg-white text-slate-800 focus:border-brand-primary outline-none">
+                    <option value="vegetarian" ${foodType === 'vegetarian' || foodType === 'veg' ? 'selected' : ''}>🟢 Vegetarian</option>
+                    <option value="non_vegetarian" ${foodType === 'non_vegetarian' || foodType === 'non_veg' ? 'selected' : ''}>🔴 Non-Veg</option>
+                    <option value="egg" ${foodType === 'egg' ? 'selected' : ''}>🟡 Egg</option>
+                    <option value="vegan" ${foodType === 'vegan' ? 'selected' : ''}>🌱 Vegan</option>
+                    <option value="unknown" ${foodType === 'unknown' ? 'selected' : ''}>⚪ Unknown</option>
+                  </select>
+                </td>
+                <td class="py-2 pr-2 w-44">
+                  <select onchange="previewMoveItem(${cIdx}, ${iIdx}, parseInt(this.value, 10))" class="w-full px-2 py-1 rounded border border-slate-200 text-[11px] text-slate-600 bg-white focus:border-brand-primary outline-none" title="Move item to another category">
+                    ${moveOptions}
+                  </select>
+                </td>
+                <td class="py-2 text-right w-10">
+                  <button type="button" onclick="previewDeleteItem(${cIdx}, ${iIdx})" class="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition" title="Delete item">
+                    <i class="fa-solid fa-trash text-xs"></i>
+                  </button>
+                </td>
+              </tr>
+            `;
+          });
+
+          tableWrap.innerHTML = `
+            <table class="w-full border-collapse">
+              <thead>
+                <tr class="text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-200 pb-1">
+                  <th class="pb-1.5 font-bold">Item Name*</th>
+                  <th class="pb-1.5 font-bold">Description</th>
+                  <th class="pb-1.5 font-bold">Price (₹)</th>
+                  <th class="pb-1.5 font-bold">Food Type</th>
+                  <th class="pb-1.5 font-bold">Organize / Move</th>
+                  <th class="pb-1.5 text-right font-bold">Action</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          `;
+          catCard.appendChild(tableWrap);
+        }
+
+        container.appendChild(catCard);
+      });
+    }
+
+    function previewUpdateCategoryName(cIdx, newName) {
+      if (!previewMenuState || !previewMenuState.categories[cIdx]) return;
+      previewMenuState.categories[cIdx].name = newName.trim();
+    }
+
+    function previewUpdateItemField(cIdx, iIdx, field, value) {
+      if (!previewMenuState || !previewMenuState.categories[cIdx] || !previewMenuState.categories[cIdx].items[iIdx]) return;
+      const item = previewMenuState.categories[cIdx].items[iIdx];
+      if (field === 'price') {
+        const p = parseFloat(value);
+        item.price = !isNaN(p) && p >= 0 ? p : null;
+      } else if (field === 'food_type') {
+        item.food_type = value;
+        item.is_veg = value === 'vegetarian' || value === 'vegan' || value === 'VEG' || value === 'VEGAN';
+      } else if (field === 'description') {
+        item.description = value.trim() || null;
+      } else if (field === 'name') {
+        item.name = value.trim();
+      }
+    }
+
+    function previewAddCategory() {
+      syncPreviewInputsToState();
+      if (!previewMenuState) previewMenuState = { categories: [] };
+      if (!previewMenuState.categories) previewMenuState.categories = [];
+      const newIndex = previewMenuState.categories.length + 1;
+      previewMenuState.categories.push({
+        name: `New Category ${newIndex}`,
+        items: []
+      });
+      renderEditablePreview();
+      const newCatInput = document.getElementById(`previewCatName_${previewMenuState.categories.length - 1}`);
+      if (newCatInput) {
+        newCatInput.focus();
+        newCatInput.select();
+      }
+    }
+
+    function previewDeleteCategory(cIdx) {
+      syncPreviewInputsToState();
+      if (!previewMenuState || !previewMenuState.categories) return;
+      const cat = previewMenuState.categories[cIdx];
+      const itemCount = (cat.items || []).length;
+      if (itemCount > 0) {
+        if (!confirm(`Delete category "${cat.name}" and all ${itemCount} items inside it?`)) return;
+      }
+      previewMenuState.categories.splice(cIdx, 1);
+      renderEditablePreview();
+    }
+
+    function previewAddItem(cIdx) {
+      syncPreviewInputsToState();
+      if (!previewMenuState || !previewMenuState.categories[cIdx]) return;
+      if (!previewMenuState.categories[cIdx].items) previewMenuState.categories[cIdx].items = [];
+      previewMenuState.categories[cIdx].items.push({
+        name: 'New Item',
+        description: null,
+        price: 0,
+        food_type: 'unknown',
+        is_veg: false
+      });
+      renderEditablePreview();
+    }
+
+    function previewDeleteItem(cIdx, iIdx) {
+      syncPreviewInputsToState();
+      if (!previewMenuState || !previewMenuState.categories[cIdx] || !previewMenuState.categories[cIdx].items) return;
+      previewMenuState.categories[cIdx].items.splice(iIdx, 1);
+      renderEditablePreview();
+    }
+
+    function previewMoveItem(cIdx, iIdx, targetIdx) {
+      if (cIdx === targetIdx) return;
+      syncPreviewInputsToState();
+      if (!previewMenuState || !previewMenuState.categories[cIdx] || !previewMenuState.categories[targetIdx]) return;
+      const [item] = previewMenuState.categories[cIdx].items.splice(iIdx, 1);
+      if (item) {
+        if (!previewMenuState.categories[targetIdx].items) previewMenuState.categories[targetIdx].items = [];
+        previewMenuState.categories[targetIdx].items.push(item);
+      }
+      renderEditablePreview();
+    }
+
+    async function handleExecuteImport(targetStatus) {
+      if (!currentMenuCafeId) return;
+      syncPreviewInputsToState();
+
+      if (!previewMenuState || !previewMenuState.categories || previewMenuState.categories.length === 0) {
+        alert('Please include at least one category before importing.');
+        return;
+      }
+
+      // Check category and item names
+      for (let c = 0; c < previewMenuState.categories.length; c++) {
+        const cat = previewMenuState.categories[c];
+        if (!cat.name || !cat.name.trim()) {
+          alert(`Category #${c + 1} has an empty name. Please provide a category name.`);
+          return;
+        }
+        for (let i = 0; i < (cat.items || []).length; i++) {
+          const item = cat.items[i];
+          if (!item.name || !item.name.trim()) {
+            alert(`Item #${i + 1} in category "${cat.name}" has an empty name.`);
+            return;
+          }
+          if (item.price !== null && (isNaN(item.price) || item.price < 0)) {
+            alert(`Item "${item.name}" has an invalid price. Price must be a non-negative number or empty.`);
+            return;
+          }
+        }
+      }
+
+      // Read import mode (replace or merge)
+      let selectedMode = 'replace';
+      const modeRadio = document.querySelector('input[name="previewImportMode"]:checked');
+      if (modeRadio) selectedMode = modeRadio.value;
+
+      const cafe = allCafes.find((c) => c.id === currentMenuCafeId);
+      let existingCount = 0;
+      (currentMenuCategories || []).forEach((c) => { existingCount += (c.items || []).length; });
+
+      if (selectedMode === 'replace' && existingCount > 0) {
+        const confirmMsg = `Replace existing menu: This will permanently replace ${existingCount} existing menu item(s) for "${cafe ? cafe.name : ''}" with the ${previewMenuState.categories.reduce((acc, c) => acc + (c.items || []).length, 0)} new items.\n\nAre you sure you want to proceed?`;
+        if (!confirm(confirmMsg)) return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/import`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({
+            menu: previewMenuState,
+            mode: selectedMode,
+            menu_status: targetStatus || 'Verified Menu',
+            allow_name_mismatch: true,
+          }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          alert(`Success! ${data.message || 'Menu successfully imported.'}`);
+
+          // Update local state and switch back to Manual Entry view
+          currentMenuCategories = data.categories || [];
+          if (cafe) {
+            cafe.menu_categories = currentMenuCategories;
+            cafe.menu_status = targetStatus || 'Verified Menu';
+          }
+
+          const statusSelect = document.getElementById('menuVerificationSelect');
+          if (statusSelect) statusSelect.value = targetStatus || 'Verified Menu';
+
+          resetPasteMenuState();
+          switchMenuMethod('manual');
+          renderMenuCategories(currentMenuCategories);
+        } else {
+          alert(data.message || 'Failed to import menu into database.');
+        }
+      } catch (err) {
+        alert('Network error while importing menu into database.');
       }
     }
 

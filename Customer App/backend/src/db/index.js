@@ -932,6 +932,141 @@ module.exports = {
     return targetItem;
   },
 
+  importStructuredMenu: (cafeId, parsedData, options = {}) => {
+    const cafe = cafesData.find((c) => c.id === cafeId || c.slug === cafeId);
+    if (!cafe) return null;
+
+    const mode = options.mode || 'replace'; // 'replace' or 'merge'
+    const adminName = options.adminName || 'ZipBi Administrator';
+    const menuStatus = options.menuStatus || 'Verified Menu';
+
+    if (!Array.isArray(cafe.menu_categories)) {
+      cafe.menu_categories = [];
+    }
+
+    const incomingCategories = Array.isArray(parsedData.categories) ? parsedData.categories : [];
+    let importedCategoriesCount = 0;
+    let importedItemsCount = 0;
+
+    const buildItem = (rawItem, catIdx, itemIdx) => {
+      const priceNum = rawItem.price !== null && rawItem.price !== undefined && !isNaN(Number(rawItem.price))
+        ? Math.round(Number(rawItem.price))
+        : null;
+      const rawFt = (rawItem.food_type || rawItem.foodType || 'unknown').toString().toLowerCase();
+      let foodType = 'UNKNOWN';
+      if (rawFt.includes('non') || rawFt.includes('meat') || rawFt.includes('chicken') || rawFt.includes('fish')) {
+        foodType = 'NON_VEG';
+      } else if (rawFt.includes('egg')) {
+        foodType = 'EGG';
+      } else if (rawFt.includes('vegan')) {
+        foodType = 'VEGAN';
+      } else if (rawFt.includes('veg')) {
+        foodType = 'VEG';
+      }
+
+      return {
+        id: `item-${Date.now()}-${catIdx}-${itemIdx}-${Math.floor(Math.random() * 1000)}`,
+        name: (rawItem.name || '').trim(),
+        description: rawItem.description ? rawItem.description.toString().trim() : '',
+        price: priceNum,
+        currency: 'INR',
+        food_type: foodType,
+        is_veg: foodType === 'VEG' || foodType === 'VEGAN',
+        is_available: true,
+        is_enabled: true,
+        source: 'AI Structured Paste',
+        verified_date: new Date().toISOString().split('T')[0],
+        variants: [],
+      };
+    };
+
+    if (mode === 'replace') {
+      const newCategories = [];
+      incomingCategories.forEach((rawCat, catIdx) => {
+        const catName = (rawCat.name || `Category ${catIdx + 1}`).trim();
+        const items = [];
+        (rawCat.items || []).forEach((rawItem, itemIdx) => {
+          items.push(buildItem(rawItem, catIdx, itemIdx));
+          importedItemsCount++;
+        });
+        newCategories.push({
+          id: `cat-${Date.now()}-${catIdx}-${Math.floor(Math.random() * 1000)}`,
+          name: catName,
+          description: rawCat.description || '',
+          is_enabled: true,
+          display_order: catIdx + 1,
+          items,
+        });
+        importedCategoriesCount++;
+      });
+      cafe.menu_categories = newCategories;
+    } else {
+      // Merge mode
+      incomingCategories.forEach((rawCat, catIdx) => {
+        const catName = (rawCat.name || '').trim();
+        let existingCat = cafe.menu_categories.find((c) => c.name.toLowerCase() === catName.toLowerCase());
+        if (!existingCat) {
+          existingCat = {
+            id: `cat-${Date.now()}-${catIdx}-${Math.floor(Math.random() * 1000)}`,
+            name: catName,
+            description: rawCat.description || '',
+            is_enabled: true,
+            display_order: cafe.menu_categories.length + 1,
+            items: [],
+          };
+          cafe.menu_categories.push(existingCat);
+          importedCategoriesCount++;
+        }
+        (rawCat.items || []).forEach((rawItem, itemIdx) => {
+          const itemName = (rawItem.name || '').trim().toLowerCase();
+          const existingItem = existingCat.items.find((i) => i.name.toLowerCase() === itemName);
+          if (existingItem) {
+            // Update existing item details
+            if (rawItem.price !== null && rawItem.price !== undefined) {
+              existingItem.price = Math.round(Number(rawItem.price));
+            }
+            if (rawItem.description) existingItem.description = rawItem.description.trim();
+            if (rawItem.food_type) {
+              const b = buildItem(rawItem, catIdx, itemIdx);
+              existingItem.food_type = b.food_type;
+              existingItem.is_veg = b.is_veg;
+            }
+          } else {
+            existingCat.items.push(buildItem(rawItem, catIdx, itemIdx));
+            importedItemsCount++;
+          }
+        });
+      });
+    }
+
+    cafe.has_published_menu = cafe.menu_categories.some((c) => c.items.length > 0);
+    cafe.menu_status = menuStatus;
+    cafe.menu_imported_at = new Date().toISOString();
+    cafe.menu_imported_by = adminName;
+    cafe.menu_import_source = 'Structured JSON Paste (AI Extracted)';
+    cafe.menu_items_count = cafe.menu_categories.reduce((acc, c) => acc + (c.items ? c.items.length : 0), 0);
+    cafe.menu_imported_categories_count = importedCategoriesCount;
+    cafe.menu_imported_items_count = importedItemsCount;
+    cafe.updated_at = new Date().toISOString();
+
+    module.exports.saveData();
+
+    module.exports.logActivity(
+      'MENU_STRUCTURED_IMPORT',
+      `Imported ${importedItemsCount} items across ${incomingCategories.length} categories for "${cafe.name}" (${mode} mode).`,
+      adminName
+    );
+
+    return {
+      cafe,
+      totalCategories: cafe.menu_categories.length,
+      totalItems: cafe.menu_categories.reduce((acc, c) => acc + (c.items ? c.items.length : 0), 0),
+      importedCategoriesCount,
+      importedItemsCount,
+      categories: cafe.menu_categories,
+    };
+  },
+
   // Save to Disk
   saveData: () => {
     try {

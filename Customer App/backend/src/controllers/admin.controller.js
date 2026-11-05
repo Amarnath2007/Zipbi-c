@@ -4,6 +4,7 @@ const config = require('../config');
 const db = require('../db');
 const { importImageFromGoogleDrive } = require('../utils/googleDrive');
 const { resolveGoogleMapsUrl, reverseGeocodeCoordinates } = require('../utils/googleMapsResolver');
+const { validateMenuJson, SAMPLE_MENU_JSON } = require('../utils/menuJsonValidator');
 const path = require('path');
 const fs = require('fs');
 
@@ -880,6 +881,96 @@ async function resetDirectory(req, res, next) {
   }
 }
 
+/**
+ * Get Sample Menu JSON schema for external AI prompts
+ */
+function getSampleMenuJson(req, res) {
+  return res.status(200).json({
+    success: true,
+    sample: SAMPLE_MENU_JSON,
+    ai_prompt_suggestion: "Extract this complete menu into ZipBi's JSON format according to this exact schema.",
+  });
+}
+
+/**
+ * Validate pasted menu JSON against schema and target cafe
+ */
+async function validateMenuJsonHandler(req, res, next) {
+  try {
+    const { id } = req.params;
+    const cafe = db.getCafeById(id);
+    if (!cafe) {
+      return res.status(404).json({ success: false, message: `Café '${id}' not found.` });
+    }
+
+    const rawInput = req.body.raw_json !== undefined ? req.body.raw_json : (req.body.menu || req.body);
+    const result = validateMenuJson(rawInput, cafe.name);
+
+    return res.status(200).json({
+      success: true,
+      cafeId: cafe.id,
+      cafeName: cafe.name,
+      ...result,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Import validated structured menu into cafe database records
+ */
+async function importStructuredMenuHandler(req, res, next) {
+  try {
+    const { id } = req.params;
+    const cafe = db.getCafeById(id);
+    if (!cafe) {
+      return res.status(404).json({ success: false, message: `Café '${id}' not found.` });
+    }
+
+    const { menu, raw_json, mode, menu_status, allow_name_mismatch } = req.body;
+    const inputToValidate = menu !== undefined ? menu : raw_json;
+    if (!inputToValidate) {
+      return res.status(400).json({ success: false, message: 'Menu data or raw_json is required.' });
+    }
+
+    const validation = validateMenuJson(inputToValidate, cafe.name);
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Menu validation failed.',
+        errors: validation.errors,
+        warnings: validation.warnings,
+      });
+    }
+
+    if (validation.nameMismatch && allow_name_mismatch !== true) {
+      return res.status(409).json({
+        success: false,
+        nameMismatch: true,
+        message: `Pasted menu is labeled for "${validation.pastedCafeName}", but current café is "${cafe.name}". Please confirm import.`,
+        warnings: validation.warnings,
+      });
+    }
+
+    const adminName = req.user && req.user.fullName ? req.user.fullName : 'ZipBi Administrator';
+    const importResult = db.importStructuredMenu(id, validation.sanitizedMenu, {
+      mode: mode === 'merge' ? 'merge' : 'replace',
+      status: menu_status || 'Verified Menu',
+      adminName,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Menu successfully imported into database (${importResult.importedItemsCount} items across ${importResult.importedCategoriesCount} categories).`,
+      mode: mode === 'merge' ? 'merge' : 'replace',
+      ...importResult,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   adminLogin,
   getStats,
@@ -902,6 +993,9 @@ module.exports = {
   updateMenuItem,
   deleteMenuItem,
   toggleMenuItemAvailability,
+  getSampleMenuJson,
+  validateMenuJson: validateMenuJsonHandler,
+  importStructuredMenu: importStructuredMenuHandler,
   listUsers,
   listPartners,
   getRevenue,
