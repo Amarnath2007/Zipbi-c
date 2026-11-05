@@ -84,6 +84,7 @@ class ApiService {
     if (t.startsWith('tea') && q.startsWith('tea')) return true;
     if (t.startsWith('baker') && q.startsWith('baker')) return true;
     if (t.startsWith('restaur') && q.startsWith('restaur')) return true;
+    if (t.startsWith('other') && q.startsWith('other')) return true;
     return false;
   }
 
@@ -143,6 +144,7 @@ class ApiService {
     if (category != null && category != 'All' && category != 'More') {
       filtered = filtered.where((c) {
         if (_matchesCategory(c.category, category)) return true;
+        if (c.specifiedBusinessType != null && _matchesCategory(c.specifiedBusinessType!, category)) return true;
         if (c.cuisineTags.any((t) => _matchesCategory(t, category))) return true;
         return false;
       }).toList();

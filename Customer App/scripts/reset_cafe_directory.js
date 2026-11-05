@@ -98,7 +98,13 @@ function resetCafeDirectory() {
   console.log('  Database Schema : INTACT & READY FOR REGISTRATION');
   console.log('=============================================');
 
-  return { totalCafes, totalCategories, totalItems, backupFile };
+  return {
+    totalCafes,
+    totalCategories,
+    totalItems,
+    backupFile,
+    totalBackedUp: backupPayload.total_cafes_backed_up,
+  };
 }
 
 if (require.main === module) {

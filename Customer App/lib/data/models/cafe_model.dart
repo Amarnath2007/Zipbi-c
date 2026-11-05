@@ -10,6 +10,7 @@ class CafeModel {
   final String? imageSource;
   final String imageVerificationStatus; // 'VERIFIED' or 'AWAITING_MERCHANT_VERIFICATION'
   final String category;
+  final String? specifiedBusinessType;
   final List<String> cuisineTags;
   final String address;
   final String area;
@@ -46,6 +47,7 @@ class CafeModel {
     this.imageSource,
     this.imageVerificationStatus = 'VERIFIED',
     required this.category,
+    this.specifiedBusinessType,
     required this.cuisineTags,
     required this.address,
     required this.area,
@@ -78,6 +80,17 @@ class CafeModel {
       calculatedDistanceKm ?? distancePsgCasKm ?? 0.0;
 
   bool get isActivePartner => verificationStatus == 'ACTIVE_PARTNER';
+
+  /// Returns user-friendly category display label (uses specified business type if category is Others)
+  String get displayCategory {
+    final catLower = category.toLowerCase();
+    if ((catLower == 'others' || catLower == 'other') &&
+        specifiedBusinessType != null &&
+        specifiedBusinessType!.trim().isNotEmpty) {
+      return specifiedBusinessType!.trim();
+    }
+    return category;
+  }
   bool get isVerified =>
       verificationStatus == 'VERIFIED' || verificationStatus == 'ACTIVE_PARTNER';
 
@@ -106,6 +119,7 @@ class CafeModel {
           json['imageVerificationStatus']?.toString() ??
           'VERIFIED',
       category: json['category']?.toString() ?? 'Café',
+      specifiedBusinessType: json['specified_business_type']?.toString() ?? json['specifiedBusinessType']?.toString(),
       cuisineTags: tags.map((t) => t.toString()).toList(),
       address: json['address']?.toString() ?? '',
       area: json['area']?.toString() ?? 'SITRA, Coimbatore',
@@ -151,6 +165,7 @@ class CafeModel {
       'image_source': imageSource,
       'image_verification_status': imageVerificationStatus,
       'category': category,
+      'specified_business_type': specifiedBusinessType,
       'cuisine_tags': cuisineTags,
       'address': address,
       'area': area,

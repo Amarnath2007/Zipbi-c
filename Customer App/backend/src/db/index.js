@@ -203,6 +203,7 @@ function matchesCategory(target, query) {
   if (t.startsWith('tea') && q.startsWith('tea')) return true;
   if (t.startsWith('baker') && q.startsWith('baker')) return true;
   if (t.startsWith('restaur') && q.startsWith('restaur')) return true;
+  if (t.startsWith('other') && q.startsWith('other')) return true;
   return false;
 }
 
@@ -297,6 +298,7 @@ module.exports = {
     if (options.category && options.category.toLowerCase() !== 'all' && options.category.toLowerCase() !== 'more') {
       result = result.filter((c) => {
         if (matchesCategory(c.category, options.category)) return true;
+        if (c.specified_business_type && matchesCategory(c.specified_business_type, options.category)) return true;
         if (c.cuisine_tags && c.cuisine_tags.some((t) => matchesCategory(t, options.category))) return true;
         return false;
       });
@@ -342,13 +344,20 @@ module.exports = {
     const slug = (cafeData.slug || cafeData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
     const id = cafeData.id || `cafe-${slug}`;
 
+    const isOthers = (cafeData.category || '').toLowerCase() === 'others' || (cafeData.category || '').toLowerCase() === 'other';
+    const category = isOthers ? 'Others' : (cafeData.category || 'Cafés');
+    const specified_business_type = isOthers && cafeData.specified_business_type ? cafeData.specified_business_type.trim() : null;
+
     const newCafe = {
       id,
       name: cafeData.name,
       slug,
       description: cafeData.description || '',
-      category: cafeData.category || 'Café',
-      cuisine_tags: Array.isArray(cafeData.cuisine_tags) ? cafeData.cuisine_tags : ['Café'],
+      category,
+      specified_business_type,
+      cuisine_tags: Array.isArray(cafeData.cuisine_tags) && cafeData.cuisine_tags.length > 0
+        ? cafeData.cuisine_tags
+        : [specified_business_type || category],
       address: cafeData.address || cafeData.formatted_address || '',
       area: (cafeData.area || cafeData.locality || '').trim() || 'Coimbatore',
       city: (cafeData.city || 'Coimbatore').trim(),
@@ -392,6 +401,20 @@ module.exports = {
   updateCafe: (id, updates) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
     if (!cafe) return null;
+
+    if (updates.category !== undefined) {
+      const isOthers = updates.category.toLowerCase() === 'others' || updates.category.toLowerCase() === 'other';
+      updates.category = isOthers ? 'Others' : updates.category;
+      if (isOthers) {
+        updates.specified_business_type = updates.specified_business_type
+          ? updates.specified_business_type.trim()
+          : (cafe.specified_business_type || 'Other Food Business');
+      } else {
+        updates.specified_business_type = null;
+      }
+    } else if (updates.specified_business_type !== undefined && cafe.category === 'Others') {
+      updates.specified_business_type = updates.specified_business_type ? updates.specified_business_type.trim() : cafe.specified_business_type;
+    }
 
     Object.assign(cafe, updates, { updated_at: new Date().toISOString() });
     if (updates.latitude !== undefined || updates.longitude !== undefined) {

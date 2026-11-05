@@ -25,6 +25,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
     'Restaurants',
     'Tea Shops',
     'Bakeries',
+    'Others',
     'Snacks',
     'Desserts',
     'Beverages',

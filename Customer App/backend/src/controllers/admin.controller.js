@@ -130,12 +130,28 @@ async function getCafe(req, res, next) {
  */
 async function createCafe(req, res, next) {
   try {
-    const { name, category, address, latitude, longitude } = req.body;
+    const { name, category, specified_business_type, address, latitude, longitude } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Business name is required.',
+      });
+    }
+
+    const validCategories = ['Cafés', 'Café', 'Restaurants', 'Tea Shops', 'Bakeries', 'Others'];
+    if (category && !validCategories.some(c => c.toLowerCase() === category.toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid category. Must be one of: ${validCategories.filter(c => c !== 'Café').join(', ')}`,
+      });
+    }
+
+    const isOthers = category && (category.toLowerCase() === 'others' || category.toLowerCase() === 'other');
+    if (isOthers && (!specified_business_type || !specified_business_type.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Specify Business Type is required when Others category is selected (e.g. Juice Shop, Ice Cream Parlour, Dessert Shop, Fast Food Outlet).',
       });
     }
 
@@ -170,6 +186,27 @@ async function createCafe(req, res, next) {
 async function updateCafe(req, res, next) {
   try {
     const { id } = req.params;
+
+    const validCategories = ['Cafés', 'Café', 'Restaurants', 'Tea Shops', 'Bakeries', 'Others'];
+    if (req.body.category && !validCategories.some(c => c.toLowerCase() === req.body.category.toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid category. Must be one of: ${validCategories.filter(c => c !== 'Café').join(', ')}`,
+      });
+    }
+
+    const isOthers = req.body.category && (req.body.category.toLowerCase() === 'others' || req.body.category.toLowerCase() === 'other');
+    if (isOthers) {
+      const existing = db.getCafeById(id);
+      const specifiedType = req.body.specified_business_type || (existing && existing.specified_business_type);
+      if (!specifiedType || !specifiedType.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Specify Business Type is required when Others category is selected.',
+        });
+      }
+    }
+
     const updated = db.updateCafe(id, req.body);
     if (!updated) {
       return res.status(404).json({
@@ -775,14 +812,63 @@ async function geocodeCoordinates(req, res, next) {
 }
 
 /**
- * Reset Café Directory to 0
+ * Reset Café Directory to 0 - Super Admin Multi-Step Safety Protocol
  */
 async function resetDirectory(req, res, next) {
   try {
+    // 1. Strict Super Admin Authorization Check
+    const userRole = req.user && req.user.role;
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Only Super Administrator can execute directory reset.',
+      });
+    }
+
+    // 2. Administrator Re-Authentication
+    const { password, confirmationPhrase } = req.body || {};
+    if (!password) {
+      return res.status(401).json({
+        success: false,
+        message: 'Re-authentication required. Please provide your administrator password.',
+      });
+    }
+
+    const adminUser = db.findUserByIdentifier(req.user.email || req.user.id);
+    if (!adminUser) {
+      return res.status(401).json({
+        success: false,
+        message: 'Administrator account not found for re-authentication.',
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, adminUser.passwordHash);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Re-authentication failed. Incorrect administrator password.',
+      });
+    }
+
+    // 3. Strict Phrase Verification
+    if (confirmationPhrase !== 'RESET DIRECTORY') {
+      return res.status(400).json({
+        success: false,
+        message: 'Confirmation phrase must be exactly "RESET DIRECTORY" (uppercase).',
+      });
+    }
+
+    // 4. Execute Automated Pre-Reset Backup & Directory Wipe
     const { resetCafeDirectory } = require('../../../scripts/reset_cafe_directory');
     const resetResult = resetCafeDirectory();
     db.reloadCafes();
-    db.logActivity('DIRECTORY_RESET', 'Administrator reset café directory to 0 for Google Maps registration.', req.user ? req.user.fullName : 'Admin');
+
+    // 5. Immutable Activity Log
+    db.logActivity(
+      'SUPER_ADMIN_DIRECTORY_RESET',
+      `Super Administrator ${adminUser.fullName || 'Admin'} performed verified café directory reset (${resetResult.totalBackedUp || 0} cafés backed up).`,
+      adminUser.fullName || 'Super Administrator'
+    );
 
     return res.status(200).json({
       success: true,

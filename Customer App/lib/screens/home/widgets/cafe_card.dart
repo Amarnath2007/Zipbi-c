@@ -312,7 +312,7 @@ class CafeCard extends StatelessWidget {
                     ),
                   ] else ...[
                     Text(
-                      cafe.category,
+                      cafe.displayCategory,
                       style: AppTypography.caption,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

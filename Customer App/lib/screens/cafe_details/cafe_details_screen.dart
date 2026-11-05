@@ -224,7 +224,7 @@ class _CafeDetailsScreenState extends State<CafeDetailsScreen> {
                           border: Border.all(color: AppColors.border),
                         ),
                         child: Text(
-                          cafe.category,
+                          cafe.displayCategory,
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,

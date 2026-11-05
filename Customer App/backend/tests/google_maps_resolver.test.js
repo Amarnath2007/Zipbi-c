@@ -147,6 +147,10 @@ test('5. Directory Reset: POST /api/v1/admin/reset-directory returns 0 counts', 
       'Content-Type': 'application/json',
       Authorization: `Bearer ${adminToken}`,
     },
+    body: JSON.stringify({
+      password: 'Admin@ZipBi2026',
+      confirmationPhrase: 'RESET DIRECTORY',
+    }),
   });
   assert.strictEqual(resetRes.status, 200);
   const data = await resetRes.json();

@@ -19,6 +19,7 @@ class HomeScreen extends StatelessWidget {
     {'name': 'Restaurants', 'icon': Icons.restaurant_rounded},
     {'name': 'Tea Shops', 'icon': Icons.emoji_food_beverage_rounded},
     {'name': 'Bakeries', 'icon': Icons.cake_rounded},
+    {'name': 'Others', 'icon': Icons.storefront_rounded},
     {'name': 'More', 'icon': Icons.more_horiz_rounded},
   ];
 

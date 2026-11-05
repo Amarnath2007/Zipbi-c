@@ -433,11 +433,11 @@
               <div class="flex items-center gap-2 flex-wrap">
                 <select id="categoryFilter" onchange="filterCafesTable()" class="px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 outline-none">
                   <option value="All">All Categories</option>
-                  <option value="Café">Cafés</option>
-                  <option value="Tea Shops">Tea Shops</option>
-                  <option value="Beverages">Beverages</option>
+                  <option value="Cafés">Cafés</option>
                   <option value="Restaurants">Restaurants</option>
+                  <option value="Tea Shops">Tea Shops</option>
                   <option value="Bakeries">Bakeries</option>
+                  <option value="Others">Others</option>
                 </select>
 
                 <select id="statusFilter" onchange="filterCafesTable()" class="px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 outline-none">
@@ -451,11 +451,6 @@
                 <button onclick="openCreateModal()" class="px-3.5 py-2 text-xs rounded-lg bg-brand-primary text-white font-semibold shadow hover:bg-brand-dark transition flex items-center gap-1.5">
                   <i class="fa-solid fa-plus"></i>
                   <span>Add Café</span>
-                </button>
-
-                <button onclick="handleResetDirectoryPrompt()" class="px-3 py-2 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-medium transition flex items-center gap-1.5" title="Reset directory to 0">
-                  <i class="fa-solid fa-trash-can"></i>
-                  <span>Reset Directory</span>
                 </button>
               </div>
             </div>
@@ -836,17 +831,62 @@
                 </div>
               </div>
 
-              <div class="pt-2 flex items-center justify-between">
+              <div class="pt-2 flex items-center justify-start">
                 <button type="submit" class="px-4 py-2.5 rounded-lg bg-brand-primary hover:bg-brand-dark text-white font-semibold text-xs shadow transition">
                   Save System Settings
                 </button>
-
-                <button type="button" onclick="handleResetDirectoryPrompt()" class="px-3.5 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 text-xs font-medium transition flex items-center gap-1.5">
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  <span>Reset Café Directory</span>
-                </button>
               </div>
             </form>
+          </div>
+
+          <!-- Advanced Settings -> Data Management -> Danger Zone -->
+          <div class="mt-8 max-w-2xl border border-slate-200 rounded-2xl bg-white overflow-hidden shadow-sm">
+            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between">
+              <div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Settings &gt; Advanced Settings &gt; Data Management</div>
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2 mt-0.5">
+                  <i class="fa-solid fa-database text-slate-500"></i>
+                  <span>Data Management &amp; System Reset</span>
+                </h3>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                <i class="fa-solid fa-shield-halved text-[9px]"></i>
+                <span>Super Admin Only</span>
+              </span>
+            </div>
+
+            <div class="p-6">
+              <!-- Danger Zone Container -->
+              <div class="rounded-xl border-2 border-red-300 bg-red-50/60 p-5 space-y-3">
+                <div class="flex items-center gap-2 text-red-700 font-bold text-xs uppercase tracking-wide">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>Danger Zone</span>
+                </div>
+
+                <div>
+                  <h4 class="text-sm font-bold text-slate-900">Reset Café Directory</h4>
+                  <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                    Permanently removes café directory listings and their associated menu data. This operation cannot be easily reversed.
+                  </p>
+                </div>
+
+                <div class="pt-2 flex items-center justify-between flex-wrap gap-3 border-t border-red-200">
+                  <div class="text-[11px] text-red-800 font-medium flex items-center gap-1.5">
+                    <i class="fa-solid fa-lock text-[10px]"></i>
+                    <span>Requires password re-authentication, full JSON backup, and exact phrase confirmation.</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onclick="openDangerZoneResetModal()"
+                    class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-xs shadow-sm transition flex items-center gap-1.5"
+                  >
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Reset Café Directory...</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -915,19 +955,38 @@
         <div id="modalSubTab-basic" class="modal-subtab space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Café Name *</label>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Business Name *</label>
               <input type="text" id="cafeName" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="e.g. The German Cafe" />
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Business Category *</label>
-              <select id="cafeCategory" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white">
-                <option value="Café">Café</option>
-                <option value="Tea Shops">Tea Shops</option>
-                <option value="Beverages">Beverages</option>
+              <select id="cafeCategory" onchange="handleCategoryChange()" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white">
+                <option value="Cafés">Cafés</option>
                 <option value="Restaurants">Restaurants</option>
+                <option value="Tea Shops">Tea Shops</option>
                 <option value="Bakeries">Bakeries</option>
+                <option value="Others">Others</option>
               </select>
             </div>
+          </div>
+
+          <!-- Dynamic Specified Business Type (shown only when category is Others) -->
+          <div id="specifiedTypeContainer" class="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200 hidden space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-indigo-950">
+                Specify Business Type <span class="text-red-500">*</span>
+              </label>
+              <span class="text-[10px] text-indigo-600 font-semibold uppercase tracking-wider">Required for Others</span>
+            </div>
+            <input
+              type="text"
+              id="cafeSpecifiedBusinessType"
+              class="w-full px-3 py-2 rounded-lg border border-indigo-300 text-xs outline-none focus:border-indigo-600 bg-white"
+              placeholder="e.g. Juice Shop, Ice Cream Parlour, Dessert Shop, Fast Food Outlet, Food Court, Cloud Kitchen..."
+            />
+            <p class="text-[11px] text-indigo-700">
+              Examples: Juice Shop, Ice Cream Parlour, Dessert Shop, Fast Food Outlet, Food Court, Cloud Kitchen, Other Food Business.
+            </p>
           </div>
 
           <div>
@@ -1376,6 +1435,188 @@
     </div>
   </div>
 
+  <!-- ==================== DANGER ZONE: RESET DIRECTORY MULTI-STEP MODAL ==================== -->
+  <div id="dangerZoneResetModal" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden border border-red-200">
+      <!-- Modal Header -->
+      <div class="bg-red-600 px-6 py-4 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white">
+            <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm tracking-wide">Danger Zone: Reset Café Directory</h3>
+            <p class="text-[11px] text-red-100">Super Admin Multi-Step Destruction Protocol</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeDangerZoneResetModal()" class="text-white/80 hover:text-white p-1 rounded transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Step Progress Indicator -->
+      <div class="bg-red-50 border-b border-red-100 px-6 py-2.5 flex items-center justify-between text-[11px] font-semibold text-red-800">
+        <span id="resetStep1Badge" class="flex items-center gap-1.5 text-red-700 font-bold"><i class="fa-solid fa-circle-dot"></i> 1. Impact Scope</span>
+        <span class="text-slate-300">→</span>
+        <span id="resetStep2Badge" class="flex items-center gap-1.5 text-slate-400"><i class="fa-regular fa-circle"></i> 2. Security Check</span>
+        <span class="text-slate-300">→</span>
+        <span id="resetStep3Badge" class="flex items-center gap-1.5 text-slate-400"><i class="fa-regular fa-circle"></i> 3. Final Execution</span>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="p-6">
+        <!-- STEP 1: Impact & Scope Review -->
+        <div id="resetStep1" class="space-y-4">
+          <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-2">
+            <div class="font-bold flex items-center gap-1.5 text-amber-800">
+              <i class="fa-solid fa-circle-info"></i> Records Affected in Current Environment
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center py-2">
+              <div class="bg-white/80 p-2 rounded-lg border border-amber-100">
+                <div id="affectedCafesCount" class="text-base font-bold text-slate-900">0</div>
+                <div class="text-[10px] text-slate-500">Cafés</div>
+              </div>
+              <div class="bg-white/80 p-2 rounded-lg border border-amber-100">
+                <div id="affectedCategoriesCount" class="text-base font-bold text-slate-900">0</div>
+                <div class="text-[10px] text-slate-500">Categories</div>
+              </div>
+              <div class="bg-white/80 p-2 rounded-lg border border-amber-100">
+                <div id="affectedItemsCount" class="text-base font-bold text-slate-900">0</div>
+                <div class="text-[10px] text-slate-500">Menu Items</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="font-bold text-slate-800">Deletion Boundaries:</div>
+            <ul class="space-y-1.5 text-slate-600 text-[11px]">
+              <li class="flex items-center gap-2 text-emerald-700">
+                <i class="fa-solid fa-check text-xs"></i>
+                <span><strong>Protected:</strong> Super Admin, Customer &amp; Merchant accounts will NOT be deleted.</span>
+              </li>
+              <li class="flex items-center gap-2 text-emerald-700">
+                <i class="fa-solid fa-check text-xs"></i>
+                <span><strong>Protected:</strong> Financial transactions, orders &amp; subscription records are untouched.</span>
+              </li>
+              <li class="flex items-center gap-2 text-emerald-700">
+                <i class="fa-solid fa-check text-xs"></i>
+                <span><strong>Protected:</strong> Automatic full JSON backup is generated prior to wipe.</span>
+              </li>
+              <li class="flex items-center gap-2 text-red-600">
+                <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+                <span><strong>Removed:</strong> All café listings, location records, and associated digital menus.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
+            <button type="button" onclick="closeDangerZoneResetModal()" class="px-4 py-2 rounded-lg border border-slate-300 text-xs text-slate-600 hover:bg-slate-50 transition">
+              Cancel
+            </button>
+            <button type="button" onclick="goToResetStep(2)" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow flex items-center gap-1.5 transition">
+              <span>Proceed to Security Check</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 2: Re-Authentication & Phrase Verification -->
+        <div id="resetStep2" class="space-y-4 hidden">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Super Administrator Password *
+            </label>
+            <input
+              type="password"
+              id="resetAdminPassword"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-red-500"
+              placeholder="Enter your administrator password to re-authenticate"
+              autocomplete="current-password"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Type exact confirmation phrase *
+            </label>
+            <div class="p-2 rounded bg-slate-100 font-mono text-xs text-center text-slate-800 font-bold border border-slate-200 select-all mb-1.5 tracking-wider">
+              RESET DIRECTORY
+            </div>
+            <input
+              type="text"
+              id="resetPhraseInput"
+              oninput="handleResetPhraseInput()"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono outline-none focus:border-red-500 uppercase"
+              placeholder="Type RESET DIRECTORY here"
+            />
+            <p id="phraseFeedback" class="text-[10px] text-slate-400 mt-1">Phrase is case-sensitive: RESET DIRECTORY</p>
+          </div>
+
+          <div class="pt-3 flex justify-between gap-2 border-t border-slate-100">
+            <button type="button" onclick="goToResetStep(1)" class="px-4 py-2 rounded-lg border border-slate-300 text-xs text-slate-600 hover:bg-slate-50 transition">
+              Back
+            </button>
+            <button
+              type="button"
+              id="toStep3Btn"
+              disabled
+              onclick="goToResetStep(3)"
+              class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold shadow flex items-center gap-1.5 transition"
+            >
+              <span>Verify &amp; Continue</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 3: Final Confirmation & Progress Execution -->
+        <div id="resetStep3" class="space-y-4 hidden">
+          <div class="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-900 space-y-2">
+            <div class="font-bold flex items-center gap-1.5 text-red-800">
+              <i class="fa-solid fa-triangle-exclamation"></i> Final Confirmation Required
+            </div>
+            <p class="text-[11px] text-red-700 leading-relaxed">
+              You are about to purge all café records and associated menu entries from the development database. This action is permanently recorded in the immutable audit log.
+            </p>
+            <label class="flex items-start gap-2 pt-2 cursor-pointer select-none">
+              <input type="checkbox" id="resetFinalAcknowledge" onchange="handleAcknowledgeChange()" class="mt-0.5 rounded text-red-600 focus:ring-red-500" />
+              <span class="text-[11px] font-semibold text-slate-800">
+                I understand that this action is irreversible without restoring from the generated backup file.
+              </span>
+            </label>
+          </div>
+
+          <!-- Progress Spinner -->
+          <div id="resetProgressContainer" class="hidden p-4 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-2">
+            <div class="flex items-center justify-center gap-2 text-red-600 font-bold text-xs">
+              <i class="fa-solid fa-spinner fa-spin text-sm"></i>
+              <span id="resetProgressText">Generating automatic pre-reset backup...</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div id="resetProgressBar" class="bg-red-600 h-1.5 rounded-full transition-all duration-300 w-1/3"></div>
+            </div>
+          </div>
+
+          <div class="pt-3 flex justify-between gap-2 border-t border-slate-100">
+            <button type="button" id="resetCancelBtn" onclick="goToResetStep(2)" class="px-4 py-2 rounded-lg border border-slate-300 text-xs text-slate-600 hover:bg-slate-50 transition">
+              Back
+            </button>
+            <button
+              type="button"
+              id="executeResetBtn"
+              disabled
+              onclick="executeDangerousDirectoryReset()"
+              class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow flex items-center gap-1.5 transition"
+            >
+              <i class="fa-solid fa-trash-can"></i>
+              <span>Permanently Reset Directory</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== JAVASCRIPT LOGIC ==================== -->
   <script>
     // State
@@ -1608,7 +1849,10 @@
             </div>
           </td>
           <td class="py-3 px-3">
-            <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700">${escapeHtml(cafe.category || 'Café')}</span>
+            ${(cafe.category || '').toLowerCase() === 'others'
+              ? `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Others${cafe.specified_business_type ? ' (' + escapeHtml(cafe.specified_business_type) + ')' : ''}</span>`
+              : `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700">${escapeHtml(cafe.category || 'Cafés')}</span>`
+            }
           </td>
           <td class="py-3 px-3 text-slate-600 max-w-xs truncate" title="${escapeHtml(cafe.address || '')}">
             ${escapeHtml(cafe.area || 'Coimbatore')}
@@ -1656,7 +1900,15 @@
           if (!matchName && !matchArea) return false;
         }
         if (cat !== 'All') {
-          if ((c.category || '').toLowerCase() !== cat.toLowerCase()) return false;
+          const cCat = (c.category || '').toLowerCase();
+          const fCat = cat.toLowerCase();
+          if (fCat === 'others') {
+            if (!cCat.startsWith('other')) return false;
+          } else if (fCat.startsWith('caf')) {
+            if (!cCat.startsWith('caf')) return false;
+          } else {
+            if (cCat !== fCat) return false;
+          }
         }
         if (status === 'active' && c.is_active === false) return false;
         if (status === 'inactive' && c.is_active !== false) return false;
@@ -1904,6 +2156,20 @@
       el.classList.remove('hidden');
     }
 
+    // Business Category Change Handler
+    function handleCategoryChange() {
+      const cat = document.getElementById('cafeCategory').value;
+      const container = document.getElementById('specifiedTypeContainer');
+      const input = document.getElementById('cafeSpecifiedBusinessType');
+      if (cat === 'Others') {
+        container.classList.remove('hidden');
+        input.focus();
+      } else {
+        container.classList.add('hidden');
+        input.value = '';
+      }
+    }
+
     // Modal Add / Edit Cafe
     function openCreateModal() {
       userModifiedFields.clear();
@@ -1911,7 +2177,9 @@
       document.getElementById('modalTitle').textContent = 'Add New Business';
       document.getElementById('editCafeId').value = '';
       document.getElementById('cafeName').value = '';
-      document.getElementById('cafeCategory').value = 'Café';
+      document.getElementById('cafeCategory').value = 'Cafés';
+      document.getElementById('cafeSpecifiedBusinessType').value = '';
+      document.getElementById('specifiedTypeContainer').classList.add('hidden');
       document.getElementById('cafeDesc').value = '';
 
       // Locality & Address fields - completely clean, NO hardcoded SITRA
@@ -1978,7 +2246,17 @@
       document.getElementById('modalTitle').textContent = `Edit Business: ${cafe.name}`;
       document.getElementById('editCafeId').value = cafe.id;
       document.getElementById('cafeName').value = cafe.name || '';
-      document.getElementById('cafeCategory').value = cafe.category || 'Café';
+      
+      const catVal = cafe.category || 'Cafés';
+      const isOthers = catVal.toLowerCase() === 'others' || catVal.toLowerCase() === 'other';
+      document.getElementById('cafeCategory').value = isOthers ? 'Others' : (catVal === 'Café' ? 'Cafés' : catVal);
+      document.getElementById('cafeSpecifiedBusinessType').value = cafe.specified_business_type || '';
+      if (isOthers) {
+        document.getElementById('specifiedTypeContainer').classList.remove('hidden');
+      } else {
+        document.getElementById('specifiedTypeContainer').classList.add('hidden');
+      }
+
       document.getElementById('cafeDesc').value = cafe.description || '';
 
       // Saved locality and address
@@ -2144,6 +2422,16 @@
       const pincode = document.getElementById('cafePincode').value.trim();
       const address = document.getElementById('cafeAddress').value.trim();
 
+      const category = document.getElementById('cafeCategory').value || 'Cafés';
+      const specifiedType = (document.getElementById('cafeSpecifiedBusinessType').value || '').trim();
+
+      if (category === 'Others' && !specifiedType) {
+        alert('Please specify the business type (e.g. Juice Shop, Ice Cream Parlour, Dessert Shop, Fast Food Outlet).');
+        switchCafeModalTab('tab-basic');
+        document.getElementById('cafeSpecifiedBusinessType').focus();
+        return;
+      }
+
       if (!area) {
         alert('Please specify the Locality / Area Name (e.g. Peelamedu, RS Puram, SITRA) in Step 2.');
         switchCafeModalTab('tab-location');
@@ -2173,7 +2461,8 @@
 
       const payload = {
         name: name,
-        category: document.getElementById('cafeCategory').value || 'Café',
+        category: category,
+        specified_business_type: category === 'Others' ? specifiedType : null,
         description: document.getElementById('cafeDesc').value.trim(),
         area: area,
         city: city,
@@ -2248,28 +2537,159 @@
       }
     }
 
-    async function handleResetDirectoryPrompt() {
-      const confirmFirst = confirm('WARNING: Are you sure you want to delete ALL existing café records and start fresh? A backup will automatically be saved.');
-      if (!confirmFirst) return;
+    // ==================== DANGER ZONE: MULTI-STEP DIRECTORY RESET ====================
+    let currentResetStep = 1;
+
+    function openDangerZoneResetModal() {
+      currentResetStep = 1;
+
+      // Compute accurate impacted record numbers
+      let totalCats = 0;
+      let totalItems = 0;
+      (allCafes || []).forEach((c) => {
+        if (Array.isArray(c.menu_categories)) {
+          totalCats += c.menu_categories.length;
+          c.menu_categories.forEach((cat) => {
+            if (Array.isArray(cat.items)) totalItems += cat.items.length;
+          });
+        }
+      });
+
+      document.getElementById('affectedCafesCount').textContent = (allCafes || []).length;
+      document.getElementById('affectedCategoriesCount').textContent = totalCats;
+      document.getElementById('affectedItemsCount').textContent = totalItems;
+
+      document.getElementById('resetAdminPassword').value = '';
+      document.getElementById('resetPhraseInput').value = '';
+      document.getElementById('resetFinalAcknowledge').checked = false;
+      document.getElementById('toStep3Btn').disabled = true;
+      document.getElementById('executeResetBtn').disabled = true;
+      document.getElementById('resetProgressContainer').classList.add('hidden');
+      document.getElementById('executeResetBtn').classList.remove('hidden');
+
+      goToResetStep(1);
+      document.getElementById('dangerZoneResetModal').classList.remove('hidden');
+    }
+
+    function closeDangerZoneResetModal() {
+      document.getElementById('dangerZoneResetModal').classList.add('hidden');
+    }
+
+    function goToResetStep(stepNum) {
+      currentResetStep = stepNum;
+      ['1', '2', '3'].forEach((s) => {
+        const el = document.getElementById(`resetStep${s}`);
+        const badge = document.getElementById(`resetStep${s}Badge`);
+        if (s === String(stepNum)) {
+          el.classList.remove('hidden');
+          badge.className = 'flex items-center gap-1.5 text-red-700 font-bold';
+        } else if (parseInt(s, 10) < stepNum) {
+          el.classList.add('hidden');
+          badge.className = 'flex items-center gap-1.5 text-emerald-600 font-medium';
+        } else {
+          el.classList.add('hidden');
+          badge.className = 'flex items-center gap-1.5 text-slate-400';
+        }
+      });
+
+      if (stepNum === 2) {
+        setTimeout(() => document.getElementById('resetAdminPassword').focus(), 50);
+      }
+    }
+
+    function handleResetPhraseInput() {
+      const phrase = document.getElementById('resetPhraseInput').value.trim();
+      const pwd = document.getElementById('resetAdminPassword').value.trim();
+      const btn = document.getElementById('toStep3Btn');
+      const feedback = document.getElementById('phraseFeedback');
+      if (phrase === 'RESET DIRECTORY') {
+        btn.disabled = false;
+        feedback.className = 'text-[10px] text-emerald-600 font-semibold mt-1';
+        feedback.textContent = '✓ Confirmation phrase matches perfectly.';
+      } else {
+        btn.disabled = true;
+        feedback.className = 'text-[10px] text-slate-400 mt-1';
+        feedback.textContent = 'Phrase is case-sensitive: RESET DIRECTORY';
+      }
+    }
+
+    function handleAcknowledgeChange() {
+      const checked = document.getElementById('resetFinalAcknowledge').checked;
+      document.getElementById('executeResetBtn').disabled = !checked;
+    }
+
+    async function executeDangerousDirectoryReset() {
+      const password = document.getElementById('resetAdminPassword').value;
+      const phrase = document.getElementById('resetPhraseInput').value.trim();
+      const progressContainer = document.getElementById('resetProgressContainer');
+      const progressText = document.getElementById('resetProgressText');
+      const progressBar = document.getElementById('resetProgressBar');
+      const executeBtn = document.getElementById('executeResetBtn');
+      const cancelBtn = document.getElementById('resetCancelBtn');
+
+      if (!password) {
+        alert('Please enter your administrator password.');
+        goToResetStep(2);
+        return;
+      }
+
+      if (phrase !== 'RESET DIRECTORY') {
+        alert('Please type the exact confirmation phrase: RESET DIRECTORY');
+        goToResetStep(2);
+        return;
+      }
+
+      // Show Progress Indicator
+      progressContainer.classList.remove('hidden');
+      executeBtn.disabled = true;
+      cancelBtn.disabled = true;
+      progressText.textContent = 'Generating automated pre-reset backup...';
+      progressBar.style.width = '35%';
 
       try {
+        setTimeout(() => {
+          progressText.textContent = 'Purging development café records...';
+          progressBar.style.width = '70%';
+        }, 300);
+
         const res = await fetch(`${API_BASE}/admin/reset-directory`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${adminToken}`,
           },
+          body: JSON.stringify({
+            password,
+            confirmationPhrase: phrase,
+          }),
         });
+
         const data = await res.json();
+
         if (res.ok && data.success) {
-          alert(`Directory reset complete!\n\nTotal Cafés: 0\nMenu Categories: 0\nMenu Items: 0\n\nA full backup was created at:\n${data.backupFile}`);
-          refreshAllData();
+          progressBar.style.width = '100%';
+          progressText.textContent = 'Directory reset verified. Refreshing workspace...';
+          setTimeout(async () => {
+            closeDangerZoneResetModal();
+            await refreshAllData();
+            alert(`✓ Café Directory Reset Complete!\n\nAll café records have been reset to 0.\nA complete pre-reset backup was secured at:\n${data.backupFile}`);
+          }, 400);
         } else {
-          alert(data.message || 'Failed to reset directory.');
+          progressContainer.classList.add('hidden');
+          executeBtn.disabled = false;
+          cancelBtn.disabled = false;
+          alert(data.message || 'Directory reset failed.');
         }
       } catch (err) {
-        alert('Network error resetting directory.');
+        progressContainer.classList.add('hidden');
+        executeBtn.disabled = false;
+        cancelBtn.disabled = false;
+        alert('Network error while executing directory reset.');
       }
+    }
+
+    function handleResetDirectoryPrompt() {
+      openDangerZoneResetModal();
     }
 
     // Google Drive Image Import

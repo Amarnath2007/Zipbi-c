@@ -54,6 +54,14 @@ class CategoryImagePlaceholder extends StatelessWidget {
       );
       icon = Icons.local_bar_rounded;
       label = 'Fresh Beverages';
+    } else if (cat.contains('other') || cat.contains('store') || cat.contains('parlour') || cat.contains('outlet')) {
+      gradient = const LinearGradient(
+        colors: [Color(0xFF312E81), Color(0xFF4338CA), Color(0xFF6366F1)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      icon = Icons.storefront_rounded;
+      label = 'Specialty Outlet';
     } else {
       // Default: Café / Coffee
       gradient = const LinearGradient(
