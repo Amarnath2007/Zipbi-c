@@ -94,6 +94,8 @@ async function getCafeMenu(req, res, next) {
       isOrderingEnabled: cafe.is_ordering_enabled,
       verificationStatus: cafe.verification_status,
       hasPublishedMenu: cafe.has_published_menu,
+      menuStatus: cafe.menu_status || 'Verified Menu',
+      menu_status: cafe.menu_status || 'Verified Menu',
       categories: cafe.menu_categories || [],
     });
   } catch (err) {

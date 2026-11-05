@@ -349,11 +349,13 @@ module.exports = {
       description: cafeData.description || '',
       category: cafeData.category || 'Café',
       cuisine_tags: Array.isArray(cafeData.cuisine_tags) ? cafeData.cuisine_tags : ['Café'],
-      address: cafeData.address || '',
-      area: cafeData.area || 'Coimbatore',
-      city: cafeData.city || 'Coimbatore',
-      state: cafeData.state || 'Tamil Nadu',
-      pincode: cafeData.pincode || '',
+      address: cafeData.address || cafeData.formatted_address || '',
+      area: (cafeData.area || cafeData.locality || '').trim() || 'Coimbatore',
+      city: (cafeData.city || 'Coimbatore').trim(),
+      district: (cafeData.district || cafeData.city || 'Coimbatore').trim(),
+      state: (cafeData.state || 'Tamil Nadu').trim(),
+      pincode: (cafeData.pincode || cafeData.postalCode || cafeData.postal_code || '').trim(),
+      location_meta: cafeData.location_meta || null,
       latitude: parseFloat(cafeData.latitude !== undefined ? cafeData.latitude : 11.0326883),
       longitude: parseFloat(cafeData.longitude !== undefined ? cafeData.longitude : 77.0345773),
       google_maps_url: cafeData.google_maps_url || null,
@@ -620,27 +622,92 @@ module.exports = {
   },
 
   // Menu Management
-  updateCafeMenu: (id, categories) => {
+  getCafeMenu: (id) => {
+    const cafe = cafesData.find((c) => c.id === id || c.slug === id);
+    if (!cafe) return null;
+    const status = cafe.menu_status || (cafe.has_published_menu ? 'Partially Verified' : 'Awaiting Merchant Confirmation');
+    const notes = cafe.menu_status_notes || null;
+    return {
+      cafeId: cafe.id,
+      cafeName: cafe.name,
+      menuStatus: status,
+      menu_status: status,
+      menuStatusNotes: notes,
+      menu_status_notes: notes,
+      hasPublishedMenu: cafe.has_published_menu || false,
+      isOrderingEnabled: cafe.is_ordering_enabled || false,
+      categories: Array.isArray(cafe.menu_categories) ? cafe.menu_categories : [],
+    };
+  },
+
+  updateCafeMenu: (id, categories, menuStatus, menuStatusNotes) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
     if (!cafe) return null;
 
     cafe.menu_categories = Array.isArray(categories) ? categories : [];
     cafe.has_published_menu = cafe.menu_categories.some((c) => Array.isArray(c.items) && c.items.length > 0);
+    if (menuStatus) cafe.menu_status = menuStatus;
+    if (menuStatusNotes !== undefined) cafe.menu_status_notes = menuStatusNotes;
     cafe.updated_at = new Date().toISOString();
     module.exports.saveData();
     return cafe;
   },
 
-  addMenuCategory: (id, categoryName) => {
+  updateMenuStatus: (id, menuStatus, menuStatusNotes) => {
+    const cafe = cafesData.find((c) => c.id === id || c.slug === id);
+    if (!cafe) return null;
+    cafe.menu_status = menuStatus;
+    if (menuStatusNotes !== undefined) cafe.menu_status_notes = menuStatusNotes;
+    cafe.updated_at = new Date().toISOString();
+    module.exports.saveData();
+    return cafe;
+  },
+
+  addMenuCategory: (id, categoryData) => {
     const cafe = cafesData.find((c) => c.id === id || c.slug === id);
     if (!cafe) return null;
 
     if (!Array.isArray(cafe.menu_categories)) cafe.menu_categories = [];
-    const exists = cafe.menu_categories.find((c) => c.name.toLowerCase() === categoryName.trim().toLowerCase());
+    const catName = typeof categoryData === 'string' ? categoryData.trim() : ((categoryData && categoryData.name) || '').trim();
+    if (!catName) return cafe.menu_categories;
+
+    const exists = cafe.menu_categories.find((c) => c.name.toLowerCase() === catName.toLowerCase());
     if (!exists) {
-      cafe.menu_categories.push({ name: categoryName.trim(), items: [] });
+      const newCat = {
+        id: (categoryData && categoryData.id) || `cat-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        name: catName,
+        description: (categoryData && categoryData.description) || '',
+        is_enabled: categoryData && categoryData.is_enabled !== undefined ? categoryData.is_enabled : true,
+        display_order: cafe.menu_categories.length + 1,
+        items: [],
+      };
+      cafe.menu_categories.push(newCat);
+      cafe.updated_at = new Date().toISOString();
       module.exports.saveData();
     }
+    return cafe.menu_categories;
+  },
+
+  renameMenuCategory: (id, oldName, newName, description, isEnabled) => {
+    const cafe = cafesData.find((c) => c.id === id || c.slug === id);
+    if (!cafe || !Array.isArray(cafe.menu_categories)) return null;
+
+    const cat = cafe.menu_categories.find(
+      (c) => c.name.toLowerCase() === oldName.trim().toLowerCase() || c.id === oldName
+    );
+    if (!cat) return null;
+
+    if (newName && newName.trim()) {
+      cat.name = newName.trim();
+    }
+    if (description !== undefined) {
+      cat.description = description;
+    }
+    if (isEnabled !== undefined) {
+      cat.is_enabled = Boolean(isEnabled);
+    }
+    cafe.updated_at = new Date().toISOString();
+    module.exports.saveData();
     return cafe.menu_categories;
   },
 
@@ -649,9 +716,30 @@ module.exports = {
     if (!cafe) return null;
 
     cafe.menu_categories = (cafe.menu_categories || []).filter(
-      (c) => c.name.toLowerCase() !== categoryName.trim().toLowerCase()
+      (c) => c.name.toLowerCase() !== categoryName.trim().toLowerCase() && c.id !== categoryName
     );
     cafe.has_published_menu = cafe.menu_categories.some((c) => Array.isArray(c.items) && c.items.length > 0);
+    cafe.updated_at = new Date().toISOString();
+    module.exports.saveData();
+    return cafe.menu_categories;
+  },
+
+  reorderMenuCategories: (id, categoryNames) => {
+    const cafe = cafesData.find((c) => c.id === id || c.slug === id);
+    if (!cafe || !Array.isArray(cafe.menu_categories) || !Array.isArray(categoryNames)) return null;
+
+    const ordered = [];
+    for (const name of categoryNames) {
+      const match = cafe.menu_categories.find(
+        (c) => c.name.toLowerCase() === name.trim().toLowerCase() || c.id === name
+      );
+      if (match) ordered.push(match);
+    }
+    for (const remaining of cafe.menu_categories) {
+      if (!ordered.includes(remaining)) ordered.push(remaining);
+    }
+    cafe.menu_categories = ordered;
+    cafe.updated_at = new Date().toISOString();
     module.exports.saveData();
     return cafe.menu_categories;
   },
@@ -661,20 +749,33 @@ module.exports = {
     if (!cafe) return null;
 
     if (!Array.isArray(cafe.menu_categories)) cafe.menu_categories = [];
-    let cat = cafe.menu_categories.find((c) => c.name.toLowerCase() === (categoryName || '').trim().toLowerCase());
+    const targetCatName = (categoryName || 'General').trim();
+    let cat = cafe.menu_categories.find((c) => c.name.toLowerCase() === targetCatName.toLowerCase());
     if (!cat) {
-      cat = { name: (categoryName || 'General').trim(), items: [] };
+      cat = {
+        id: `cat-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        name: targetCatName,
+        description: '',
+        is_enabled: true,
+        display_order: cafe.menu_categories.length + 1,
+        items: [],
+      };
       cafe.menu_categories.push(cat);
     }
 
+    const priceNum = typeof itemData.price === 'number' ? itemData.price : parseFloat(itemData.price || 0);
+    const foodType = (itemData.food_type || itemData.foodType || (itemData.is_veg === false ? 'NON_VEG' : 'VEG')).toUpperCase();
+    const isVeg = foodType === 'VEG' || foodType === 'VEGAN';
+
     const newItem = {
       id: itemData.id || `item-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      name: itemData.name,
-      description: itemData.description || '',
-      price: typeof itemData.price === 'number' ? itemData.price : parseFloat(itemData.price || 0),
-      is_veg: itemData.is_veg !== false && itemData.isVeg !== false,
+      name: (itemData.name || '').trim(),
+      description: (itemData.description || '').trim(),
+      price: isNaN(priceNum) || priceNum < 0 ? 0 : priceNum,
+      food_type: foodType,
+      is_veg: isVeg,
       is_available: itemData.is_available !== false && itemData.isAvailable !== false,
-      image_url: itemData.image_url || itemData.imageUrl || null,
+      is_enabled: itemData.is_enabled !== false && itemData.isEnabled !== false,
       source: itemData.source || 'Admin Upload',
       verified_date: new Date().toISOString().split('T')[0],
       variants: Array.isArray(itemData.variants) ? itemData.variants : [],
@@ -682,29 +783,87 @@ module.exports = {
 
     cat.items.push(newItem);
     cafe.has_published_menu = true;
+    cafe.updated_at = new Date().toISOString();
     module.exports.saveData();
-    return { cafe, item: newItem };
+    return { cafe, item: newItem, categories: cafe.menu_categories };
   },
 
-  updateMenuItem: (cafeId, categoryName, itemId, updates) => {
+  updateMenuItem: (cafeId, categoryName, itemId, updates, newCategoryName) => {
     const cafe = cafesData.find((c) => c.id === cafeId || c.slug === cafeId);
     if (!cafe || !Array.isArray(cafe.menu_categories)) return null;
 
     let targetItem = null;
+    let currentCat = null;
+
+    // Find the item across categories
     for (const cat of cafe.menu_categories) {
-      if (categoryName && cat.name.toLowerCase() !== categoryName.toLowerCase()) continue;
+      if (categoryName && cat.name.toLowerCase() !== categoryName.toLowerCase() && cat.id !== categoryName) {
+        continue;
+      }
       const item = cat.items.find((i) => i.id === itemId);
       if (item) {
-        Object.assign(item, updates);
         targetItem = item;
+        currentCat = cat;
         break;
       }
     }
 
-    if (targetItem) {
-      module.exports.saveData();
+    if (!targetItem) {
+      for (const cat of cafe.menu_categories) {
+        const item = cat.items.find((i) => i.id === itemId);
+        if (item) {
+          targetItem = item;
+          currentCat = cat;
+          break;
+        }
+      }
     }
-    return targetItem;
+
+    if (!targetItem) return null;
+
+    // Apply updates
+    if (updates.name !== undefined) targetItem.name = updates.name.trim();
+    if (updates.description !== undefined) targetItem.description = updates.description.trim();
+    if (updates.price !== undefined) {
+      const p = parseFloat(updates.price);
+      if (!isNaN(p) && p >= 0) targetItem.price = p;
+    }
+    if (updates.food_type || updates.foodType) {
+      targetItem.food_type = (updates.food_type || updates.foodType).toUpperCase();
+      targetItem.is_veg = targetItem.food_type === 'VEG' || targetItem.food_type === 'VEGAN';
+    } else if (updates.is_veg !== undefined || updates.isVeg !== undefined) {
+      targetItem.is_veg = updates.is_veg !== false && updates.isVeg !== false;
+      targetItem.food_type = targetItem.is_veg ? 'VEG' : 'NON_VEG';
+    }
+    if (updates.is_available !== undefined || updates.isAvailable !== undefined) {
+      targetItem.is_available = updates.is_available !== false && updates.isAvailable !== false;
+    }
+    if (updates.is_enabled !== undefined || updates.isEnabled !== undefined) {
+      targetItem.is_enabled = updates.is_enabled !== false && updates.isEnabled !== false;
+    }
+
+    // Move to new category if requested
+    const destCatName = (newCategoryName || '').trim();
+    if (destCatName && currentCat && currentCat.name.toLowerCase() !== destCatName.toLowerCase()) {
+      currentCat.items = currentCat.items.filter((i) => i.id !== itemId);
+      let destCat = cafe.menu_categories.find((c) => c.name.toLowerCase() === destCatName.toLowerCase());
+      if (!destCat) {
+        destCat = {
+          id: `cat-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          name: destCatName,
+          description: '',
+          is_enabled: true,
+          display_order: cafe.menu_categories.length + 1,
+          items: [],
+        };
+        cafe.menu_categories.push(destCat);
+      }
+      destCat.items.push(targetItem);
+    }
+
+    cafe.updated_at = new Date().toISOString();
+    module.exports.saveData();
+    return { item: targetItem, categories: cafe.menu_categories, cafe };
   },
 
   deleteMenuItem: (cafeId, itemId) => {
@@ -723,9 +882,31 @@ module.exports = {
 
     if (removed) {
       cafe.has_published_menu = cafe.menu_categories.some((c) => Array.isArray(c.items) && c.items.length > 0);
+      cafe.updated_at = new Date().toISOString();
       module.exports.saveData();
     }
     return removed;
+  },
+
+  toggleMenuItemAvailability: (cafeId, itemId, isAvailable) => {
+    const cafe = cafesData.find((c) => c.id === cafeId || c.slug === cafeId);
+    if (!cafe || !Array.isArray(cafe.menu_categories)) return null;
+
+    let targetItem = null;
+    for (const cat of cafe.menu_categories) {
+      const item = cat.items.find((i) => i.id === itemId);
+      if (item) {
+        item.is_available = isAvailable !== undefined ? Boolean(isAvailable) : !item.is_available;
+        targetItem = item;
+        break;
+      }
+    }
+
+    if (targetItem) {
+      cafe.updated_at = new Date().toISOString();
+      module.exports.saveData();
+    }
+    return targetItem;
   },
 
   // Save to Disk

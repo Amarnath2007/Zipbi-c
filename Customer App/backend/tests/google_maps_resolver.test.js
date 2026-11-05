@@ -130,7 +130,17 @@ test('4. POST /api/v1/admin/resolve-maps-url: Endpoint Verification', async () =
   assert.ok(data.googleMapsUrl);
 });
 
+const fs = require('fs');
+const path = require('path');
+let cafesBackupForTests = null;
+
 test('5. Directory Reset: POST /api/v1/admin/reset-directory returns 0 counts', async () => {
+  // Back up existing directory state before running reset test
+  const dataPath = path.resolve(__dirname, '../../data/cafes.json');
+  if (fs.existsSync(dataPath)) {
+    cafesBackupForTests = fs.readFileSync(dataPath, 'utf8');
+  }
+
   const resetRes = await fetch(`${baseUrl}/admin/reset-directory`, {
     method: 'POST',
     headers: {
@@ -158,65 +168,84 @@ test('5. Directory Reset: POST /api/v1/admin/reset-directory returns 0 counts', 
 });
 
 test('6. Fresh Café Registration with Google Maps Link & Verified Distance', async () => {
-  // 1. Register a new café using Google Maps URL
-  const createRes = await fetch(`${baseUrl}/admin/cafes`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${adminToken}`,
-    },
-    body: JSON.stringify({
-      name: 'Fresh Harvest Coffee Roasters',
-      category: 'Café',
-      description: 'Speciality manual brew bar and artisan bakery near SITRA.',
-      area: 'SITRA, Coimbatore',
-      address: 'Plot 14, Avinashi Road, Opposite SITRA, Coimbatore',
-      phone: '+91 99760 12345',
-      website: 'https://freshharvest.example.com',
-      cost_for_two: 400,
-      latitude: 11.035800,
-      longitude: 77.035500,
-      google_maps_url: 'https://maps.google.com/place/Fresh+Harvest/@11.035800,77.035500,17z',
-      location_verification_status: 'GOOGLE_MAPS_VERIFIED',
-      verification_status: 'UNCLAIMED',
-      is_ordering_enabled: false,
-      is_active: true,
-      cover_image: 'assets/images/placeholder_cafe.png',
-    }),
-  });
+  try {
+    // 1. Register a new café using Google Maps URL
+    const createRes = await fetch(`${baseUrl}/admin/cafes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({
+        name: 'Fresh Harvest Coffee Roasters',
+        category: 'Café',
+        description: 'Speciality manual brew bar and artisan bakery near SITRA.',
+        area: 'SITRA, Coimbatore',
+        address: 'Plot 14, Avinashi Road, Opposite SITRA, Coimbatore',
+        phone: '+91 99760 12345',
+        website: 'https://freshharvest.example.com',
+        cost_for_two: 400,
+        latitude: 11.035800,
+        longitude: 77.035500,
+        google_maps_url: 'https://maps.google.com/place/Fresh+Harvest/@11.035800,77.035500,17z',
+        location_verification_status: 'GOOGLE_MAPS_VERIFIED',
+        verification_status: 'UNCLAIMED',
+        is_ordering_enabled: false,
+        is_active: true,
+        cover_image: 'assets/images/placeholder_cafe.png',
+      }),
+    });
 
-  assert.strictEqual(createRes.status, 201);
-  const createData = await createRes.json();
-  assert.strictEqual(createData.success, true);
-  const newCafeId = createData.cafe.id;
+    assert.strictEqual(createRes.status, 201);
+    const createData = await createRes.json();
+    assert.strictEqual(createData.success, true);
+    const newCafeId = createData.cafe.id;
 
-  assert.strictEqual(createData.cafe.name, 'Fresh Harvest Coffee Roasters');
-  assert.strictEqual(createData.cafe.latitude, 11.035800);
-  assert.strictEqual(createData.cafe.longitude, 77.035500);
-  assert.strictEqual(createData.cafe.google_maps_url, 'https://maps.google.com/place/Fresh+Harvest/@11.035800,77.035500,17z');
-  assert.strictEqual(createData.cafe.location_verification_status, 'GOOGLE_MAPS_VERIFIED');
-  assert.strictEqual(createData.cafe.is_ordering_enabled, false);
+    assert.strictEqual(createData.cafe.name, 'Fresh Harvest Coffee Roasters');
+    assert.strictEqual(createData.cafe.latitude, 11.035800);
+    assert.strictEqual(createData.cafe.longitude, 77.035500);
+    assert.strictEqual(createData.cafe.google_maps_url, 'https://maps.google.com/place/Fresh+Harvest/@11.035800,77.035500,17z');
+    assert.strictEqual(createData.cafe.location_verification_status, 'GOOGLE_MAPS_VERIFIED');
+    assert.strictEqual(createData.cafe.is_ordering_enabled, false);
 
-  // 2. Customer API retrieves the newly registered café with Haversine distance
-  // From PSG CAS reference: 11.0326883, 77.0345773 -> ~0.36 km
-  const custRes = await fetch(`${baseUrl}/cafes?lat=11.0326883&lon=77.0345773`);
-  assert.strictEqual(custRes.status, 200);
-  const custData = await custRes.json();
-  assert.strictEqual(custData.count, 1);
-  const retrieved = custData.cafes[0];
-  assert.strictEqual(retrieved.id, newCafeId);
-  assert.ok(retrieved.calculated_distance_km >= 0.3 && retrieved.calculated_distance_km <= 0.5);
+    // 2. Customer API retrieves the newly registered café with Haversine distance
+    const custRes = await fetch(`${baseUrl}/cafes?lat=11.0326883&lon=77.0345773`);
+    assert.strictEqual(custRes.status, 200);
+    const custData = await custRes.json();
+    assert.strictEqual(custData.count, 1);
+    const retrieved = custData.cafes[0];
+    assert.strictEqual(retrieved.id, newCafeId);
+    assert.ok(retrieved.calculated_distance_km >= 0.3 && retrieved.calculated_distance_km <= 0.5);
 
-  // 3. Clean up the test registered café so directory remains 0
-  const delRes = await fetch(`${baseUrl}/admin/cafes/${newCafeId}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${adminToken}` },
-  });
-  assert.strictEqual(delRes.status, 200);
+    // 3. Clean up the test registered café so directory remains 0
+    const delRes = await fetch(`${baseUrl}/admin/cafes/${newCafeId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    assert.strictEqual(delRes.status, 200);
 
-  // Final check: directory is completely empty
-  const finalCheck = await fetch(`${baseUrl}/cafes`);
-  const finalData = await finalCheck.json();
-  assert.strictEqual(finalData.count, 0);
+    // Final check: directory is completely empty
+    const finalCheck = await fetch(`${baseUrl}/cafes`);
+    const finalData = await finalCheck.json();
+    assert.strictEqual(finalData.count, 0);
+  } finally {
+    // Restore original cafes after test completion
+    if (cafesBackupForTests) {
+      const pathsToRestore = [
+        path.resolve(__dirname, '../../data/cafes.json'),
+        path.resolve(__dirname, '../data/cafes.json'),
+        path.resolve(__dirname, '../../assets/data/cafes.json'),
+      ];
+      for (const p of pathsToRestore) {
+        try {
+          fs.writeFileSync(p, cafesBackupForTests, 'utf8');
+        } catch (_) {}
+      }
+      try {
+        const db = require('../src/db');
+        db.reloadCafes();
+      } catch (_) {}
+    }
+  }
 });
 

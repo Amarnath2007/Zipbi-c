@@ -1011,19 +1011,25 @@
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
                 <i class="fa-solid fa-compass text-brand-primary"></i>
-                <span>Extracted Geographic Coordinates</span>
+                <span>Geographic Coordinates</span>
               </span>
-              <span id="locationBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">Pending Verification</span>
+              <div class="flex items-center gap-2">
+                <button type="button" id="refreshCoordsBtn" onclick="handleRefreshFromCoordinates()" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium transition flex items-center gap-1" title="Reverse geocode current coordinates">
+                  <i id="refreshCoordsIcon" class="fa-solid fa-arrows-rotate text-[10px]"></i>
+                  <span>Refresh from Coordinates</span>
+                </button>
+                <span id="locationBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">Pending Verification</span>
+              </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-[11px] font-semibold text-slate-700 mb-1">Latitude *</label>
-                <input type="number" id="cafeLat" step="0.000001" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono outline-none focus:border-brand-primary" placeholder="11.035800" />
+                <input type="number" id="cafeLat" step="0.000001" oninput="markCoordModified()" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono outline-none focus:border-brand-primary" placeholder="11.035800" />
               </div>
               <div>
                 <label class="block text-[11px] font-semibold text-slate-700 mb-1">Longitude *</label>
-                <input type="number" id="cafeLon" step="0.000001" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono outline-none focus:border-brand-primary" placeholder="77.035500" />
+                <input type="number" id="cafeLon" step="0.000001" oninput="markCoordModified()" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono outline-none focus:border-brand-primary" placeholder="77.035500" />
               </div>
             </div>
 
@@ -1039,7 +1045,7 @@
             </div>
 
             <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-              <span class="text-[11px] text-slate-400">Coordinates are editable for manual precision correction.</span>
+              <span class="text-[11px] text-slate-400">Edit coordinates above or click "Refresh from Coordinates" to update reverse geocoding.</span>
               <a id="verifyMapLink" href="#" target="_blank" class="hidden text-xs text-brand-primary hover:underline font-semibold flex items-center gap-1.5">
                 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                 <span>Open in Google Maps to Verify</span>
@@ -1047,15 +1053,63 @@
             </div>
           </div>
 
-          <!-- Locality & Full Address -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Locality / Area Name</label>
-              <input type="text" id="cafeArea" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="e.g. SITRA, Coimbatore" />
+          <!-- Locality & Address Details (Editable with Detection Badges) -->
+          <div class="p-4 rounded-xl bg-slate-50/70 border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+              <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-map-location-dot text-brand-primary"></i>
+                <span>Locality & Address Information</span>
+              </span>
+              <span id="detectionSourceBadge" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 text-slate-700">Not Detected Yet</span>
             </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-[11px] font-semibold text-slate-700">Locality / Area Name *</label>
+                  <span id="badge-area" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">Pending</span>
+                </div>
+                <input type="text" id="cafeArea" oninput="markFieldModified('area')" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white" placeholder="e.g. SITRA, Peelamedu, RS Puram" required />
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-[11px] font-semibold text-slate-700">City *</label>
+                  <span id="badge-city" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">Pending</span>
+                </div>
+                <input type="text" id="cafeCity" oninput="markFieldModified('city')" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white" placeholder="e.g. Coimbatore" required />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-[11px] font-semibold text-slate-700">District</label>
+                  <span id="badge-district" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">Pending</span>
+                </div>
+                <input type="text" id="cafeDistrict" oninput="markFieldModified('district')" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white" placeholder="e.g. Coimbatore" />
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-[11px] font-semibold text-slate-700">State</label>
+                  <span id="badge-state" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">Pending</span>
+                </div>
+                <input type="text" id="cafeState" oninput="markFieldModified('state')" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white" placeholder="e.g. Tamil Nadu" />
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-[11px] font-semibold text-slate-700">PIN Code</label>
+                  <span id="badge-pincode" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">Pending</span>
+                </div>
+                <input type="text" id="cafePincode" oninput="markFieldModified('pincode')" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white" placeholder="e.g. 641014" />
+              </div>
+            </div>
+
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Full Physical Address</label>
-              <input type="text" id="cafeAddress" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="Door No, Street, Landmark, Avinashi Road..." />
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-[11px] font-semibold text-slate-700">Full Physical Address *</label>
+                <span id="badge-address" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">Pending</span>
+              </div>
+              <textarea id="cafeAddress" rows="2" oninput="markFieldModified('address')" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white" placeholder="Door No, Street Name, Landmark, Road..."></textarea>
             </div>
           </div>
 
@@ -1145,29 +1199,64 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL: MANAGE MENU (Strictly Text-Only) ==================== -->
+  <!-- ==================== MODAL: MANAGE MENU (Comprehensive Digital Menu OS) ==================== -->
   <div id="menuModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[90vh] flex flex-col m-4 overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-        <div>
-          <h2 id="menuModalTitle" class="text-base font-bold text-slate-900">Manage Digital Menu</h2>
-          <p class="text-xs text-slate-500">Strictly text-based items with ₹ prices. Food photographs are prohibited per design specification.</p>
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col m-4 overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary">
+            <i class="fa-solid fa-utensils text-lg"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 id="menuModalTitle" class="text-base font-bold text-slate-900">Manage Digital Menu</h2>
+              <span id="menuModalCountBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">0 Items</span>
+            </div>
+            <p class="text-xs text-slate-500">Strictly text-based items with ₹ prices. Food photographs are prohibited per design specification.</p>
+          </div>
         </div>
         <button onclick="closeMenuModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <div class="p-6 overflow-y-auto flex-1 space-y-6 custom-scroll">
+      <!-- Verification Status Bar -->
+      <div class="px-6 py-2.5 bg-emerald-50/50 border-b border-emerald-100/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-slate-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-shield-check text-emerald-600"></i>
+            <span>Menu Verification Status:</span>
+          </span>
+          <select id="menuVerificationSelect" onchange="handleUpdateMenuStatus(this.value)" class="px-2.5 py-1 rounded-lg border border-slate-300 text-xs font-semibold bg-white text-slate-800 outline-none focus:border-brand-primary">
+            <option value="Awaiting Merchant Confirmation">Awaiting Merchant Confirmation</option>
+            <option value="Partially Verified">Partially Verified</option>
+            <option value="Verified Menu">Verified Menu</option>
+            <option value="Menu Not Available">Menu Not Available</option>
+          </select>
+        </div>
+        <span id="menuStatusFeedback" class="text-[11px] text-emerald-700 font-medium hidden">Status updated</span>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto flex-1 space-y-5 custom-scroll">
         <input type="hidden" id="menuCafeId" />
 
         <!-- Add Category Form -->
-        <div class="flex gap-2">
-          <input type="text" id="newCategoryInput" placeholder="New category name (e.g. Pasta, Snacks, Burgers)..." class="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" />
-          <button type="button" onclick="handleAddMenuCategory()" class="px-3.5 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition">
-            + Add Category
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
+          <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+              <i class="fa-solid fa-layer-group text-xs"></i>
+            </span>
+            <input type="text" id="newCategoryInput" onkeydown="if(event.key==='Enter'){event.preventDefault();handleAddMenuCategory();}" placeholder="New category name (e.g. Pasta, Snacks, Burgers, Beverages)..." class="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white" />
+          </div>
+          <button type="button" onclick="handleAddMenuCategory()" class="px-4 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition shadow-sm flex items-center justify-center gap-1.5 shrink-0">
+            <i class="fa-solid fa-plus text-[10px]"></i>
+            <span>Add Category</span>
           </button>
         </div>
+
+        <div id="menuFeedback" class="hidden text-xs p-2.5 rounded-lg font-medium"></div>
 
         <!-- Categories & Items list -->
         <div id="menuCategoriesContainer" class="space-y-4">
@@ -1175,9 +1264,115 @@
         </div>
       </div>
 
-      <div class="px-6 py-3 border-t border-slate-100 flex justify-end bg-slate-50">
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50">
+        <span class="text-xs text-slate-400">All changes persist automatically to database and mobile sync.</span>
         <button type="button" onclick="closeMenuModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-white text-xs font-semibold hover:bg-slate-700 transition">Done</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ==================== SUB-MODAL: ADD / EDIT MENU ITEM ==================== -->
+  <div id="menuItemModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg m-4 overflow-hidden flex flex-col">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 id="menuItemModalTitle" class="text-sm font-bold text-slate-900">Add Menu Item</h3>
+        <button type="button" onclick="closeMenuItemModal()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+
+      <form id="menuItemForm" onsubmit="handleSaveMenuItemSubmit(event)" class="p-6 space-y-4">
+        <input type="hidden" id="itemModalItemId" />
+        <input type="hidden" id="itemModalOriginalCategory" />
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Item Name *</label>
+          <input type="text" id="itemModalName" required placeholder="e.g. Classic Margherita, Masala Chai, Veg Burger" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Category *</label>
+            <select id="itemModalCategory" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Price (₹ INR) *</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-bold text-xs">₹</span>
+              <input type="number" id="itemModalPrice" required min="1" step="0.5" placeholder="120" class="w-full pl-7 pr-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold outline-none focus:border-brand-primary" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Description (Optional)</label>
+          <textarea id="itemModalDesc" rows="2" placeholder="Ingredients, preparation style, portion size..." class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Food Type</label>
+            <select id="itemModalFoodType" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white font-medium">
+              <option value="VEG">🟢 Vegetarian</option>
+              <option value="NON_VEG">🔴 Non-Vegetarian</option>
+              <option value="EGG">🟡 Contains Egg</option>
+              <option value="VEGAN">🌱 Vegan</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Availability</label>
+            <select id="itemModalAvailability" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white font-medium">
+              <option value="true">✅ In Stock / Available</option>
+              <option value="false">❌ Out of Stock</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeMenuItemModal()" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition">Cancel</button>
+          <button type="submit" id="saveMenuItemBtn" class="px-4 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition shadow-sm">Save Menu Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== SUB-MODAL: RENAME CATEGORY ==================== -->
+  <div id="categoryModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md m-4 overflow-hidden flex flex-col">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 class="text-sm font-bold text-slate-900">Rename / Edit Category</h3>
+        <button type="button" onclick="closeCategoryModal()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+
+      <form id="categoryForm" onsubmit="handleSaveCategorySubmit(event)" class="p-6 space-y-4">
+        <input type="hidden" id="catModalOldName" />
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Category Name *</label>
+          <input type="text" id="catModalNewName" required placeholder="e.g. Artisanal Coffee, Quick Bites" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Description (Optional)</label>
+          <input type="text" id="catModalDesc" placeholder="e.g. Freshly baked each morning" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" />
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <input type="checkbox" id="catModalEnabled" checked class="w-4 h-4 text-brand-primary rounded border-slate-300" />
+          <label for="catModalEnabled" class="text-xs text-slate-700 font-medium">Category Enabled & Visible to Customers</label>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeCategoryModal()" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition shadow-sm">Save Changes</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1493,6 +1688,66 @@
       }
     }
 
+    // Field tracking for manual edits vs auto-detection
+    const userModifiedFields = new Set();
+
+    function markFieldModified(fieldName) {
+      userModifiedFields.add(fieldName);
+      const badge = document.getElementById(`badge-${fieldName}`);
+      if (badge) {
+        badge.textContent = 'Manual';
+        badge.className = 'text-[9px] font-semibold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-200';
+      }
+    }
+
+    function markCoordModified() {
+      const badge = document.getElementById('locationBadge');
+      if (badge) {
+        badge.textContent = 'Manual Coordinates';
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300';
+      }
+    }
+
+    function setLocationFieldValue(fieldKey, inputId, badgeId, value, isAutoDetected) {
+      const input = document.getElementById(inputId);
+      const badge = document.getElementById(badgeId);
+      if (!input || !badge) return;
+
+      if (!userModifiedFields.has(fieldKey)) {
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+          input.value = String(value).trim();
+          badge.textContent = isAutoDetected ? 'Auto-detected' : 'Saved';
+          badge.className = 'text-[9px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300';
+        } else {
+          if (isAutoDetected) {
+            badge.textContent = 'Not Available';
+            badge.className = 'text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600';
+          }
+        }
+      }
+    }
+
+    function updateDetectionSourceBadge(source, isConfigured) {
+      const badge = document.getElementById('detectionSourceBadge');
+      if (!badge) return;
+      if (source === 'GOOGLE_PLACES_API') {
+        badge.textContent = 'Google Places API (New)';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+      } else if (source === 'GOOGLE_GEOCODING_API') {
+        badge.textContent = 'Google Geocoding API';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+      } else if (source === 'URL_EXTRACTION_ONLY') {
+        badge.textContent = isConfigured === false ? 'Link Only (API Key Missing)' : 'Link Extraction Only';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-300';
+      } else if (source === 'SAVED') {
+        badge.textContent = 'Saved Record';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800 border border-blue-200';
+      } else {
+        badge.textContent = 'Not Detected Yet';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 text-slate-700';
+      }
+    }
+
     // Google Maps Location Fetcher
     async function handleFetchLocation() {
       const urlInput = document.getElementById('googleMapsUrl');
@@ -1522,7 +1777,7 @@
 
         const data = await res.json();
 
-        if (res.ok && data.success && data.latitude && data.longitude) {
+        if (res.ok && data.success && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
           // Populate Coordinates
           document.getElementById('cafeLat').value = data.latitude.toFixed(6);
           document.getElementById('cafeLon').value = data.longitude.toFixed(6);
@@ -1541,13 +1796,16 @@
             document.getElementById('googlePlaceId').value = data.googlePlaceId;
           }
 
-          // Populate Formatted Address if available
-          if (data.formattedAddress) {
-            const addrInput = document.getElementById('cafeAddress');
-            if (!addrInput.value.trim()) {
-              addrInput.value = data.formattedAddress;
-            }
-          }
+          // Update Detection Source Badge
+          updateDetectionSourceBadge(data.detectionSource, data.isApiConfigured);
+
+          // Populate Locality / Area & Address Details (Respecting manual modifications)
+          setLocationFieldValue('area', 'cafeArea', 'badge-area', data.area, true);
+          setLocationFieldValue('city', 'cafeCity', 'badge-city', data.city || 'Coimbatore', true);
+          setLocationFieldValue('district', 'cafeDistrict', 'badge-district', data.district || 'Coimbatore', true);
+          setLocationFieldValue('state', 'cafeState', 'badge-state', data.state || 'Tamil Nadu', true);
+          setLocationFieldValue('pincode', 'cafePincode', 'badge-pincode', data.postalCode || data.pincode, true);
+          setLocationFieldValue('address', 'cafeAddress', 'badge-address', data.formattedAddress, true);
 
           // Update Status Badge
           const badge = document.getElementById('locationBadge');
@@ -1559,7 +1817,13 @@
           verifyLink.href = data.resolvedUrl || data.googleMapsUrl || url;
           verifyLink.classList.remove('hidden');
 
-          showFeedback(feedback, `Coordinates extracted successfully: ${data.latitude.toFixed(5)}, ${data.longitude.toFixed(5)}`, true);
+          let successMsg = `Coordinates extracted: ${data.latitude.toFixed(5)}, ${data.longitude.toFixed(5)}.`;
+          if (data.area) {
+            successMsg += ` Locality identified as "${data.area}".`;
+          } else if (data.isApiConfigured === false) {
+            successMsg += ` Note: Server GOOGLE_MAPS_API_KEY is not configured, so address components were not auto-geocoded. Coordinates are kept; you may type the locality manually.`;
+          }
+          showFeedback(feedback, successMsg, true);
         } else {
           // Coordinates not extractable from URL, prompt for manual correction
           const msg = data.message || 'Could not extract coordinates automatically. Please enter latitude & longitude manually below.';
@@ -1579,6 +1843,59 @@
       }
     }
 
+    // Refresh / Reverse Geocode from current coordinates
+    async function handleRefreshFromCoordinates() {
+      const latVal = parseFloat(document.getElementById('cafeLat').value);
+      const lonVal = parseFloat(document.getElementById('cafeLon').value);
+      const feedback = document.getElementById('fetchFeedback');
+      const btn = document.getElementById('refreshCoordsBtn');
+      const icon = document.getElementById('refreshCoordsIcon');
+
+      if (isNaN(latVal) || isNaN(lonVal)) {
+        alert('Please enter valid numeric Latitude and Longitude first.');
+        return;
+      }
+
+      if (icon) icon.className = 'fa-solid fa-arrows-rotate fa-spin text-[10px]';
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/geocode-coordinates`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ latitude: latVal, longitude: lonVal }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          updateDetectionSourceBadge(data.detectionSource, data.isApiConfigured);
+
+          setLocationFieldValue('area', 'cafeArea', 'badge-area', data.area, true);
+          setLocationFieldValue('city', 'cafeCity', 'badge-city', data.city, true);
+          setLocationFieldValue('district', 'cafeDistrict', 'badge-district', data.district, true);
+          setLocationFieldValue('state', 'cafeState', 'badge-state', data.state, true);
+          setLocationFieldValue('pincode', 'cafePincode', 'badge-pincode', data.postalCode, true);
+          setLocationFieldValue('address', 'cafeAddress', 'badge-address', data.formattedAddress, true);
+
+          if (data.googlePlaceId) {
+            document.getElementById('googlePlaceId').value = data.googlePlaceId;
+          }
+
+          showFeedback(feedback, `Refreshed from coordinates! Locality: ${data.area || 'Detected'}${data.city ? ', ' + data.city : ''}`, true);
+        } else {
+          showFeedback(feedback, data.message || 'Could not reverse geocode coordinates. Please enter address manually.', false);
+        }
+      } catch (err) {
+        showFeedback(feedback, 'Network error while refreshing geocode data.', false);
+      } finally {
+        if (icon) icon.className = 'fa-solid fa-arrows-rotate text-[10px]';
+        if (btn) btn.disabled = false;
+      }
+    }
+
     function showFeedback(el, msg, isSuccess) {
       el.textContent = msg;
       el.className = isSuccess
@@ -1589,13 +1906,32 @@
 
     // Modal Add / Edit Cafe
     function openCreateModal() {
+      userModifiedFields.clear();
+
       document.getElementById('modalTitle').textContent = 'Add New Business';
       document.getElementById('editCafeId').value = '';
       document.getElementById('cafeName').value = '';
       document.getElementById('cafeCategory').value = 'Café';
       document.getElementById('cafeDesc').value = '';
-      document.getElementById('cafeArea').value = 'SITRA, Coimbatore';
+
+      // Locality & Address fields - completely clean, NO hardcoded SITRA
+      document.getElementById('cafeArea').value = '';
+      document.getElementById('cafeCity').value = 'Coimbatore';
+      document.getElementById('cafeDistrict').value = 'Coimbatore';
+      document.getElementById('cafeState').value = 'Tamil Nadu';
+      document.getElementById('cafePincode').value = '';
       document.getElementById('cafeAddress').value = '';
+
+      // Reset badges
+      ['area', 'city', 'district', 'state', 'pincode', 'address'].forEach((f) => {
+        const b = document.getElementById(`badge-${f}`);
+        if (b) {
+          b.textContent = 'Pending';
+          b.className = 'text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600';
+        }
+      });
+      updateDetectionSourceBadge(null);
+
       document.getElementById('cafeHours').value = '10:00 AM – 11:00 PM';
       document.getElementById('cafePhone').value = '';
       document.getElementById('cafeWebsite').value = '';
@@ -1637,13 +1973,41 @@
       const cafe = allCafes.find((c) => c.id === id);
       if (!cafe) return;
 
+      userModifiedFields.clear();
+
       document.getElementById('modalTitle').textContent = `Edit Business: ${cafe.name}`;
       document.getElementById('editCafeId').value = cafe.id;
       document.getElementById('cafeName').value = cafe.name || '';
       document.getElementById('cafeCategory').value = cafe.category || 'Café';
       document.getElementById('cafeDesc').value = cafe.description || '';
+
+      // Saved locality and address
       document.getElementById('cafeArea').value = cafe.area || '';
-      document.getElementById('cafeAddress').value = cafe.address || '';
+      document.getElementById('cafeCity').value = cafe.city || 'Coimbatore';
+      document.getElementById('cafeDistrict').value = cafe.district || 'Coimbatore';
+      document.getElementById('cafeState').value = cafe.state || 'Tamil Nadu';
+      document.getElementById('cafePincode').value = cafe.pincode || cafe.postalCode || '';
+      document.getElementById('cafeAddress').value = cafe.address || cafe.formatted_address || '';
+
+      // Display Saved badges
+      ['area', 'city', 'district', 'state', 'pincode', 'address'].forEach((f) => {
+        const b = document.getElementById(`badge-${f}`);
+        const inputEl = document.getElementById(`cafe${f.charAt(0).toUpperCase() + f.slice(1)}`);
+        const val = inputEl ? inputEl.value : '';
+        if (b) {
+          if (val) {
+            b.textContent = 'Saved Value';
+            b.className = 'text-[9px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200';
+          } else {
+            b.textContent = 'Empty';
+            b.className = 'text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600';
+          }
+        }
+      });
+
+      const src = cafe.location_meta && cafe.location_meta.source ? cafe.location_meta.source : (cafe.google_maps_url ? 'SAVED' : null);
+      updateDetectionSourceBadge(src);
+
       document.getElementById('cafeHours').value = cafe.opening_hours || '';
       document.getElementById('cafePhone').value = cafe.phone || '';
       document.getElementById('cafeWebsite').value = cafe.website || '';
@@ -1656,7 +2020,7 @@
       document.getElementById('googleMapsUrl').value = cafe.google_maps_url || '';
       document.getElementById('cafeLat').value = cafe.latitude !== undefined ? cafe.latitude : '';
       document.getElementById('cafeLon').value = cafe.longitude !== undefined ? cafe.longitude : '';
-      document.getElementById('detectedPlaceName').value = cafe.formatted_address || '';
+      document.getElementById('detectedPlaceName').value = cafe.formatted_address || cafe.address || '';
       document.getElementById('googlePlaceId').value = cafe.google_place_id || '';
       document.getElementById('fetchFeedback').classList.add('hidden');
 
@@ -1757,8 +2121,8 @@
             lonVal = mData.longitude;
             document.getElementById('cafeLat').value = latVal;
             document.getElementById('cafeLon').value = lonVal;
-            if (mData.placeName && !document.getElementById('cafeArea').value.trim()) {
-              document.getElementById('cafeArea').value = mData.placeName;
+            if (mData.area && !document.getElementById('cafeArea').value.trim()) {
+              document.getElementById('cafeArea').value = mData.area;
             }
             if (mData.formattedAddress && !document.getElementById('cafeAddress').value.trim()) {
               document.getElementById('cafeAddress').value = mData.formattedAddress;
@@ -1768,22 +2132,30 @@
       }
 
       if (isNaN(latVal) || isNaN(lonVal)) {
-        alert('Please provide valid coordinates or paste a Google Maps link in Step 2.');
+        alert('Please provide valid geographical coordinates or paste a Google Maps link in Step 2.');
         switchCafeModalTab('tab-location');
         return;
       }
 
-      let area = document.getElementById('cafeArea').value.trim();
-      let address = document.getElementById('cafeAddress').value.trim();
-      const detected = document.getElementById('detectedPlaceName').value.trim();
+      const area = document.getElementById('cafeArea').value.trim();
+      const city = document.getElementById('cafeCity').value.trim() || 'Coimbatore';
+      const district = document.getElementById('cafeDistrict').value.trim() || city;
+      const state = document.getElementById('cafeState').value.trim() || 'Tamil Nadu';
+      const pincode = document.getElementById('cafePincode').value.trim();
+      const address = document.getElementById('cafeAddress').value.trim();
 
       if (!area) {
-        area = detected || 'SITRA, Coimbatore';
-        document.getElementById('cafeArea').value = area;
+        alert('Please specify the Locality / Area Name (e.g. Peelamedu, RS Puram, SITRA) in Step 2.');
+        switchCafeModalTab('tab-location');
+        document.getElementById('cafeArea').focus();
+        return;
       }
+
       if (!address) {
-        address = detected ? `${detected}, ${area}` : `${name}, ${area}, Coimbatore`;
-        document.getElementById('cafeAddress').value = address;
+        alert('Please specify the Full Physical Address in Step 2.');
+        switchCafeModalTab('tab-location');
+        document.getElementById('cafeAddress').focus();
+        return;
       }
 
       let coverImage = document.getElementById('cafeImageUrl').value.trim();
@@ -1796,7 +2168,7 @@
       if (saveBtn) {
         originalBtnHtml = saveBtn.innerHTML;
         saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Saving Café...';
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Saving Business...';
       }
 
       const payload = {
@@ -1804,7 +2176,12 @@
         category: document.getElementById('cafeCategory').value || 'Café',
         description: document.getElementById('cafeDesc').value.trim(),
         area: area,
+        city: city,
+        district: district,
+        state: state,
+        pincode: pincode,
         address: address,
+        formatted_address: address,
         opening_hours: document.getElementById('cafeHours').value.trim() || '10:00 AM – 10:00 PM',
         phone: document.getElementById('cafePhone').value.trim(),
         website: document.getElementById('cafeWebsite').value.trim() || null,
@@ -1819,6 +2196,7 @@
         location_verification_status: googleMapsUrl ? 'GOOGLE_MAPS_VERIFIED' : 'UNCLAIMED',
         verification_status: document.getElementById('cafeOrdering').checked ? 'ACTIVE_PARTNER' : 'UNCLAIMED',
         cover_image: coverImage,
+        cover_image_url: coverImage,
       };
 
       try {
@@ -2019,185 +2397,483 @@
       reader.readAsDataURL(file);
     }
 
-    // Menu Modal (Strictly Text-Only)
-    function openMenuModal(cafeId) {
-      const cafe = allCafes.find((c) => c.id === cafeId);
-      if (!cafe) return;
+    // ==================== DIGITAL MENU MANAGEMENT OS ====================
+    let currentMenuCafeId = null;
+    let currentMenuCategories = [];
 
-      document.getElementById('menuCafeId').value = cafe.id;
-      document.getElementById('menuModalTitle').textContent = `Manage Menu: ${cafe.name}`;
-      renderMenuCategories(cafe.menu_categories || []);
+    async function openMenuModal(cafeId) {
+      currentMenuCafeId = cafeId;
+      document.getElementById('menuCafeId').value = cafeId;
+
+      const cafe = allCafes.find((c) => c.id === cafeId);
+      document.getElementById('menuModalTitle').textContent = `Manage Menu: ${cafe ? cafe.name : ''}`;
+
+      const container = document.getElementById('menuCategoriesContainer');
+      container.innerHTML = `
+        <div class="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center gap-2">
+          <i class="fa-solid fa-spinner fa-spin text-brand-primary text-base"></i>
+          <span>Loading menu data...</span>
+        </div>
+      `;
+
       document.getElementById('menuModal').classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${cafeId}/menu`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const statusSelect = document.getElementById('menuVerificationSelect');
+          if (statusSelect) {
+            statusSelect.value = data.menu_status || 'Awaiting Merchant Confirmation';
+          }
+          currentMenuCategories = data.categories || [];
+          renderMenuCategories(currentMenuCategories);
+        } else {
+          container.innerHTML = `
+            <div class="p-6 text-center text-red-600 text-xs bg-red-50 rounded-xl border border-red-200">
+              Failed to load menu: ${data.message || 'Unknown error'}
+            </div>
+          `;
+        }
+      } catch (err) {
+        container.innerHTML = `
+          <div class="p-6 text-center text-red-600 text-xs bg-red-50 rounded-xl border border-red-200">
+            Network error loading menu. Please try again.
+          </div>
+        `;
+      }
     }
 
     function closeMenuModal() {
       document.getElementById('menuModal').classList.add('hidden');
+      currentMenuCafeId = null;
       refreshAllData();
+    }
+
+    async function handleUpdateMenuStatus(newStatus) {
+      if (!currentMenuCafeId) return;
+      const feedback = document.getElementById('menuStatusFeedback');
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ status: newStatus }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          if (feedback) {
+            feedback.textContent = `Status saved: "${newStatus}"`;
+            feedback.classList.remove('hidden');
+            setTimeout(() => feedback.classList.add('hidden'), 2500);
+          }
+          const c = allCafes.find((item) => item.id === currentMenuCafeId);
+          if (c) c.menu_status = newStatus;
+        } else {
+          alert(data.message || 'Failed to update menu status.');
+        }
+      } catch (e) {
+        alert('Network error updating menu status.');
+      }
     }
 
     function renderMenuCategories(categories) {
       const container = document.getElementById('menuCategoriesContainer');
       container.innerHTML = '';
 
-      if (categories.length === 0) {
+      if (!categories || categories.length === 0) {
         container.innerHTML = `
-          <div class="p-6 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            No menu categories yet. Enter a category name above to start building the digital menu.
+          <div class="p-8 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200 space-y-2">
+            <i class="fa-solid fa-utensils text-2xl text-slate-300"></i>
+            <p class="font-semibold text-slate-600">No menu categories yet.</p>
+            <p>Enter a category name above (e.g. "Signature Coffee", "Sandwiches", "Desserts") and click "Add Category".</p>
           </div>
         `;
         return;
       }
 
-      for (const cat of categories) {
+      categories.forEach((cat) => {
         const catCard = document.createElement('div');
         catCard.className = 'p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3';
 
+        const items = cat.items || [];
         let itemsHtml = '';
-        if (cat.items && cat.items.length > 0) {
-          itemsHtml = cat.items.map((it) => `
-            <div class="flex items-center justify-between p-2.5 rounded bg-white border border-slate-100 text-xs">
-              <div>
-                <div class="font-bold text-slate-900">${escapeHtml(it.name)}</div>
-                <div class="text-[11px] text-slate-400">${escapeHtml(it.description || '')}</div>
+
+        if (items.length > 0) {
+          itemsHtml = items.map((it) => {
+            const isAvail = it.is_available !== false;
+
+            let foodTypeBadge = '';
+            if (it.food_type === 'NON_VEG') {
+              foodTypeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">🔴 Non-Veg</span>';
+            } else if (it.food_type === 'EGG') {
+              foodTypeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">🟡 Egg</span>';
+            } else if (it.food_type === 'VEGAN') {
+              foodTypeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">🌱 Vegan</span>';
+            } else {
+              foodTypeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">🟢 Veg</span>';
+            }
+
+            const availBtn = isAvail
+              ? `<button type="button" onclick="handleToggleAvailability('${escapeJsString(cat.name)}', '${it.id}', false)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition" title="Click to mark Out of Stock">✅ In Stock</button>`
+              : `<button type="button" onclick="handleToggleAvailability('${escapeJsString(cat.name)}', '${it.id}', true)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition" title="Click to mark In Stock">❌ Out of Stock</button>`;
+
+            return `
+              <div class="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200 text-xs shadow-xs hover:border-slate-300 transition">
+                <div class="flex-1 pr-3">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-900">${escapeHtml(it.name)}</span>
+                    ${foodTypeBadge}
+                  </div>
+                  ${it.description ? `<p class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(it.description)}</p>` : ''}
+                </div>
+                <div class="flex items-center gap-2.5 shrink-0">
+                  <span class="font-bold text-slate-900 text-xs font-mono">₹${it.price}</span>
+                  ${availBtn}
+                  <button type="button" onclick="openEditMenuItemModal('${escapeJsString(cat.name)}', '${it.id}')" class="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition" title="Edit Item">
+                    <i class="fa-solid fa-pen text-[11px]"></i>
+                  </button>
+                  <button type="button" onclick="handleDeleteMenuItem('${escapeJsString(cat.name)}', '${it.id}')" class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 transition" title="Delete Item">
+                    <i class="fa-solid fa-trash-can text-[11px]"></i>
+                  </button>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
-                <span class="font-bold text-slate-900">₹${it.price}</span>
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold ${it.is_veg ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">${it.is_veg ? 'Veg' : 'Non-Veg'}</span>
-                <button type="button" onclick="handleDeleteMenuItem('${escapeHtml(cat.name)}', '${it.id}')" class="text-slate-400 hover:text-red-600 transition" title="Delete Item">
-                  <i class="fa-solid fa-trash-can"></i>
-                </button>
-              </div>
-            </div>
-          `).join('');
+            `;
+          }).join('');
         } else {
-          itemsHtml = '<div class="text-[11px] text-slate-400 py-1 italic">No items in this category yet.</div>';
+          itemsHtml = '<div class="text-[11px] text-slate-400 py-2 italic text-center bg-white/60 rounded-lg border border-dashed border-slate-200">No items in this category yet. Click "+ Add Item" below.</div>';
         }
 
         catCard.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-sm text-slate-800">${escapeHtml(cat.name)} (${cat.items ? cat.items.length : 0})</span>
-            <button type="button" onclick="handleDeleteCategory('${escapeHtml(cat.name)}')" class="text-xs text-red-600 hover:underline">
-              Delete Category
-            </button>
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-slate-900">${escapeHtml(cat.name)}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">${items.length} items</span>
+              ${cat.description ? `<span class="text-xs text-slate-400 italic">• ${escapeHtml(cat.description)}</span>` : ''}
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="openAddMenuItemModal('${escapeJsString(cat.name)}')" class="px-2.5 py-1 rounded-md bg-brand-primary text-white text-[11px] font-semibold hover:bg-brand-dark transition flex items-center gap-1 shadow-xs">
+                <i class="fa-solid fa-plus text-[9px]"></i>
+                <span>Add Item</span>
+              </button>
+              <button type="button" onclick="openRenameCategoryModal('${escapeJsString(cat.name)}', '${escapeJsString(cat.description || '')}', ${cat.is_enabled !== false})" class="p-1.5 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition" title="Rename / Edit Category">
+                <i class="fa-solid fa-pen-to-square text-xs"></i>
+              </button>
+              <button type="button" onclick="handleDeleteCategory('${escapeJsString(cat.name)}')" class="p-1.5 rounded hover:bg-red-100 text-slate-400 hover:text-red-600 transition" title="Delete Category">
+                <i class="fa-solid fa-trash text-xs"></i>
+              </button>
+            </div>
           </div>
-          <div class="space-y-1.5">${itemsHtml}</div>
-          <div class="pt-2 border-t border-slate-200 flex items-center gap-2">
-            <input type="text" id="itemName_${escapeHtml(cat.name)}" placeholder="Item name" class="flex-1 px-2.5 py-1.5 rounded border border-slate-300 text-xs" />
-            <input type="number" id="itemPrice_${escapeHtml(cat.name)}" placeholder="₹ Price" class="w-20 px-2.5 py-1.5 rounded border border-slate-300 text-xs" />
-            <select id="itemVeg_${escapeHtml(cat.name)}" class="px-2 py-1.5 rounded border border-slate-300 text-xs bg-white">
-              <option value="true">Veg</option>
-              <option value="false">Non-Veg</option>
-            </select>
-            <button type="button" onclick="handleAddItem('${escapeHtml(cat.name)}')" class="px-3 py-1.5 rounded bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition">
-              + Add
-            </button>
-          </div>
+          <div class="space-y-1.5 pt-1">${itemsHtml}</div>
         `;
         container.appendChild(catCard);
-      }
+      });
     }
 
+    // Escape helper for strings passed into inline onclick handlers
+    function escapeJsString(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;');
+    }
+
+    // Add Category
     async function handleAddMenuCategory() {
-      const cafeId = document.getElementById('menuCafeId').value;
-      const catName = document.getElementById('newCategoryInput').value.trim();
-      if (!catName) return;
+      if (!currentMenuCafeId) return;
+      const input = document.getElementById('newCategoryInput');
+      const catName = input.value.trim();
+      if (!catName) {
+        input.focus();
+        return;
+      }
 
       try {
-        const res = await fetch(`${API_BASE}/admin/cafes/${cafeId}/menu/categories`, {
+        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/categories`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${adminToken}`,
           },
-          body: JSON.stringify({ categoryName: catName }),
+          body: JSON.stringify({ name: catName }),
         });
         const data = await res.json();
-        if (res.ok && data.cafe) {
-          document.getElementById('newCategoryInput').value = '';
-          const cafe = allCafes.find((c) => c.id === cafeId);
-          if (cafe) cafe.menu_categories = data.cafe.menu_categories;
-          renderMenuCategories(data.cafe.menu_categories);
+        if (res.ok && data.success) {
+          input.value = '';
+          currentMenuCategories = data.categories || [];
+          renderMenuCategories(currentMenuCategories);
+          const c = allCafes.find((item) => item.id === currentMenuCafeId);
+          if (c) c.menu_categories = currentMenuCategories;
+        } else {
+          alert(data.message || 'Failed to add category.');
         }
       } catch (err) {
-        alert('Failed to add category.');
+        alert('Network error while adding category.');
       }
     }
 
+    // Category Rename Modal
+    function openRenameCategoryModal(oldName, desc, isEnabled) {
+      document.getElementById('catModalOldName').value = oldName;
+      document.getElementById('catModalNewName').value = oldName;
+      document.getElementById('catModalDesc').value = desc || '';
+      document.getElementById('catModalEnabled').checked = isEnabled !== false;
+      document.getElementById('categoryModal').classList.remove('hidden');
+    }
+
+    function closeCategoryModal() {
+      document.getElementById('categoryModal').classList.add('hidden');
+    }
+
+    async function handleSaveCategorySubmit(e) {
+      if (e) e.preventDefault();
+      if (!currentMenuCafeId) return;
+
+      const oldName = document.getElementById('catModalOldName').value;
+      const newName = document.getElementById('catModalNewName').value.trim();
+      const description = document.getElementById('catModalDesc').value.trim();
+      const isEnabled = document.getElementById('catModalEnabled').checked;
+
+      if (!newName) {
+        alert('Please enter a valid category name.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/categories/${encodeURIComponent(oldName)}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ newName, description, isEnabled }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          closeCategoryModal();
+          currentMenuCategories = data.categories || [];
+          renderMenuCategories(currentMenuCategories);
+          const c = allCafes.find((item) => item.id === currentMenuCafeId);
+          if (c) c.menu_categories = currentMenuCategories;
+        } else {
+          alert(data.message || 'Failed to rename category.');
+        }
+      } catch (err) {
+        alert('Network error renaming category.');
+      }
+    }
+
+    // Delete Category
     async function handleDeleteCategory(categoryName) {
-      const cafeId = document.getElementById('menuCafeId').value;
-      if (!confirm(`Delete category "${categoryName}"?`)) return;
+      if (!currentMenuCafeId) return;
+      if (!confirm(`Are you sure you want to permanently delete category "${categoryName}" and all its items?`)) return;
 
       try {
-        const res = await fetch(`${API_BASE}/admin/cafes/${cafeId}/menu/categories/${encodeURIComponent(categoryName)}`, {
+        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/categories/${encodeURIComponent(categoryName)}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${adminToken}` },
         });
         const data = await res.json();
-        if (res.ok && data.cafe) {
-          const cafe = allCafes.find((c) => c.id === cafeId);
-          if (cafe) cafe.menu_categories = data.cafe.menu_categories;
-          renderMenuCategories(data.cafe.menu_categories);
+        if (res.ok && data.success) {
+          currentMenuCategories = data.categories || [];
+          renderMenuCategories(currentMenuCategories);
+          const c = allCafes.find((item) => item.id === currentMenuCafeId);
+          if (c) c.menu_categories = currentMenuCategories;
+        } else {
+          alert(data.message || 'Failed to delete category.');
         }
       } catch (err) {
-        alert('Failed to delete category.');
+        alert('Network error while deleting category.');
       }
     }
 
-    async function handleAddItem(categoryName) {
-      const cafeId = document.getElementById('menuCafeId').value;
-      const name = document.getElementById(`itemName_${categoryName}`).value.trim();
-      const price = parseFloat(document.getElementById(`itemPrice_${categoryName}`).value);
-      const isVeg = document.getElementById(`itemVeg_${categoryName}`).value === 'true';
+    // Menu Item Sub-Modal helpers
+    function populateCategoryDropdown(selectedCategory) {
+      const select = document.getElementById('itemModalCategory');
+      select.innerHTML = '';
+      currentMenuCategories.forEach((cat) => {
+        const opt = document.createElement('option');
+        opt.value = cat.name;
+        opt.textContent = cat.name;
+        if (cat.name === selectedCategory) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
 
-      if (!name || isNaN(price)) return alert('Please enter valid item name and price.');
+    function openAddMenuItemModal(catName) {
+      document.getElementById('menuItemModalTitle').textContent = 'Add Menu Item';
+      document.getElementById('itemModalItemId').value = '';
+      document.getElementById('itemModalOriginalCategory').value = catName;
+      document.getElementById('itemModalName').value = '';
+      document.getElementById('itemModalPrice').value = '';
+      document.getElementById('itemModalDesc').value = '';
+      document.getElementById('itemModalFoodType').value = 'VEG';
+      document.getElementById('itemModalAvailability').value = 'true';
+
+      populateCategoryDropdown(catName);
+      document.getElementById('menuItemModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('itemModalName').focus(), 100);
+    }
+
+    function openEditMenuItemModal(catName, itemId) {
+      let foundItem = null;
+      for (const cat of currentMenuCategories) {
+        const it = (cat.items || []).find((i) => i.id === itemId);
+        if (it) {
+          foundItem = it;
+          break;
+        }
+      }
+
+      if (!foundItem) return;
+
+      document.getElementById('menuItemModalTitle').textContent = `Edit Menu Item: ${foundItem.name}`;
+      document.getElementById('itemModalItemId').value = foundItem.id;
+      document.getElementById('itemModalOriginalCategory').value = catName;
+      document.getElementById('itemModalName').value = foundItem.name || '';
+      document.getElementById('itemModalPrice').value = foundItem.price || '';
+      document.getElementById('itemModalDesc').value = foundItem.description || '';
+      document.getElementById('itemModalFoodType').value = foundItem.food_type || (foundItem.is_veg ? 'VEG' : 'NON_VEG');
+      document.getElementById('itemModalAvailability').value = String(foundItem.is_available !== false);
+
+      populateCategoryDropdown(catName);
+      document.getElementById('menuItemModal').classList.remove('hidden');
+    }
+
+    function closeMenuItemModal() {
+      document.getElementById('menuItemModal').classList.add('hidden');
+    }
+
+    async function handleSaveMenuItemSubmit(e) {
+      if (e) e.preventDefault();
+      if (!currentMenuCafeId) return;
+
+      const itemId = document.getElementById('itemModalItemId').value;
+      const origCat = document.getElementById('itemModalOriginalCategory').value;
+      const targetCat = document.getElementById('itemModalCategory').value;
+      const name = document.getElementById('itemModalName').value.trim();
+      const priceVal = parseFloat(document.getElementById('itemModalPrice').value);
+      const desc = document.getElementById('itemModalDesc').value.trim();
+      const foodType = document.getElementById('itemModalFoodType').value;
+      const isAvail = document.getElementById('itemModalAvailability').value === 'true';
+
+      if (!name) return alert('Item name is required.');
+      if (isNaN(priceVal) || priceVal < 0) return alert('Please enter a valid price.');
+
+      const itemPayload = {
+        name,
+        price: priceVal,
+        description: desc,
+        food_type: foodType,
+        is_veg: foodType === 'VEG' || foodType === 'VEGAN',
+        is_available: isAvail,
+      };
 
       try {
-        const res = await fetch(`${API_BASE}/admin/cafes/${cafeId}/menu/items`, {
-          method: 'POST',
+        let res;
+        if (itemId) {
+          // Update item (and move across category if changed)
+          res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/items/${itemId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${adminToken}`,
+            },
+            body: JSON.stringify({
+              categoryName: origCat,
+              newCategoryName: targetCat,
+              ...itemPayload,
+            }),
+          });
+        } else {
+          // Add new item
+          res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/items`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${adminToken}`,
+            },
+            body: JSON.stringify({
+              categoryName: targetCat,
+              ...itemPayload,
+            }),
+          });
+        }
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          closeMenuItemModal();
+          currentMenuCategories = data.categories || [];
+          renderMenuCategories(currentMenuCategories);
+          const c = allCafes.find((item) => item.id === currentMenuCafeId);
+          if (c) c.menu_categories = currentMenuCategories;
+        } else {
+          alert(data.message || 'Failed to save menu item.');
+        }
+      } catch (err) {
+        alert('Network error saving menu item.');
+      }
+    }
+
+    // Toggle item availability
+    async function handleToggleAvailability(catName, itemId, newStatus) {
+      if (!currentMenuCafeId) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/items/${itemId}/availability`, {
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${adminToken}`,
           },
-          body: JSON.stringify({
-            categoryName,
-            item: {
-              name,
-              price,
-              is_veg: isVeg,
-              description: '',
-              is_available: true,
-            },
-          }),
+          body: JSON.stringify({ isAvailable: newStatus }),
         });
         const data = await res.json();
-        if (res.ok && data.cafe) {
-          const cafe = allCafes.find((c) => c.id === cafeId);
-          if (cafe) cafe.menu_categories = data.cafe.menu_categories;
-          renderMenuCategories(data.cafe.menu_categories);
+        if (res.ok && data.success) {
+          // Update in local state
+          for (const cat of currentMenuCategories) {
+            const it = (cat.items || []).find((i) => i.id === itemId);
+            if (it) {
+              it.is_available = newStatus;
+              break;
+            }
+          }
+          renderMenuCategories(currentMenuCategories);
+        } else {
+          alert(data.message || 'Failed to update availability.');
         }
       } catch (err) {
-        alert('Failed to add item.');
+        alert('Network error updating availability.');
       }
     }
 
-    async function handleDeleteMenuItem(categoryName, itemId) {
-      const cafeId = document.getElementById('menuCafeId').value;
+    // Delete item
+    async function handleDeleteMenuItem(catName, itemId) {
+      if (!currentMenuCafeId) return;
+      if (!confirm('Are you sure you want to delete this menu item?')) return;
+
       try {
-        const res = await fetch(`${API_BASE}/admin/cafes/${cafeId}/menu/items/${itemId}`, {
+        const res = await fetch(`${API_BASE}/admin/cafes/${currentMenuCafeId}/menu/items/${itemId}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${adminToken}` },
         });
-        if (res.ok) {
-          const cafe = allCafes.find((c) => c.id === cafeId);
-          if (cafe && cafe.menu_categories) {
-            for (const cat of cafe.menu_categories) {
-              cat.items = cat.items.filter((it) => it.id !== itemId);
-            }
-            renderMenuCategories(cafe.menu_categories);
-          }
+        const data = await res.json();
+        if (res.ok && data.success) {
+          currentMenuCategories = data.categories || [];
+          renderMenuCategories(currentMenuCategories);
+          const c = allCafes.find((item) => item.id === currentMenuCafeId);
+          if (c) c.menu_categories = currentMenuCategories;
+        } else {
+          alert(data.message || 'Failed to delete menu item.');
         }
       } catch (err) {
-        alert('Failed to remove item.');
+        alert('Network error while deleting item.');
       }
     }
 

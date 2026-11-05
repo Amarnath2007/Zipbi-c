@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const db = require('../db');
 const { importImageFromGoogleDrive } = require('../utils/googleDrive');
-const { resolveGoogleMapsUrl } = require('../utils/googleMapsResolver');
+const { resolveGoogleMapsUrl, reverseGeocodeCoordinates } = require('../utils/googleMapsResolver');
 const path = require('path');
 const fs = require('fs');
 
@@ -310,13 +310,40 @@ async function uploadImage(req, res, next) {
 }
 
 /**
+ * Get full cafe menu with verification status
+ */
+async function getCafeMenu(req, res, next) {
+  try {
+    const { id } = req.params;
+    const menuData = db.getCafeMenu(id);
+    if (!menuData) {
+      return res.status(404).json({
+        success: false,
+        message: `Business '${id}' not found.`,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      ...menuData,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
  * Update full menu
  */
 async function updateMenu(req, res, next) {
   try {
     const { id } = req.params;
-    const { categories } = req.body;
-    const updated = db.updateCafeMenu(id, categories);
+    const { categories, menu_status, menuStatus, menu_status_notes, menuStatusNotes } = req.body;
+    const updated = db.updateCafeMenu(
+      id,
+      categories,
+      menu_status || menuStatus,
+      menu_status_notes !== undefined ? menu_status_notes : menuStatusNotes
+    );
     if (!updated) {
       return res.status(404).json({
         success: false,
@@ -327,6 +354,8 @@ async function updateMenu(req, res, next) {
       success: true,
       message: 'Menu updated successfully.',
       categories: updated.menu_categories,
+      menu_status: updated.menu_status,
+      cafe: updated,
     });
   } catch (err) {
     next(err);
@@ -334,17 +363,94 @@ async function updateMenu(req, res, next) {
 }
 
 /**
- * Add category
+ * Update Menu Verification Status
+ */
+async function updateMenuStatus(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { status, menu_status, menuStatus, notes } = req.body;
+    const targetStatus = status || menu_status || menuStatus;
+
+    const allowed = ['Verified Menu', 'Partially Verified', 'Awaiting Merchant Confirmation', 'Menu Not Available'];
+    if (!targetStatus || !allowed.includes(targetStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid menu status. Allowed values: ${allowed.join(', ')}`,
+      });
+    }
+
+    const updated = db.updateMenuStatus(id, targetStatus, notes);
+    if (!updated) {
+      return res.status(404).json({ success: false, message: `Business '${id}' not found.` });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Menu verification status updated to '${targetStatus}'.`,
+      menu_status: updated.menu_status,
+      cafe: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Add category (accepts both 'name' and 'categoryName')
  */
 async function addCategory(req, res, next) {
   try {
     const { id } = req.params;
-    const { name } = req.body;
-    if (!name || !name.trim()) {
+    const name = (req.body.name || req.body.categoryName || '').trim();
+    const description = (req.body.description || '').trim();
+    const is_enabled = req.body.is_enabled !== undefined ? req.body.is_enabled : true;
+
+    if (!name) {
       return res.status(400).json({ success: false, message: 'Category name is required.' });
     }
-    const categories = db.addMenuCategory(id, name);
-    return res.status(200).json({ success: true, categories });
+
+    const categories = db.addMenuCategory(id, { name, description, is_enabled });
+    const cafe = db.getCafeById(id);
+
+    return res.status(200).json({
+      success: true,
+      message: `Category '${name}' created successfully.`,
+      categories,
+      cafe,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Rename / update category
+ */
+async function renameCategory(req, res, next) {
+  try {
+    const { id, categoryName } = req.params;
+    const { newName, name, description, is_enabled, isEnabled } = req.body;
+    const targetNewName = (newName || name || '').trim();
+
+    const categories = db.renameMenuCategory(
+      id,
+      categoryName,
+      targetNewName || categoryName,
+      description,
+      is_enabled !== undefined ? is_enabled : isEnabled
+    );
+
+    if (!categories) {
+      return res.status(404).json({ success: false, message: `Category '${categoryName}' not found.` });
+    }
+
+    const cafe = db.getCafeById(id);
+    return res.status(200).json({
+      success: true,
+      message: 'Category updated successfully.',
+      categories,
+      cafe,
+    });
   } catch (err) {
     next(err);
   }
@@ -357,41 +463,106 @@ async function deleteCategory(req, res, next) {
   try {
     const { id, categoryName } = req.params;
     const categories = db.deleteMenuCategory(id, categoryName);
-    return res.status(200).json({ success: true, categories });
+    const cafe = db.getCafeById(id);
+
+    return res.status(200).json({
+      success: true,
+      message: `Category '${categoryName}' deleted successfully.`,
+      categories,
+      cafe,
+    });
   } catch (err) {
     next(err);
   }
 }
 
 /**
- * Add menu item
+ * Reorder categories
+ */
+async function reorderCategories(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { categoryNames } = req.body;
+    if (!Array.isArray(categoryNames)) {
+      return res.status(400).json({ success: false, message: 'categoryNames array is required.' });
+    }
+    const categories = db.reorderMenuCategories(id, categoryNames);
+    const cafe = db.getCafeById(id);
+    return res.status(200).json({
+      success: true,
+      message: 'Categories reordered successfully.',
+      categories,
+      cafe,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Add menu item with strict validation
  */
 async function addMenuItem(req, res, next) {
   try {
     const { id } = req.params;
-    const { categoryName, item } = req.body;
-    if (!item || !item.name) {
+    const categoryName = (req.body.categoryName || req.body.category || '').trim();
+    const item = req.body.item || req.body;
+
+    if (!item || !item.name || !item.name.trim()) {
       return res.status(400).json({ success: false, message: 'Item name is required.' });
     }
+
+    const price = typeof item.price === 'number' ? item.price : parseFloat(item.price);
+    if (isNaN(price) || price < 0) {
+      return res.status(400).json({ success: false, message: 'Price must be a valid non-negative number.' });
+    }
+
     const result = db.addMenuItem(id, categoryName, item);
-    return res.status(201).json({ success: true, item: result.item });
+    if (!result) {
+      return res.status(404).json({ success: false, message: `Business '${id}' not found.` });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: `Item '${item.name}' added successfully.`,
+      item: result.item,
+      categories: result.categories,
+      cafe: result.cafe,
+    });
   } catch (err) {
     next(err);
   }
 }
 
 /**
- * Update menu item
+ * Update menu item (supports moving categories, updating price and availability)
  */
 async function updateMenuItem(req, res, next) {
   try {
     const { id, itemId } = req.params;
-    const { categoryName, updates } = req.body;
-    const updated = db.updateMenuItem(id, categoryName, itemId, updates);
-    if (!updated) {
+    const categoryName = req.body.categoryName || req.body.category || null;
+    const newCategoryName = req.body.newCategoryName || req.body.newCategory || null;
+    const updates = req.body.updates || req.body;
+
+    if (updates.price !== undefined) {
+      const p = parseFloat(updates.price);
+      if (isNaN(p) || p < 0) {
+        return res.status(400).json({ success: false, message: 'Price must be a valid non-negative number.' });
+      }
+    }
+
+    const result = db.updateMenuItem(id, categoryName, itemId, updates, newCategoryName);
+    if (!result) {
       return res.status(404).json({ success: false, message: 'Menu item not found.' });
     }
-    return res.status(200).json({ success: true, item: updated });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Menu item updated successfully.',
+      item: result.item,
+      categories: result.categories,
+      cafe: result.cafe,
+    });
   } catch (err) {
     next(err);
   }
@@ -407,7 +578,38 @@ async function deleteMenuItem(req, res, next) {
     if (!removed) {
       return res.status(404).json({ success: false, message: 'Menu item not found.' });
     }
-    return res.status(200).json({ success: true, message: 'Menu item deleted successfully.' });
+
+    const cafe = db.getCafeById(id);
+    return res.status(200).json({
+      success: true,
+      message: 'Menu item deleted successfully.',
+      categories: cafe ? cafe.menu_categories : [],
+      cafe,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Toggle menu item availability
+ */
+async function toggleMenuItemAvailability(req, res, next) {
+  try {
+    const { id, itemId } = req.params;
+    const { is_available, isAvailable } = req.body;
+    const targetAvailability = is_available !== undefined ? is_available : isAvailable;
+
+    const item = db.toggleMenuItemAvailability(id, itemId, targetAvailability);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Menu item not found.' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Item availability updated to ${item.is_available ? 'Available' : 'Out of Stock'}.`,
+      item,
+    });
   } catch (err) {
     next(err);
   }
@@ -553,6 +755,26 @@ async function resolveMapsUrl(req, res, next) {
 }
 
 /**
+ * Reverse Geocode Latitude and Longitude Coordinates
+ */
+async function geocodeCoordinates(req, res, next) {
+  try {
+    const { latitude, longitude } = req.body;
+    if (latitude === undefined || longitude === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Numeric latitude and longitude are required.',
+      });
+    }
+
+    const result = await reverseGeocodeCoordinates(latitude, longitude);
+    return res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
  * Reset Café Directory to 0
  */
 async function resetDirectory(req, res, next) {
@@ -583,12 +805,17 @@ module.exports = {
   toggleStatus,
   importDriveImage,
   uploadImage,
+  getCafeMenu,
   updateMenu,
+  updateMenuStatus,
   addCategory,
+  renameCategory,
   deleteCategory,
+  reorderCategories,
   addMenuItem,
   updateMenuItem,
   deleteMenuItem,
+  toggleMenuItemAvailability,
   listUsers,
   listPartners,
   getRevenue,
@@ -597,6 +824,7 @@ module.exports = {
   getSettings,
   updateSettings,
   resolveMapsUrl,
+  geocodeCoordinates,
   resetDirectory,
 };
 

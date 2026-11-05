@@ -25,15 +25,21 @@ router.post('/import-drive-image', adminController.importDriveImage);
 router.post('/upload-image', adminController.uploadImage);
 
 // Menu Management
+router.get('/cafes/:id/menu', adminController.getCafeMenu);
 router.put('/cafes/:id/menu', adminController.updateMenu);
+router.patch('/cafes/:id/menu/status', adminController.updateMenuStatus);
 router.post('/cafes/:id/menu/categories', adminController.addCategory);
+router.put('/cafes/:id/menu/categories/:categoryName', adminController.renameCategory);
 router.delete('/cafes/:id/menu/categories/:categoryName', adminController.deleteCategory);
+router.put('/cafes/:id/menu/categories-order', adminController.reorderCategories);
 router.post('/cafes/:id/menu/items', adminController.addMenuItem);
 router.put('/cafes/:id/menu/items/:itemId', adminController.updateMenuItem);
 router.delete('/cafes/:id/menu/items/:itemId', adminController.deleteMenuItem);
+router.patch('/cafes/:id/menu/items/:itemId/availability', adminController.toggleMenuItemAvailability);
 
 // Location & Google Maps Resolver
 router.post('/resolve-maps-url', adminController.resolveMapsUrl);
+router.post('/geocode-coordinates', adminController.geocodeCoordinates);
 
 // Directory Reset (Development / Admin)
 router.post('/reset-directory', adminController.resetDirectory);
