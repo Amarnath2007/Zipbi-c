@@ -1165,7 +1165,7 @@
 
             <div>
               <div class="flex items-center justify-between mb-1">
-                <label class="text-[11px] font-semibold text-slate-700">Full Physical Address *</label>
+                <label class="text-[11px] font-semibold text-slate-700">Full Physical Address <span class="text-[10px] font-normal text-slate-400">(Optional)</span></label>
                 <span id="badge-address" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">Pending</span>
               </div>
               <textarea id="cafeAddress" rows="2" oninput="markFieldModified('address')" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white" placeholder="Door No, Street Name, Landmark, Road..."></textarea>
@@ -2662,13 +2662,6 @@ Cold Coffee | Price: ₹100 | Description: Not provided | Type: Unknown" class="
         alert('Please specify the Locality / Area Name (e.g. Peelamedu, RS Puram, SITRA) in Step 2.');
         switchCafeModalTab('tab-location');
         document.getElementById('cafeArea').focus();
-        return;
-      }
-
-      if (!address) {
-        alert('Please specify the Full Physical Address in Step 2.');
-        switchCafeModalTab('tab-location');
-        document.getElementById('cafeAddress').focus();
         return;
       }
 

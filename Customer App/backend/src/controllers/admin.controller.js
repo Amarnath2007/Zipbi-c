@@ -157,13 +157,6 @@ async function createCafe(req, res, next) {
       });
     }
 
-    if (!address || !address.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Full address is required.',
-      });
-    }
-
     if (latitude === undefined || longitude === undefined || isNaN(latitude) || isNaN(longitude)) {
       return res.status(400).json({
         success: false,

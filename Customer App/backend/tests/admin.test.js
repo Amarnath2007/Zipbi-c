@@ -196,6 +196,44 @@ test('3. Admin Business Management: Complete CRUD with GPS Coordinates', async (
   assert.strictEqual(delRes.status, 200);
 });
 
+test('3b. Business Registration without Full Physical Address succeeds (Optional Address)', async () => {
+  const adminLoginRes = await fetch(`${baseUrl}/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@zipbi.com', password: 'Admin@ZipBi2026' }),
+  });
+  const { token } = await adminLoginRes.json();
+
+  const noAddressPayload = {
+    name: 'Corner Tea Stall',
+    category: 'Tea Shops',
+    area: 'Gandhipuram',
+    city: 'Coimbatore',
+    latitude: 11.0183,
+    longitude: 76.9644,
+  };
+
+  const createRes = await fetch(`${baseUrl}/admin/cafes`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(noAddressPayload),
+  });
+  assert.strictEqual(createRes.status, 201);
+  const data = await createRes.json();
+  assert.strictEqual(data.success, true);
+  assert.strictEqual(data.cafe.name, 'Corner Tea Stall');
+  assert.strictEqual(data.cafe.address, '');
+
+  // Cleanup
+  await fetch(`${baseUrl}/admin/cafes/${data.cafe.id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+});
+
 test('4. Admin Portal: Required KPIs and Sidebar Endpoints', async () => {
   const adminLoginRes = await fetch(`${baseUrl}/admin/login`, {
     method: 'POST',
