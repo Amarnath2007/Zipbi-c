@@ -53,12 +53,7 @@ class CafeImageView extends StatelessWidget {
     // 2. Uploaded image path (/uploads/...)
     if (cleanPath.startsWith('/uploads/') || cleanPath.startsWith('uploads/')) {
       final subPath = cleanPath.startsWith('/') ? cleanPath : '/$cleanPath';
-      final String networkUrl;
-      if (kIsWeb) {
-        networkUrl = subPath;
-      } else {
-        networkUrl = '${AppConstants.apiBaseUrl.replaceAll('/api/v1', '')}$subPath';
-      }
+      final networkUrl = '${AppConstants.apiBaseUrl.replaceAll('/api/v1', '')}$subPath';
 
       return SizedBox(
         width: width,

@@ -2,10 +2,9 @@ class AppConstants {
   static const String appName = 'ZipBi';
   static const String appTagline = 'Discover great cafés around you';
 
-  // Base API configuration (Supports local emulators, device IP, and web)
-  // For Android emulator: 10.0.2.2; for real device/desktop: localhost or LAN IP
-  static const String apiBaseUrl = 'http://10.0.2.2:5000/api/v1';
-  static const String apiBaseUrlWebOrLocal = 'http://localhost:5000/api/v1';
+  // Live Cloud API configuration
+  static const String apiBaseUrl = 'https://zipbi-c.onrender.com/api/v1';
+  static const String apiBaseUrlWebOrLocal = 'https://zipbi-c.onrender.com/api/v1';
 
   // Default Location: PSG College of Arts & Science Main Gate, Coimbatore
   static const String defaultLocationName = 'PSG CAS, Coimbatore';

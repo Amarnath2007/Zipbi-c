@@ -11,13 +11,7 @@ import 'location_service.dart';
 import 'storage_service.dart';
 
 class ApiService {
-  static String get baseUrl {
-    if (kIsWeb) {
-      return AppConstants.apiBaseUrlWebOrLocal;
-    }
-    // Android emulator vs desktop/iOS
-    return AppConstants.apiBaseUrlWebOrLocal;
-  }
+  static String get baseUrl => AppConstants.apiBaseUrl;
 
   static Map<String, String> get _headers {
     final token = StorageService.getAuthToken();
