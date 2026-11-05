@@ -1,0 +1,14 @@
+{
+  "name": "zipbi-unified",
+  "version": "1.0.0",
+  "description": "ZipBi Customer App, Backend API and Admin OS",
+  "main": "Customer App/backend/src/server.js",
+  "scripts": {
+    "postinstall": "cd \"Customer App/backend\" && npm install",
+    "build": "cd \"Customer App/backend\" && npm install",
+    "start": "cd \"Customer App/backend\" && npm start"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
