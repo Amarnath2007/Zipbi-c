@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="ZipBi - AI-Assisted Café Discovery and Ordering Platform">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="ZipBi">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>ZipBi - Discover Great Cafés</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- ZipBi High-Accuracy Geolocation Interop -->
+  <script>
+    window.zipbiGetDeviceLocation = function() {
+      return new Promise(function(resolve, reject) {
+        if (!navigator.geolocation) {
+          reject(new Error("Geolocation is not supported by your browser"));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            resolve(JSON.stringify({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy
+            }));
+          },
+          function(error) {
+            var msg = "Location error: " + error.code;
+            if (error.code === 1) msg = "PERMISSION_DENIED";
+            else if (error.code === 2) msg = "POSITION_UNAVAILABLE";
+            else if (error.code === 3) msg = "TIMEOUT";
+            reject(new Error(msg));
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+          }
+        );
+      });
+    };
+  </script>
+</head>
+<body>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

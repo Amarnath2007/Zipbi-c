@@ -1,0 +1,12 @@
+{
+  "backup_timestamp": "2026-11-04T16:26:57.591Z",
+  "backup_reason": "Administrator directory restart: initiating fresh Google Maps link-based café registration.",
+  "total_cafes_backed_up": 0,
+  "reference_point": {
+    "name": "PSG College of Arts and Science Main Gate",
+    "area": "Civil Aerodrome Post, Avinashi Road, Coimbatore, Tamil Nadu",
+    "latitude": 11.0326883,
+    "longitude": 77.0345773
+  },
+  "cafes": []
+}

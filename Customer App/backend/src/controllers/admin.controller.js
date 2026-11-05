@@ -1,0 +1,602 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const config = require('../config');
+const db = require('../db');
+const { importImageFromGoogleDrive } = require('../utils/googleDrive');
+const { resolveGoogleMapsUrl } = require('../utils/googleMapsResolver');
+const path = require('path');
+const fs = require('fs');
+
+/**
+ * Dedicated Admin Login - Strictly blocks non-admin users
+ */
+async function adminLogin(req, res, next) {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin email and password are required.',
+      });
+    }
+
+    const user = db.findUserByIdentifier(email);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials. Administrator not found.',
+      });
+    }
+
+    if (user.role !== 'ADMIN') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Account does not have administrator privileges.',
+      });
+    }
+
+    const match = await bcrypt.compare(password, user.passwordHash);
+    if (!match) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials. Incorrect password.',
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, fullName: user.fullName, email: user.email, role: 'ADMIN' },
+      config.jwtSecret,
+      { expiresIn: '24h' }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Admin authentication successful.',
+      token,
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Get Admin Overview Statistics
+ */
+async function getStats(req, res, next) {
+  try {
+    const stats = db.getAdminStats();
+    return res.status(200).json({
+      success: true,
+      stats,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * List all businesses for Admin (including inactive)
+ */
+async function listCafes(req, res, next) {
+  try {
+    const { q, category } = req.query;
+    const cafes = db.getAllCafes({
+      includeInactive: true,
+      q,
+      category,
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: cafes.length,
+      cafes,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Get single business by ID or slug
+ */
+async function getCafe(req, res, next) {
+  try {
+    const { id } = req.params;
+    const cafe = db.getCafeById(id);
+    if (!cafe) {
+      return res.status(404).json({
+        success: false,
+        message: `Business with ID '${id}' not found.`,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      cafe,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Create a new business
+ */
+async function createCafe(req, res, next) {
+  try {
+    const { name, category, address, latitude, longitude } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Business name is required.',
+      });
+    }
+
+    if (!address || !address.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Full address is required.',
+      });
+    }
+
+    if (latitude === undefined || longitude === undefined || isNaN(latitude) || isNaN(longitude)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid geographical coordinates (latitude and longitude) are required.',
+      });
+    }
+
+    const created = db.createCafe(req.body);
+    return res.status(201).json({
+      success: true,
+      message: 'Business created successfully.',
+      cafe: created,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Update business details
+ */
+async function updateCafe(req, res, next) {
+  try {
+    const { id } = req.params;
+    const updated = db.updateCafe(id, req.body);
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: `Business '${id}' not found.`,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: 'Business updated successfully.',
+      cafe: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Delete business
+ */
+async function deleteCafe(req, res, next) {
+  try {
+    const { id } = req.params;
+    const success = db.deleteCafe(id);
+    if (!success) {
+      return res.status(404).json({
+        success: false,
+        message: `Business '${id}' not found.`,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: `Business '${id}' deleted successfully.`,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Toggle Active / Inactive status
+ */
+async function toggleStatus(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+    const updated = db.toggleCafeStatus(id, isActive);
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: `Business '${id}' not found.`,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: `Business '${id}' is now ${updated.is_active ? 'Active' : 'Inactive'}.`,
+      cafe: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Import image from Google Drive link
+ */
+async function importDriveImage(req, res, next) {
+  try {
+    const driveUrl = req.body.driveUrl || req.body.url || req.body.link;
+    const slug = req.body.slug || 'cafe';
+
+    if (!driveUrl || typeof driveUrl !== 'string' || !driveUrl.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google Drive sharing link is required.',
+      });
+    }
+
+    const result = await importImageFromGoogleDrive(driveUrl.trim(), slug);
+    return res.status(200).json({
+      success: true,
+      message: 'Image successfully downloaded and stored permanently.',
+      imageUrl: result.permanentUrl,
+      ...result,
+    });
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'Failed to import image from Google Drive.',
+    });
+  }
+}
+
+/**
+ * Direct file / base64 image upload
+ */
+async function uploadImage(req, res, next) {
+  try {
+    const { base64Data, filename, prefix } = req.body;
+    if (!base64Data) {
+      return res.status(400).json({
+        success: false,
+        message: 'Base64 image data is required.',
+      });
+    }
+
+    const cleanBase64 = base64Data.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(cleanBase64, 'base64');
+    const safeName = filename || `${prefix || 'upload'}_${Date.now()}.jpg`;
+
+    const uploadsDir = path.resolve(__dirname, '../../uploads/cafes');
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    const targetPath = path.join(uploadsDir, safeName);
+    fs.writeFileSync(targetPath, buffer);
+
+    // Also mirror to assets
+    try {
+      const assetsDir = path.resolve(__dirname, '../../../assets/images/cafes');
+      fs.mkdirSync(assetsDir, { recursive: true });
+      fs.writeFileSync(path.join(assetsDir, safeName), buffer);
+
+      const buildDir = path.resolve(__dirname, '../../../build/web/assets/images/cafes');
+      if (fs.existsSync(buildDir)) {
+        fs.writeFileSync(path.join(buildDir, safeName), buffer);
+      }
+    } catch (_) {}
+
+    return res.status(200).json({
+      success: true,
+      fileName: safeName,
+      imageUrl: `/uploads/cafes/${safeName}`,
+      permanentUrl: `/uploads/cafes/${safeName}`,
+      assetPath: `assets/images/cafes/${safeName}`,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Update full menu
+ */
+async function updateMenu(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { categories } = req.body;
+    const updated = db.updateCafeMenu(id, categories);
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: `Business '${id}' not found.`,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: 'Menu updated successfully.',
+      categories: updated.menu_categories,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Add category
+ */
+async function addCategory(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Category name is required.' });
+    }
+    const categories = db.addMenuCategory(id, name);
+    return res.status(200).json({ success: true, categories });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Delete category
+ */
+async function deleteCategory(req, res, next) {
+  try {
+    const { id, categoryName } = req.params;
+    const categories = db.deleteMenuCategory(id, categoryName);
+    return res.status(200).json({ success: true, categories });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Add menu item
+ */
+async function addMenuItem(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { categoryName, item } = req.body;
+    if (!item || !item.name) {
+      return res.status(400).json({ success: false, message: 'Item name is required.' });
+    }
+    const result = db.addMenuItem(id, categoryName, item);
+    return res.status(201).json({ success: true, item: result.item });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Update menu item
+ */
+async function updateMenuItem(req, res, next) {
+  try {
+    const { id, itemId } = req.params;
+    const { categoryName, updates } = req.body;
+    const updated = db.updateMenuItem(id, categoryName, itemId, updates);
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Menu item not found.' });
+    }
+    return res.status(200).json({ success: true, item: updated });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Delete menu item
+ */
+async function deleteMenuItem(req, res, next) {
+  try {
+    const { id, itemId } = req.params;
+    const removed = db.deleteMenuItem(id, itemId);
+    if (!removed) {
+      return res.status(404).json({ success: false, message: 'Menu item not found.' });
+    }
+    return res.status(200).json({ success: true, message: 'Menu item deleted successfully.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * List Customer Users
+ */
+async function listUsers(req, res, next) {
+  try {
+    const users = db.getAllUsers();
+    return res.status(200).json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * List Merchant Partners
+ */
+async function listPartners(req, res, next) {
+  try {
+    const partners = db.getMerchantPartners();
+    return res.status(200).json({
+      success: true,
+      count: partners.length,
+      partners,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Get Aggregated Café Revenue (privacy preserved)
+ */
+async function getRevenue(req, res, next) {
+  try {
+    const revenue = db.getRevenueOverview();
+    return res.status(200).json({
+      success: true,
+      revenue,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Get Subscriptions
+ */
+async function getSubscriptions(req, res, next) {
+  try {
+    const data = db.getSubscriptions();
+    return res.status(200).json({
+      success: true,
+      subscriptions: data,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Get Activity Logs
+ */
+async function getActivityLogs(req, res, next) {
+  try {
+    const logs = db.getActivityLogs();
+    return res.status(200).json({
+      success: true,
+      count: logs.length,
+      logs,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Get Admin Settings
+ */
+async function getSettings(req, res, next) {
+  try {
+    const ref = db.getReferencePoint();
+    return res.status(200).json({
+      success: true,
+      settings: {
+        appName: 'ZipBi Customer App',
+        targetCity: 'Coimbatore, Tamil Nadu',
+        discoveryRadiusKm: 5.0,
+        referencePoint: ref,
+        supportEmail: 'contact@zipbi.com',
+        supportPhone: '+91 99760 18088',
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Update Admin Settings
+ */
+async function updateSettings(req, res, next) {
+  try {
+    db.logActivity('SETTINGS_UPDATE', 'System configuration updated by Administrator', req.user ? req.user.fullName : 'Admin');
+    return res.status(200).json({
+      success: true,
+      message: 'System settings updated successfully.',
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Resolve Google Maps Location Link (coordinates, place name, address)
+ */
+async function resolveMapsUrl(req, res, next) {
+  try {
+    const { url } = req.body;
+    if (!url || typeof url !== 'string' || !url.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google Maps location URL is required.',
+      });
+    }
+
+    const result = await resolveGoogleMapsUrl(url.trim());
+    if (!result.success && !result.resolvedUrl) {
+      return res.status(400).json(result);
+    }
+
+    return res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Reset Café Directory to 0
+ */
+async function resetDirectory(req, res, next) {
+  try {
+    const { resetCafeDirectory } = require('../../../scripts/reset_cafe_directory');
+    const resetResult = resetCafeDirectory();
+    db.reloadCafes();
+    db.logActivity('DIRECTORY_RESET', 'Administrator reset café directory to 0 for Google Maps registration.', req.user ? req.user.fullName : 'Admin');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Café directory successfully reset to 0.',
+      ...resetResult,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  adminLogin,
+  getStats,
+  listCafes,
+  getCafe,
+  createCafe,
+  updateCafe,
+  deleteCafe,
+  toggleStatus,
+  importDriveImage,
+  uploadImage,
+  updateMenu,
+  addCategory,
+  deleteCategory,
+  addMenuItem,
+  updateMenuItem,
+  deleteMenuItem,
+  listUsers,
+  listPartners,
+  getRevenue,
+  getSubscriptions,
+  getActivityLogs,
+  getSettings,
+  updateSettings,
+  resolveMapsUrl,
+  resetDirectory,
+};
+

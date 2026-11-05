@@ -1,0 +1,116 @@
+{
+  "backup_timestamp": "2026-11-04T15:05:12.217Z",
+  "backup_reason": "Administrator directory restart: initiating fresh Google Maps link-based café registration.",
+  "total_cafes_backed_up": 1,
+  "reference_point": {
+    "name": "PSG College of Arts and Science Main Gate",
+    "area": "Civil Aerodrome Post, Avinashi Road, Coimbatore, Tamil Nadu",
+    "latitude": 11.0326883,
+    "longitude": 77.0345773
+  },
+  "cafes": [
+    {
+      "id": "cafe-juice-world",
+      "name": "Juice World Fresh 'N' Juicy",
+      "slug": "juice-world",
+      "description": "Fresh fruit juice bar and sandwich counter offering refreshing coolers, smoothies, thick shakes and grilled bites.",
+      "cover_image": "assets/images/cafes/juice_world.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/juice_world.jpg",
+      "image_source": "Verified Business Profile — Sitra / Peelamedu",
+      "image_verification_status": "VERIFIED",
+      "category": "Beverages",
+      "cuisine_tags": [
+        "Beverages",
+        "Juices",
+        "Sandwiches",
+        "Fast Food"
+      ],
+      "address": "SITRA / Vilankurichi Road Link, Civil Aerodrome Post, Coimbatore",
+      "area": "SITRA / Vilankurichi, Coimbatore",
+      "latitude": 11.037,
+      "longitude": 77.0372,
+      "distance_psg_cas_km": 0.5,
+      "opening_hours": "10:30 AM – 10:00 PM",
+      "phone": "+91 97865 43210",
+      "website": null,
+      "cost_for_two": 250,
+      "cost_for_two_source": "EazyDiner verified directory",
+      "rating": 4,
+      "review_count": 25,
+      "verification_status": "VERIFIED",
+      "is_ordering_enabled": false,
+      "has_published_menu": true,
+      "menu_status": "Partially Verified",
+      "menu_status_notes": "Fresh juices, milkshakes, and grilled sandwiches verified from active Swiggy & Justdial listings.",
+      "verified_at": "2026-11-04",
+      "menu_categories": [
+        {
+          "name": "Fresh Fruit Juices",
+          "items": []
+        },
+        {
+          "name": "Shakes & Smoothies",
+          "items": [
+            {
+              "id": "item-jw-s-1",
+              "name": "Chocolate Thick Shake",
+              "description": "Rich creamy chocolate ice cream shake with chocolate fudge drizzle",
+              "price": 130,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-jw-s-2",
+              "name": "Oreo Thick Shake",
+              "description": "Thick milkshake blended with crushed Oreo cookies",
+              "price": 140,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-jw-s-3",
+              "name": "Fig and Dates Smoothie",
+              "description": "Wholesome nutritious blend of dried figs, dates, honey, and chilled milk",
+              "price": 150,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Sandwiches",
+          "items": [
+            {
+              "id": "item-jw-sw-1",
+              "name": "Creamy Tandoori Veg Sandwich",
+              "description": "Grilled sandwich layered with spiced paneer, onions, and tandoori mayo",
+              "price": 130,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-jw-sw-2",
+              "name": "Veg Club Sandwich",
+              "description": "Triple-decker toasted sandwich with cheese slice, cucumber, tomato and mint sauce",
+              "price": 150,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        }
+      ],
+      "is_active": false,
+      "updated_at": "2026-11-04T14:57:05.777Z"
+    }
+  ]
+}

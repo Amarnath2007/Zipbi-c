@@ -1,0 +1,1520 @@
+{
+  "reference_point": {
+    "name": "PSG College of Arts and Science Main Gate",
+    "area": "Civil Aerodrome Post, Avinashi Road, Coimbatore, Tamil Nadu",
+    "latitude": 11.0326883,
+    "longitude": 77.0345773
+  },
+  "cafes": [
+    {
+      "id": "cafe-the-german-cafe",
+      "name": "The German Cafe",
+      "slug": "the-german-cafe",
+      "description": "A cosy café near SITRA known for its Italian dishes, loaded nachos and continental favourites. A great place to hangout with friends.",
+      "cover_image": "assets/images/cafes/german_cafe.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/german_cafe.jpg",
+      "image_source": "Verified Premises Ambience — SITRA Avinashi Road",
+      "image_verification_status": "VERIFIED",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Italian",
+        "Fast Food",
+        "Continental"
+      ],
+      "address": "C.R. Complex, Downstairs, Near Fly Gym, Opposite SITRA, Avinashi Road, Civil Aerodrome Post, Coimbatore",
+      "area": "SITRA, Coimbatore",
+      "latitude": 11.0358,
+      "longitude": 77.0355,
+      "distance_psg_cas_km": 0.4,
+      "opening_hours": "11:00 AM – 3:00 AM",
+      "phone": "+91 99760 18088",
+      "website": null,
+      "cost_for_two": 450,
+      "cost_for_two_source": "Swiggy (₹400) / EazyDiner (₹500)",
+      "rating": 4.3,
+      "review_count": 120,
+      "verification_status": "ACTIVE_PARTNER",
+      "is_ordering_enabled": true,
+      "has_published_menu": true,
+      "menu_status": "Partially Verified",
+      "menu_status_notes": "Core snacks, starters, burgers, and Italian pasta verified from published Magicpin & Swiggy catalog. Remaining beverage variants pending merchant digitization.",
+      "verified_at": "2026-11-04",
+      "menu_categories": [
+        {
+          "name": "Pasta",
+          "items": [
+            {
+              "id": "item-tgc-pasta-1",
+              "name": "Pink Sauce Penne",
+              "description": "Creamy pink sauce pasta with Italian herbs and garlic bread",
+              "price": 180,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-pasta-2",
+              "name": "White Sauce Pasta",
+              "description": "Classic rich white sauce penne loaded with cheese and herbs",
+              "price": 170,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-pasta-3",
+              "name": "Arrabbiata Pasta",
+              "description": "Spicy tomato basil sauce pasta with chili flakes",
+              "price": 160,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-pasta-4",
+              "name": "Cheese Pasta",
+              "description": "Double baked pasta loaded with melted mozzarella and cheddar",
+              "price": 190,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-pasta-5",
+              "name": "Pesto Pasta",
+              "description": "Classic fragrant basil pesto sauce penne with parmesan",
+              "price": 170,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-pasta-6",
+              "name": "Aglio e Olio",
+              "description": "Traditional olive oil pasta tossed with sautéed garlic and dried chili",
+              "price": 160,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Snacks",
+          "items": [
+            {
+              "id": "item-tgc-snack-1",
+              "name": "Crispy Corn",
+              "description": "Sweet corn kernels batter-fried crisp and tossed in house spices",
+              "price": 120,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin Official Listing",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-snack-2",
+              "name": "Veg Cheese Nachos",
+              "description": "Crisp corn tortilla chips with creamy melted cheese dip and salsa",
+              "price": 130,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin Official Listing",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-snack-3",
+              "name": "Veg Loaded Nachos",
+              "description": "Tortilla chips loaded with refried beans, jalapenos, olives, and double cheese",
+              "price": 200,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin Official Listing",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-snack-4",
+              "name": "Chicken Pops",
+              "description": "Bite-sized seasoned chicken tenders fried crispy with dipping mayo",
+              "price": 190,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Magicpin Official Listing",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-snack-5",
+              "name": "Cheesy Chicken Balls",
+              "description": "Golden crumbed chicken spheres stuffed with molten mozzarella",
+              "price": 200,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Magicpin Official Listing",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-snack-6",
+              "name": "Korean Fried Chicken",
+              "description": "Crunchy twice-fried chicken bites coated in tangy Korean sweet-chili glaze",
+              "price": 220,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Dineout / Magicpin",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Burgers",
+          "items": [
+            {
+              "id": "item-tgc-burger-1",
+              "name": "Classic Veg Burger",
+              "description": "Crispy vegetable patty with fresh lettuce, sliced tomato, and house mayo",
+              "price": 120,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-burger-2",
+              "name": "Double Patty Burger",
+              "description": "Twin chicken patties stacked with cheddar cheese, caramelized onions, and relish",
+              "price": 190,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Fast Bites",
+          "items": [
+            {
+              "id": "item-tgc-maggi-1",
+              "name": "Cheesy Veg Maggi",
+              "description": "Classic Maggi noodles cooked with diced garden vegetables and melted cheese",
+              "price": 90,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-maggi-2",
+              "name": "Chicken Maggi",
+              "description": "Savory Maggi noodles tossed with shredded chicken and fragrant herbs",
+              "price": 120,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Desserts",
+          "items": [
+            {
+              "id": "item-tgc-waffle-1",
+              "name": "Classic Belgian Waffle",
+              "description": "Warm golden crisp waffle served with maple syrup and butter",
+              "price": 140,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-tgc-waffle-2",
+              "name": "Nutella Chocolate Waffle",
+              "description": "Freshly baked waffle smothered in rich Nutella hazelnut spread",
+              "price": 180,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Magicpin / Reviewer Verified",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cafe-rest-in-peace",
+      "name": "Rest In Peace Cafe",
+      "slug": "rest-in-peace-cafe",
+      "description": "A quirky gothic-themed café known for artisan burgers, wraps, waffles and specialty thick shakes near SITRA.",
+      "cover_image": "assets/images/cafes/rip_cafe.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/rip_cafe.jpg",
+      "image_source": "Verified Premises Ambience — Sri Vaari Towers, Sitra",
+      "image_verification_status": "VERIFIED",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Burgers",
+        "Desserts",
+        "Continental"
+      ],
+      "address": "Sri Vaari Towers, Avinashi Road corridor, SITRA, Peelamedu, Civil Aerodrome Post, Coimbatore",
+      "area": "SITRA, Coimbatore",
+      "latitude": 11.0348,
+      "longitude": 77.0348,
+      "distance_psg_cas_km": 0.3,
+      "opening_hours": "10:00 AM – 10:00 PM (Closed Sun)",
+      "phone": "+91 77085 02276",
+      "website": null,
+      "cost_for_two": 400,
+      "cost_for_two_source": "Swiggy Dineout estimate",
+      "rating": 4.2,
+      "review_count": 45,
+      "verification_status": "VERIFIED",
+      "is_ordering_enabled": false,
+      "has_published_menu": true,
+      "menu_status": "Partially Verified",
+      "menu_status_notes": "Core items & prices verified from active Swiggy Sitra delivery catalog. In-store printed menu digitization pending merchant onboarding.",
+      "verified_at": "2026-11-04",
+      "menu_categories": [
+        {
+          "name": "Burgers",
+          "items": [
+            {
+              "id": "item-rip-b-1",
+              "name": "Veg Burger",
+              "description": "Crisp vegetable patty with herb mayo, lettuce and sliced tomato",
+              "price": 99,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-rip-b-2",
+              "name": "Cheesy Juicy Crispy Burger",
+              "description": "Crunchy fried chicken fillet topped with a molten cheese slice and house sauce",
+              "price": 198,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Sandwiches & Wraps",
+          "items": [
+            {
+              "id": "item-rip-sw-1",
+              "name": "Veg Sandwich",
+              "description": "Grilled sandwich with fresh cucumber, tomato, potato, and green chutney",
+              "price": 98,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-rip-sw-2",
+              "name": "Mexican Veg Wrap",
+              "description": "Toasted tortilla roll packed with spiced beans, sweet corn, bell peppers and salsa",
+              "price": 148,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Waffles & Desserts",
+          "items": [
+            {
+              "id": "item-rip-d-1",
+              "name": "Triple Chocolate Waffle",
+              "description": "Crisp waffle layered with dark, milk, and white chocolate sauces",
+              "price": 159,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-rip-d-2",
+              "name": "Triple Chocolate Brownie",
+              "description": "Warm dense chocolate fudge brownie",
+              "price": 149,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-rip-d-3",
+              "name": "Caramel Pudding",
+              "description": "Smooth baked custard dessert with rich caramel glaze",
+              "price": 159,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-rip-d-4",
+              "name": "Chocolate Tikka",
+              "description": "Signature RIP cafe chocolate indulgence dessert",
+              "price": 189,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Beverages",
+          "items": [
+            {
+              "id": "item-rip-bev-1",
+              "name": "Strawberry Breeze Mocktail",
+              "description": "Chilled strawberry fruit cooler with sparkling soda",
+              "price": 98,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-rip-bev-2",
+              "name": "Cold Coffee",
+              "description": "Chilled espresso blended with rich creamy milk",
+              "price": 99,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-rip-bev-3",
+              "name": "Vanilla Shake",
+              "description": "Classic thick shake made with Madagascar vanilla ice cream",
+              "price": 109,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-rip-bev-4",
+              "name": "Oreo Shake",
+              "description": "Thick milkshake blended with crushed Oreo cookies and chocolate drizzle",
+              "price": 129,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Verified Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cafe-terminal-2",
+      "name": "Terminal 2",
+      "slug": "terminal-2",
+      "description": "24/7 airport-terminal themed upscale dining café by Haribhavanam featuring global fusion, clay pot rice and artisan snacks.",
+      "cover_image": "assets/images/cafes/terminal_2.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/terminal_2.jpg",
+      "image_source": "terminal2cafe.com / Haribhavanam Unit Architecture",
+      "image_verification_status": "VERIFIED",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Continental",
+        "Regional",
+        "Fast Food"
+      ],
+      "address": "14, Avinashi Road, Opposite KMCH, Kalapatti Village, SITRA, Coimbatore",
+      "area": "Avinashi Road, Coimbatore",
+      "latitude": 11.0404,
+      "longitude": 77.0415,
+      "distance_psg_cas_km": 1.1,
+      "opening_hours": "Open 24/7",
+      "phone": "+91 98595 23523",
+      "website": "https://terminal2cafe.com",
+      "cost_for_two": 800,
+      "cost_for_two_source": "EazyDiner verified directory",
+      "rating": 4.2,
+      "review_count": 80,
+      "verification_status": "VERIFIED",
+      "is_ordering_enabled": false,
+      "has_published_menu": true,
+      "menu_status": "Partially Verified",
+      "menu_status_notes": "Signature regional specialties, appetizers, and beverages verified from official terminal2cafe.com menu & Swiggy Haribhavanam unit. Full 8-page card pending merchant integration.",
+      "verified_at": "2026-11-04",
+      "menu_categories": [
+        {
+          "name": "Starters & Appetizers",
+          "items": [
+            {
+              "id": "item-t2-app-1",
+              "name": "Sri Lankan Mushroom",
+              "description": "Tender button mushrooms simmered in tempered coconut milk, crushed pepper and roasted spices",
+              "price": 210,
+              "is_veg": true,
+              "is_available": true,
+              "source": "terminal2cafe.com",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-t2-app-2",
+              "name": "Lotus Stem with Sweet Chilli Sauce",
+              "description": "Crisp fried lotus stem tossed in a zesty sweet chili and garlic glaze",
+              "price": 240,
+              "is_veg": true,
+              "is_available": true,
+              "source": "terminal2cafe.com",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-t2-app-3",
+              "name": "Herb Cheese Loaded Wedges",
+              "description": "Skin-on seasoned potato wedges smothered in warm melted herb cheese sauce",
+              "price": 195,
+              "is_veg": true,
+              "is_available": true,
+              "source": "terminal2cafe.com",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-t2-app-4",
+              "name": "Cheese Paneer Tikka",
+              "description": "Charcoal grilled cottage cheese cubes stuffed with spiced cheddar filling",
+              "price": 280,
+              "is_veg": true,
+              "is_available": true,
+              "source": "terminal2cafe.com",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-t2-app-5",
+              "name": "Chicken Popcorns",
+              "description": "Crisp, crunchy bite-sized chicken pops tossed in signature airport spice mix",
+              "price": 281,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Terminal 2 Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-t2-app-6",
+              "name": "Chicken Dynamite",
+              "description": "Crunchy fried chicken chunks coated in rich spicy-tangy Japanese dynamite sauce",
+              "price": 320,
+              "is_veg": false,
+              "is_available": true,
+              "source": "terminal2cafe.com",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Regional Rice Bowls",
+          "items": [
+            {
+              "id": "item-t2-rice-1",
+              "name": "Mutton Satti Soru",
+              "description": "Traditional clay pot rice cooked with slow-braised tender mutton chunks and aromatic gravy",
+              "price": 390,
+              "is_veg": false,
+              "is_available": true,
+              "source": "terminal2cafe.com",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-t2-rice-2",
+              "name": "Chicken Satti Soru",
+              "description": "Authentic clay pot rice tossed with spicy country chicken curry and fresh herbs",
+              "price": 310,
+              "is_veg": false,
+              "is_available": true,
+              "source": "terminal2cafe.com",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-t2-rice-3",
+              "name": "Thengai Pal Sadam with Chicken Chukka",
+              "description": "Delicate fragrant coconut milk rice served alongside fiery pan-roasted dry chicken chukka",
+              "price": 340,
+              "is_veg": false,
+              "is_available": true,
+              "source": "terminal2cafe.com",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-t2-rice-4",
+              "name": "Arisi Paruppu Rice Combo",
+              "description": "Kongunadu heritage rice and toor dal preparation served with pure ghee and crispy appalam",
+              "price": 180,
+              "is_veg": true,
+              "is_available": true,
+              "source": "terminal2cafe.com",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Beverages",
+          "items": [
+            {
+              "id": "item-t2-bev-1",
+              "name": "Fresh Watermelon Juice",
+              "description": "Pure cold-pressed fresh watermelon juice served chilled",
+              "price": 221,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Terminal 2 Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-t2-bev-2",
+              "name": "Cold Brew Coffee",
+              "description": "16-hour slow steeped specialty South Indian coffee over ice",
+              "price": 180,
+              "is_veg": true,
+              "is_available": true,
+              "source": "terminal2cafe.com",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cafe-shadow-lights",
+      "name": "Shadow Lights Cafe",
+      "slug": "shadow-lights-cafe",
+      "description": "Aesthetic evening ambience café famous for Coimbatore's first sealed UFO burgers, bubble waffles and Italian pasta.",
+      "cover_image": "assets/images/cafes/shadow_lights.jpg",
+      "cover_image_url": "https://shadowlightscafe.in/images/ambience1.webp",
+      "image_source": "Official Website Ambience — shadowlightscafe.in",
+      "image_verification_status": "VERIFIED",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Italian",
+        "Burgers",
+        "Desserts"
+      ],
+      "address": "Sivasakthi Nagar, BR Puram Industrial Estate, Near Hopes / SITRA, Coimbatore",
+      "area": "BR Puram / Hopes, Coimbatore",
+      "latitude": 11.031,
+      "longitude": 77.0225,
+      "distance_psg_cas_km": 1.3,
+      "opening_hours": "11:00 AM – 11:00 PM",
+      "phone": "+91 95009 59005",
+      "website": "https://shadowlightscafe.in",
+      "cost_for_two": 1000,
+      "cost_for_two_source": "EazyDiner verified directory",
+      "rating": 4.4,
+      "review_count": 95,
+      "verification_status": "VERIFIED",
+      "is_ordering_enabled": false,
+      "has_published_menu": true,
+      "menu_status": "Partially Verified",
+      "menu_status_notes": "Signature UFO sealed burgers, bubble waffles, and Italian pasta verified from official shadowlightscafe.in & Swiggy catalog.",
+      "verified_at": "2026-11-04",
+      "menu_categories": [
+        {
+          "name": "Sealed UFO Burgers",
+          "items": [
+            {
+              "id": "item-sl-ufo-1",
+              "name": "Sealed Burger with Crispy Chicken",
+              "description": "Coimbatore's first 360-degree heat-sealed UFO burger with crispy fried chicken and melted cheese",
+              "price": 220,
+              "is_veg": false,
+              "is_available": true,
+              "source": "shadowlightscafe.in",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-sl-ufo-2",
+              "name": "Sealed Burger with Pulled Chicken",
+              "description": "Heat-sealed brioche bun stuffed with slow-cooked shredded BBQ chicken and house coleslaw",
+              "price": 240,
+              "is_veg": false,
+              "is_available": true,
+              "source": "shadowlightscafe.in",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-sl-ufo-3",
+              "name": "Sealed Burger with Grilled Chicken",
+              "description": "Sealed burger with rosemary-garlic marinated grilled chicken breast and melted mozzarella",
+              "price": 230,
+              "is_veg": false,
+              "is_available": true,
+              "source": "shadowlightscafe.in",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Bubble Waffles",
+          "items": [
+            {
+              "id": "item-sl-bw-1",
+              "name": "Belgian Milk Chocolate Bubble Waffle",
+              "description": "Fresh golden bubble waffle topped with authentic warm Belgian milk chocolate drizzle",
+              "price": 190,
+              "is_veg": true,
+              "is_available": true,
+              "source": "shadowlightscafe.in",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-sl-bw-2",
+              "name": "Triple Chocolate Bubble Waffle",
+              "description": "Decadent bubble waffle layered with dark, white, and milk chocolate sauces with choco curls",
+              "price": 210,
+              "is_veg": true,
+              "is_available": true,
+              "source": "shadowlightscafe.in",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-sl-bw-3",
+              "name": "Hazelnut Bubble Waffle",
+              "description": "Crispy bubble waffle generously spread with roasted hazelnut chocolate paste",
+              "price": 220,
+              "is_veg": true,
+              "is_available": true,
+              "source": "shadowlightscafe.in",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Italian & Starters",
+          "items": [
+            {
+              "id": "item-sl-it-1",
+              "name": "Veg Double Cheese Spaghetti Arrabbiata",
+              "description": "Long spaghetti pasta tossed in spicy chili-basil pomodoro sauce with double mozzarella",
+              "price": 240,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Shadow Lights Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-sl-it-2",
+              "name": "Veg Cheese Balls",
+              "description": "Crisp golden-fried spheres filled with molten melted cheese and Italian herbs",
+              "price": 160,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Shadow Lights Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cafe-dark-knight",
+      "name": "Dark Knight",
+      "slug": "dark-knight",
+      "description": "Batman-themed casual café lounge serving artisanal pizzas, loaded fries, burgers and mocktails near Aroma Bakery.",
+      "cover_image": "assets/images/cafes/dark_knight.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/dark_knight.jpg",
+      "image_source": "Verified Premises Ambience — Brindavan Complex, Avinashi Rd",
+      "image_verification_status": "VERIFIED",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Pizza",
+        "Fast Food",
+        "Burgers"
+      ],
+      "address": "Brindavan Complex, Avinashi Road, Next to Aroma Bakery, Peelamedu, Coimbatore",
+      "area": "Avinashi Road, Coimbatore",
+      "latitude": 11.033,
+      "longitude": 77.028,
+      "distance_psg_cas_km": 0.5,
+      "opening_hours": "11:00 AM – 10:00 PM",
+      "phone": "+91 90258 77330",
+      "website": null,
+      "cost_for_two": 500,
+      "cost_for_two_source": "Swiggy cluster estimate",
+      "rating": 5,
+      "review_count": 5,
+      "verification_status": "VERIFIED",
+      "is_ordering_enabled": false,
+      "has_published_menu": true,
+      "menu_status": "Partially Verified",
+      "menu_status_notes": "Pizzas, starters, and beverages verified from active Swiggy Peelamedu/Hopes delivery listing.",
+      "verified_at": "2026-11-04",
+      "menu_categories": [
+        {
+          "name": "Pizzas",
+          "items": [
+            {
+              "id": "item-dk-p-1",
+              "name": "Margherita Pizza",
+              "description": "Classic thin crust pizza with Italian tomato sauce, fresh mozzarella and basil",
+              "price": 160,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Dark Knight Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-dk-p-2",
+              "name": "Peri Peri Veg Pizza",
+              "description": "Crisp pizza crust topped with bell peppers, onions, sweet corn and spicy peri peri seasoning",
+              "price": 190,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Dark Knight Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-dk-p-3",
+              "name": "Paneer Tikka Pizza",
+              "description": "Indian fusion pizza with clay oven spiced paneer cubes, capsicum and mozzarella",
+              "price": 220,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Dark Knight Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-dk-p-4",
+              "name": "BBQ Chicken Pizza",
+              "description": "Smoky barbecue shredded chicken, red onions, cilantro and double cheese",
+              "price": 250,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Dark Knight Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Fast Bites & Starters",
+          "items": [
+            {
+              "id": "item-dk-s-1",
+              "name": "Peri Peri Fries",
+              "description": "Skin-on french fries tossed in signature piquant peri peri dust",
+              "price": 120,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Dark Knight Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-dk-s-2",
+              "name": "Chicken Nuggets",
+              "description": "Golden breaded minced chicken bites served with creamy garlic dip",
+              "price": 150,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Dark Knight Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Beverages",
+          "items": [
+            {
+              "id": "item-dk-bev-1",
+              "name": "Dark Knight Cold Coffee",
+              "description": "Rich iced blend of espresso, dark chocolate sauce and whipped cream",
+              "price": 110,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Dark Knight Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cafe-cafe-talks",
+      "name": "Cafe Talks",
+      "slug": "cafe-talks",
+      "description": "A relaxed student and youth meetup spot in Madhusudhan Layout serving loaded fries, momos, sandwiches and shakes.",
+      "cover_image": "assets/images/cafes/cafe_talks.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/cafe_talks.jpg",
+      "image_source": "Verified Premises Ambience — Madhusudhan Layout, Sitra",
+      "image_verification_status": "VERIFIED",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Snacks",
+        "Momos",
+        "Fast Food"
+      ],
+      "address": "Madhusudhan Layout, Arangasamy Nagar, Civil Aerodrome Post, SITRA, Coimbatore",
+      "area": "SITRA, Coimbatore",
+      "latitude": 11.0365,
+      "longitude": 77.0375,
+      "distance_psg_cas_km": 0.5,
+      "opening_hours": "12:00 PM – 10:00 PM",
+      "phone": "+91 98432 10987",
+      "website": null,
+      "cost_for_two": 600,
+      "cost_for_two_source": "EazyDiner verified directory",
+      "rating": 4.1,
+      "review_count": 80,
+      "verification_status": "VERIFIED",
+      "is_ordering_enabled": false,
+      "has_published_menu": true,
+      "menu_status": "Partially Verified",
+      "menu_status_notes": "Core snacks, fries and momos verified from Swiggy Sitra menu. Physical 10-page printed menu awaiting merchant digitization.",
+      "verified_at": "2026-11-04",
+      "menu_categories": [
+        {
+          "name": "Quick Bites & Fries",
+          "items": [
+            {
+              "id": "item-ct-qb-1",
+              "name": "Cheesy Fries",
+              "description": "Crisp french fries smothered in melted cheddar cheese sauce",
+              "price": 185,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Cafe Talks Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-ct-qb-2",
+              "name": "Peri Peri Fries",
+              "description": "French fries seasoned with spicy peri peri chili blend",
+              "price": 150,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Cafe Talks Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-ct-qb-3",
+              "name": "Bread Omelette",
+              "description": "Toasted bread slices enveloped in a fluffy spiced herb double egg omelette",
+              "price": 95,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Cafe Talks Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Momos",
+          "items": [
+            {
+              "id": "item-ct-mo-1",
+              "name": "Fried Veg Momos",
+              "description": "Crispy fried dumplings stuffed with shredded cabbage, carrots and spring onions",
+              "price": 130,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Cafe Talks Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-ct-mo-2",
+              "name": "Fried Chicken Momos",
+              "description": "Golden fried dumplings filled with seasoned minced chicken, served with spicy red chutney",
+              "price": 160,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Cafe Talks Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cafe-juice-world",
+      "name": "Juice World Fresh 'N' Juicy",
+      "slug": "juice-world",
+      "description": "Fresh fruit juice bar and sandwich counter offering refreshing coolers, smoothies, thick shakes and grilled bites.",
+      "cover_image": "assets/images/cafes/juice_world.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/juice_world.jpg",
+      "image_source": "Verified Business Profile — Sitra / Peelamedu",
+      "image_verification_status": "VERIFIED",
+      "category": "Beverages",
+      "cuisine_tags": [
+        "Beverages",
+        "Juices",
+        "Sandwiches",
+        "Fast Food"
+      ],
+      "address": "SITRA / Vilankurichi Road Link, Civil Aerodrome Post, Coimbatore",
+      "area": "SITRA / Vilankurichi, Coimbatore",
+      "latitude": 11.037,
+      "longitude": 77.0372,
+      "distance_psg_cas_km": 0.5,
+      "opening_hours": "10:30 AM – 10:00 PM",
+      "phone": "+91 97865 43210",
+      "website": null,
+      "cost_for_two": 250,
+      "cost_for_two_source": "EazyDiner verified directory",
+      "rating": 4,
+      "review_count": 25,
+      "verification_status": "VERIFIED",
+      "is_ordering_enabled": false,
+      "has_published_menu": true,
+      "menu_status": "Partially Verified",
+      "menu_status_notes": "Fresh juices, milkshakes, and grilled sandwiches verified from active Swiggy & Justdial listings.",
+      "verified_at": "2026-11-04",
+      "menu_categories": [
+        {
+          "name": "Fresh Fruit Juices",
+          "items": [
+            {
+              "id": "item-jw-j-1",
+              "name": "Fresh Watermelon Juice",
+              "description": "Pure pressed fresh watermelon juice with a hint of mint",
+              "price": 80,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-jw-j-2",
+              "name": "Mosambi Sweet Lime Juice",
+              "description": "Freshly squeezed sweet lime juice with rock salt",
+              "price": 90,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-jw-j-3",
+              "name": "Pomegranate Juice",
+              "description": "Antioxidant-rich pure fresh pomegranate juice",
+              "price": 120,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Shakes & Smoothies",
+          "items": [
+            {
+              "id": "item-jw-s-1",
+              "name": "Chocolate Thick Shake",
+              "description": "Rich creamy chocolate ice cream shake with chocolate fudge drizzle",
+              "price": 130,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-jw-s-2",
+              "name": "Oreo Thick Shake",
+              "description": "Thick milkshake blended with crushed Oreo cookies",
+              "price": 140,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-jw-s-3",
+              "name": "Fig and Dates Smoothie",
+              "description": "Wholesome nutritious blend of dried figs, dates, honey, and chilled milk",
+              "price": 150,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Sandwiches",
+          "items": [
+            {
+              "id": "item-jw-sw-1",
+              "name": "Creamy Tandoori Veg Sandwich",
+              "description": "Grilled sandwich layered with spiced paneer, onions, and tandoori mayo",
+              "price": 130,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-jw-sw-2",
+              "name": "Veg Club Sandwich",
+              "description": "Triple-decker toasted sandwich with cheese slice, cucumber, tomato and mint sauce",
+              "price": 150,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Juice World Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cafe-zesty-mania",
+      "name": "Zesty Mania Cafe",
+      "slug": "zesty-mania-cafe",
+      "description": "A vibrant hangout in the SITRA/Goldwins stretch serving cheese loaded fries, zinger burgers, waffles and artisan brownies.",
+      "cover_image": "assets/images/cafes/zesty_mania.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/zesty_mania.jpg",
+      "image_source": "Verified Premises Ambience — Sitra / Goldwins",
+      "image_verification_status": "VERIFIED",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Desserts",
+        "Fast Food",
+        "Waffles"
+      ],
+      "address": "Avinashi Road / Goldwins, Civil Aerodrome Post, SITRA, Coimbatore",
+      "area": "SITRA, Coimbatore",
+      "latitude": 11.036,
+      "longitude": 77.037,
+      "distance_psg_cas_km": 0.5,
+      "opening_hours": "11:00 AM – 10:30 PM",
+      "phone": "+91 96009 87654",
+      "website": null,
+      "cost_for_two": 350,
+      "cost_for_two_source": "Swiggy cluster estimate",
+      "rating": 4.1,
+      "review_count": 28,
+      "verification_status": "VERIFIED",
+      "is_ordering_enabled": false,
+      "has_published_menu": true,
+      "menu_status": "Partially Verified",
+      "menu_status_notes": "Loaded fries, burgers, waffles, and brownies verified from active Swiggy Sitra listing.",
+      "verified_at": "2026-11-04",
+      "menu_categories": [
+        {
+          "name": "Loaded Fries & Starters",
+          "items": [
+            {
+              "id": "item-zm-f-1",
+              "name": "Cheese Chicken Loaded Fries",
+              "description": "French fries loaded with diced crispy chicken, melted cheese sauce, and jalapenos",
+              "price": 190,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Zesty Mania Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-zm-f-2",
+              "name": "Crispy Chicken Strips (5 pcs)",
+              "description": "Golden crumb-fried boneless chicken tenders served with garlic dip",
+              "price": 170,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Zesty Mania Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Burgers & Pasta",
+          "items": [
+            {
+              "id": "item-zm-b-1",
+              "name": "Classic Zinger Burger",
+              "description": "Crispy fried chicken breast fillet with shredded lettuce and creamy herb mayo",
+              "price": 150,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Zesty Mania Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-zm-b-2",
+              "name": "Creamy White Sauce Pasta",
+              "description": "Penne pasta tossed in creamy parmesan bechamel sauce with sautéed mushrooms and corn",
+              "price": 180,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Zesty Mania Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Waffles & Brownies",
+          "items": [
+            {
+              "id": "item-zm-w-1",
+              "name": "Butterscotch Waffle",
+              "description": "Crisp warm waffle topped with butterscotch praline crunch and caramel syrup",
+              "price": 140,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Zesty Mania Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-zm-w-2",
+              "name": "Kit Kat Waffle",
+              "description": "Freshly baked waffle topped with chocolate ganache and crushed Kit Kat bars",
+              "price": 160,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Zesty Mania Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-zm-w-3",
+              "name": "Double Chocolate Brownie",
+              "description": "Dense dark chocolate fudge brownie served warm",
+              "price": 120,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Zesty Mania Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cafe-kovai-brews",
+      "name": "Kovai Brews",
+      "slug": "kovai-brews",
+      "description": "Casual coffee house and pizzeria on Avinashi Road near KMCH serving hot garlic pizzas, chicken fingers and milkshakes.",
+      "cover_image": "assets/images/cafes/kovai_brews.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/kovai_brews.jpg",
+      "image_source": "ZipBi Branded Card — Awaiting Merchant Image Verification",
+      "image_verification_status": "AWAITING_MERCHANT_VERIFICATION",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Pizza",
+        "Coffee",
+        "Fast Food"
+      ],
+      "address": "Avinashi Road near KMCH, Civil Aerodrome Post, Coimbatore",
+      "area": "Avinashi Road, Coimbatore",
+      "latitude": 11.041,
+      "longitude": 77.042,
+      "distance_psg_cas_km": 1.3,
+      "opening_hours": "12:00 PM – 11:30 PM",
+      "phone": "+91 96290 94317",
+      "website": null,
+      "cost_for_two": 450,
+      "cost_for_two_source": "Swiggy catalog estimate",
+      "rating": 2.6,
+      "review_count": 5,
+      "verification_status": "UNCLAIMED",
+      "is_ordering_enabled": false,
+      "has_published_menu": true,
+      "menu_status": "Partially Verified",
+      "menu_status_notes": "Pizzas, fried fingers, and milkshakes verified from active delivery listing. Merchant verification pending.",
+      "verified_at": "2026-11-04",
+      "menu_categories": [
+        {
+          "name": "Pizzas",
+          "items": [
+            {
+              "id": "item-kb-p-1",
+              "name": "Hot Garlic Chicken Pizza",
+              "description": "Seasoned chicken cubes, roasted garlic, mozzarella, paprika, olives and herbs",
+              "price": 240,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Kovai Brews Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-kb-p-2",
+              "name": "Margherita Pizza",
+              "description": "Classic herb tomato sauce and mozzarella cheese",
+              "price": 180,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Kovai Brews Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Short Eats",
+          "items": [
+            {
+              "id": "item-kb-se-1",
+              "name": "Crispy Chicken Fingers",
+              "description": "Succulent chicken strips fried golden brown with dip",
+              "price": 160,
+              "is_veg": false,
+              "is_available": true,
+              "source": "Swiggy Kovai Brews Catalog",
+              "verified_date": "2026-11-04"
+            },
+            {
+              "id": "item-kb-se-2",
+              "name": "Corn & Cheese Momos",
+              "description": "Steamed momos packed with sweet corn and melted cheese",
+              "price": 130,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Kovai Brews Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        },
+        {
+          "name": "Beverages",
+          "items": [
+            {
+              "id": "item-kb-bev-1",
+              "name": "Black Currant Milkshake",
+              "description": "Chilled thick shake with black currant essence and vanilla ice cream",
+              "price": 120,
+              "is_veg": true,
+              "is_available": true,
+              "source": "Swiggy Kovai Brews Catalog",
+              "verified_date": "2026-11-04"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cafe-refresh-cafe",
+      "name": "Refresh Cafe",
+      "slug": "refresh-cafe",
+      "description": "An informal budget-friendly family dining spot near SITRA bus stop offering pizzas, fig & honey shakes and boba tea.",
+      "cover_image": "assets/images/cafes/refresh_cafe.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/refresh_cafe.jpg",
+      "image_source": "Verified Premises Ambience — RVM Complex, Sitra",
+      "image_verification_status": "VERIFIED",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Pizza",
+        "Beverages",
+        "Fast Food"
+      ],
+      "address": "Door 12/2, RVM Complex, Ward 36, Near SITRA Bus Stop, Avinashi Road, Coimbatore",
+      "area": "SITRA, Coimbatore",
+      "latitude": 11.0342,
+      "longitude": 77.035,
+      "distance_psg_cas_km": 0.25,
+      "opening_hours": "10:00 AM – 10:00 PM",
+      "phone": null,
+      "website": null,
+      "cost_for_two": 300,
+      "cost_for_two_source": "Justdial estimate (₹200 - ₹350 for two)",
+      "rating": 4,
+      "review_count": 30,
+      "verification_status": "VERIFIED",
+      "is_ordering_enabled": false,
+      "has_published_menu": false,
+      "menu_status": "Awaiting Merchant Confirmation",
+      "menu_status_notes": "Known for pizza, fig & honey shakes, and boba tea from field audit. Itemized price sheet awaiting merchant submission.",
+      "verified_at": "2026-11-04",
+      "menu_categories": []
+    },
+    {
+      "id": "cafe-friends-zone",
+      "name": "Friends Zone Cafe",
+      "slug": "friends-zone-cafe",
+      "description": "Popular youth hangout offering celebration cakes, waffles, momos, french fries and thick milkshakes near SITRA roundabout.",
+      "cover_image": "assets/images/cafes/friends_zone.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/friends_zone.jpg",
+      "image_source": "ZipBi Branded Card — Awaiting Merchant Image Verification",
+      "image_verification_status": "AWAITING_MERCHANT_VERIFICATION",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Desserts",
+        "Bakery",
+        "Fast Food"
+      ],
+      "address": "Near SITRA Roundabout, Kalapatti Main Road / Avinashi Road, Coimbatore",
+      "area": "SITRA, Coimbatore",
+      "latitude": 11.038,
+      "longitude": 77.04,
+      "distance_psg_cas_km": 0.9,
+      "opening_hours": "9:30 AM – 10:30 PM",
+      "phone": null,
+      "website": null,
+      "cost_for_two": 350,
+      "cost_for_two_source": "Justdial directory estimate",
+      "rating": 4,
+      "review_count": 18,
+      "verification_status": "UNCLAIMED",
+      "is_ordering_enabled": false,
+      "has_published_menu": false,
+      "menu_status": "Awaiting Merchant Confirmation",
+      "menu_status_notes": "Known for cakes, brownies with ice cream, waffles, and momos. Item-by-item machine-readable pricing awaiting merchant claim.",
+      "verified_at": "2026-11-04",
+      "menu_categories": []
+    },
+    {
+      "id": "cafe-dee-chill",
+      "name": "Dee Chill Cafe",
+      "slug": "dee-chill-cafe",
+      "description": "Neighborhood tea, coffee and short-eats spot near SITRA / Madhusudhan Layout providing quick refreshments.",
+      "cover_image": "assets/images/cafes/dee_chill.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/dee_chill.jpg",
+      "image_source": "ZipBi Branded Card — Awaiting Merchant Image Verification",
+      "image_verification_status": "AWAITING_MERCHANT_VERIFICATION",
+      "category": "Tea Shops",
+      "cuisine_tags": [
+        "Tea Shops",
+        "Snacks",
+        "Beverages"
+      ],
+      "address": "Shastri Nagar / Madhusudhan Layout, SITRA, Coimbatore",
+      "area": "SITRA, Coimbatore",
+      "latitude": 11.0382,
+      "longitude": 77.0402,
+      "distance_psg_cas_km": 0.9,
+      "opening_hours": "7:00 AM – 10:00 PM",
+      "phone": null,
+      "website": null,
+      "cost_for_two": 150,
+      "cost_for_two_source": "Field note (Lemon tea ₹30, quick snacks)",
+      "rating": 3.8,
+      "review_count": 8,
+      "verification_status": "UNCLAIMED",
+      "is_ordering_enabled": false,
+      "has_published_menu": false,
+      "menu_status": "Awaiting Merchant Confirmation",
+      "menu_status_notes": "Neighborhood tea and snack kiosk. Itemized digital menu awaiting merchant onboarding.",
+      "verified_at": "2026-11-04",
+      "menu_categories": []
+    },
+    {
+      "id": "cafe-den-cafe",
+      "name": "Den Cafe",
+      "slug": "den-cafe",
+      "description": "Cozy local coffee and refreshment nook located on Masakalipalayam Road near Kondasamy Nagar in Peelamedu.",
+      "cover_image": "assets/images/cafes/den_cafe.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/den_cafe.jpg",
+      "image_source": "ZipBi Branded Card — Awaiting Merchant Image Verification",
+      "image_verification_status": "AWAITING_MERCHANT_VERIFICATION",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Coffee",
+        "Snacks"
+      ],
+      "address": "Kondasamy Nagar / Kondasamy Layout, Masakalipalayam Road, Peelamedu, Coimbatore",
+      "area": "Peelamedu, Coimbatore",
+      "latitude": 11.0315,
+      "longitude": 77.029,
+      "distance_psg_cas_km": 0.5,
+      "opening_hours": "10:00 AM – 9:30 PM",
+      "phone": null,
+      "website": null,
+      "cost_for_two": 200,
+      "cost_for_two_source": "Local directory estimate",
+      "rating": 5,
+      "review_count": 1,
+      "verification_status": "UNCLAIMED",
+      "is_ordering_enabled": false,
+      "has_published_menu": false,
+      "menu_status": "Awaiting Merchant Confirmation",
+      "menu_status_notes": "Local Peelamedu coffee shop. Digital menu awaiting merchant onboarding.",
+      "verified_at": "2026-11-04",
+      "menu_categories": []
+    },
+    {
+      "id": "cafe-rain-cafe",
+      "name": "Rain Cafe",
+      "slug": "rain-cafe",
+      "description": "Compact neighborhood café situated in Ashok Layout near Peelamedu / SITRA offering coffee and quick bites.",
+      "cover_image": "assets/images/cafes/rain_cafe.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/rain_cafe.jpg",
+      "image_source": "ZipBi Branded Card — Awaiting Merchant Image Verification",
+      "image_verification_status": "AWAITING_MERCHANT_VERIFICATION",
+      "category": "Café",
+      "cuisine_tags": [
+        "Café",
+        "Tea & Snacks",
+        "Beverages"
+      ],
+      "address": "Street 53, Ashok Layout, Peelamedu, Coimbatore",
+      "area": "Ashok Layout, Coimbatore",
+      "latitude": 11.032,
+      "longitude": 77.03,
+      "distance_psg_cas_km": 0.5,
+      "opening_hours": "10:00 AM – 9:00 PM",
+      "phone": null,
+      "website": null,
+      "cost_for_two": 250,
+      "cost_for_two_source": "Local directory estimate",
+      "rating": 4.7,
+      "review_count": 3,
+      "verification_status": "UNCLAIMED",
+      "is_ordering_enabled": false,
+      "has_published_menu": false,
+      "menu_status": "Awaiting Merchant Confirmation",
+      "menu_status_notes": "Neighborhood cafe. Digital menu awaiting merchant onboarding.",
+      "verified_at": "2026-11-04",
+      "menu_categories": []
+    },
+    {
+      "id": "cafe-sandsha-cafe",
+      "name": "Sandsha Cafe",
+      "slug": "sandsha-cafe",
+      "description": "24-hour transit tea, coffee and snack counter near Coimbatore Airport traffic signal at TNHB Colony.",
+      "cover_image": "assets/images/cafes/sandsha_cafe.jpg",
+      "cover_image_url": "https://zipbi.in/assets/cafes/sandsha_cafe.jpg",
+      "image_source": "ZipBi Branded Card — Awaiting Merchant Image Verification",
+      "image_verification_status": "AWAITING_MERCHANT_VERIFICATION",
+      "category": "Tea Shops",
+      "cuisine_tags": [
+        "Tea Shops",
+        "Snacks",
+        "Fast Food"
+      ],
+      "address": "Street 2, Near Airport Signal, TNHB Colony, Civil Aerodrome Post, Coimbatore",
+      "area": "Airport Signal, Coimbatore",
+      "latitude": 11.0375,
+      "longitude": 77.039,
+      "distance_psg_cas_km": 0.7,
+      "opening_hours": "Open 24 Hours",
+      "phone": null,
+      "website": null,
+      "cost_for_two": 150,
+      "cost_for_two_source": "Local field estimate",
+      "rating": 3,
+      "review_count": 2,
+      "verification_status": "UNCLAIMED",
+      "is_ordering_enabled": false,
+      "has_published_menu": false,
+      "menu_status": "Awaiting Merchant Confirmation",
+      "menu_status_notes": "24/7 highway transit tea and quick snack stall. Digital menu awaiting merchant onboarding.",
+      "verified_at": "2026-11-04",
+      "menu_categories": []
+    }
+  ]
+}

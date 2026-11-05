@@ -1,29 +1,48 @@
-# Dependencies
+# Node.js dependencies
 node_modules/
-.pnp
-.pnp.js
+*/node_modules/
+*/*/node_modules/
 
-# Production build artifacts
+# Flutter & Dart build artifacts
+.dart_tool/
+*/.dart_tool/
+.pub-cache/
+*/.pub-cache/
+.pub/
+*/.pub/
+build/
+*/build/
+*/*/build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Android build & Gradle cache
+.gradle/
+*/.gradle/
+*/*/.gradle/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+local.properties
+
+# Windows desktop build cache
+windows/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+
+# Web / Frontend dist
 dist/
-dist-ssr/
-*.local
+*/dist/
 
-# Environment & Logs
+# Environment variables
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-enquiries.json
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+*.env
 
-# IDE & OS files
+# Operating System & IDE
 .DS_Store
 Thumbs.db
+*.class
+*.log
 .idea/
-.vscode/
-*.sublime-project
-*.sublime-workspace
+*.iml
+

@@ -1,0 +1,155 @@
+[
+  {
+    "id": "usr-admin-1",
+    "fullName": "ZipBi Administrator",
+    "phone": "+919876500000",
+    "email": "admin@zipbi.com",
+    "passwordHash": "$2a$10$KVquP2WmP4CYFg7fYDdJFuH1oamLraffFJpk0w4gt/nTgd6EwN35O",
+    "role": "ADMIN",
+    "createdAt": "2026-11-04T13:09:33.432Z"
+  },
+  {
+    "id": "usr-demo-1",
+    "fullName": "Amarnath B",
+    "phone": "+919876543210",
+    "email": "amarnath.b@example.com",
+    "passwordHash": "$2a$10$yWbH.9n3B7kXsx6HF1ooZuWAsIwr1npJbPb3iYN8PDTlwwyOhb/9y",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-04T13:09:33.544Z"
+  },
+  {
+    "id": "usr-1793797773853-878",
+    "fullName": "Test Customer",
+    "phone": "+919964390634",
+    "email": "test_1793797773688@example.com",
+    "passwordHash": "$2a$10$cmQ/5k35kXLkhp3JUwP/YuJjOrxjTHnNs5g7j71iCoYdMW9pB2deO",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-04T13:09:33.853Z"
+  },
+  {
+    "id": "usr-cust-2",
+    "fullName": "Kaviya Ramesh",
+    "phone": "+919842101234",
+    "email": "kaviya.r@example.com",
+    "passwordHash": "$2a$10$uOsOQjttP5CKYReW5DHT8esN9rlpkjrDlQ5w38N7zB/1nDp/C.Opy",
+    "role": "CUSTOMER",
+    "createdAt": "2026-10-15T09:30:00.000Z"
+  },
+  {
+    "id": "usr-cust-3",
+    "fullName": "Siddharth Venkat",
+    "phone": "+919842205678",
+    "email": "sid.venkat@example.com",
+    "passwordHash": "$2a$10$uOsOQjttP5CKYReW5DHT8esN9rlpkjrDlQ5w38N7zB/1nDp/C.Opy",
+    "role": "CUSTOMER",
+    "createdAt": "2026-10-15T09:30:00.000Z"
+  },
+  {
+    "id": "usr-cust-4",
+    "fullName": "Divya Balasubramanian",
+    "phone": "+919842309012",
+    "email": "divya.b@example.com",
+    "passwordHash": "$2a$10$uOsOQjttP5CKYReW5DHT8esN9rlpkjrDlQ5w38N7zB/1nDp/C.Opy",
+    "role": "CUSTOMER",
+    "createdAt": "2026-10-15T09:30:00.000Z"
+  },
+  {
+    "id": "usr-cust-5",
+    "fullName": "Praveen Kumar",
+    "phone": "+919842403456",
+    "email": "praveen.k@example.com",
+    "passwordHash": "$2a$10$uOsOQjttP5CKYReW5DHT8esN9rlpkjrDlQ5w38N7zB/1nDp/C.Opy",
+    "role": "CUSTOMER",
+    "createdAt": "2026-10-15T09:30:00.000Z"
+  },
+  {
+    "id": "usr-cust-6",
+    "fullName": "Ananya Sundaram",
+    "phone": "+919842507890",
+    "email": "ananya.s@example.com",
+    "passwordHash": "$2a$10$uOsOQjttP5CKYReW5DHT8esN9rlpkjrDlQ5w38N7zB/1nDp/C.Opy",
+    "role": "CUSTOMER",
+    "createdAt": "2026-10-15T09:30:00.000Z"
+  },
+  {
+    "id": "usr-cust-7",
+    "fullName": "Karthik Selvam",
+    "phone": "+919842601234",
+    "email": "karthik.s@example.com",
+    "passwordHash": "$2a$10$uOsOQjttP5CKYReW5DHT8esN9rlpkjrDlQ5w38N7zB/1nDp/C.Opy",
+    "role": "CUSTOMER",
+    "createdAt": "2026-10-15T09:30:00.000Z"
+  },
+  {
+    "id": "usr-cust-8",
+    "fullName": "Meera Chandran",
+    "phone": "+919842705678",
+    "email": "meera.c@example.com",
+    "passwordHash": "$2a$10$uOsOQjttP5CKYReW5DHT8esN9rlpkjrDlQ5w38N7zB/1nDp/C.Opy",
+    "role": "CUSTOMER",
+    "createdAt": "2026-10-15T09:30:00.000Z"
+  },
+  {
+    "id": "usr-1793800908077-41",
+    "fullName": "Test Customer",
+    "phone": "+919961049791",
+    "email": "test_1793800907918@example.com",
+    "passwordHash": "$2a$10$85Yw54nwxJElojpakPtWE.qRvlNiM7hNUtGBuEawKmw8RfVsmliGS",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-04T14:01:48.077Z"
+  },
+  {
+    "id": "usr-1793800939584-790",
+    "fullName": "Test Customer",
+    "phone": "+919919518438",
+    "email": "test_1793800939394@example.com",
+    "passwordHash": "$2a$10$MPoCDo05VAvVC57KLtDMzelRiQXBQBFJ2zESlk3jlyt6k2FG.VlGi",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-04T14:02:19.584Z"
+  },
+  {
+    "id": "usr-1793805496757-678",
+    "fullName": "Test Customer",
+    "phone": "+919971136308",
+    "email": "test_1793805496582@example.com",
+    "passwordHash": "$2a$10$18OT7phcZALYV7/yp7DYHeFt9Wv.8G2fIsl09MwrSqbqiX9pzU6D6",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-04T15:18:16.757Z"
+  },
+  {
+    "id": "usr-1793809088650-621",
+    "fullName": "Test Customer",
+    "phone": "+919993844273",
+    "email": "test_1793809088485@example.com",
+    "passwordHash": "$2a$10$l5UfpP8k1A819dQcA4WKbOyecEv4lTxHbvltv2E7ZaXuFu1LeCaje",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-04T16:18:08.650Z"
+  },
+  {
+    "id": "usr-1793809616946-4",
+    "fullName": "Test Customer",
+    "phone": "+919989290318",
+    "email": "test_1793809616740@example.com",
+    "passwordHash": "$2a$10$Af2ndbaK114MivT6PxisBuH3I9UNluT0n12nWLh0zI3/uBrLDIC7S",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-04T16:26:56.946Z"
+  },
+  {
+    "id": "usr-1793811034909-632",
+    "fullName": "Test Customer",
+    "phone": "+919979711546",
+    "email": "test_1793811034737@example.com",
+    "passwordHash": "$2a$10$bC8tP6gYVfB9NVNH60UQ3.1N.GJJonGaImTGDYwy5n2Z1tvL3HFhO",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-04T16:50:34.909Z"
+  },
+  {
+    "id": "usr-1793812127430-540",
+    "fullName": "Test Customer",
+    "phone": "+919976165930",
+    "email": "test_1793812127254@example.com",
+    "passwordHash": "$2a$10$hrucvrZGe15CKd4aT42GoeCsbr7FuVA6phIWzdOlq0TmH6s4CPWe6",
+    "role": "CUSTOMER",
+    "createdAt": "2026-11-04T17:08:47.430Z"
+  }
+]

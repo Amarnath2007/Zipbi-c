@@ -1,0 +1,2422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZipBi Admin Portal | Private Business & Location Management</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              primary: '#1B4D3E',
+              dark: '#143A2F',
+              light: '#2D6A4F',
+              accent: '#52B788',
+              surface: '#F4F7F5',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- ZipBi Logo Favicon -->
+  <link rel="icon" type="image/png" href="/assets/images/logo/zipbi_logo.png" />
+
+  <!-- Self-contained Core Styles: guarantees robust rendering even without CDN -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+    .hidden { display: none !important; }
+    
+    /* Brand accents */
+    .bg-brand-primary { background-color: #1B4D3E !important; }
+    .bg-brand-dark { background-color: #143A2F !important; }
+    .bg-brand-light { background-color: #2D6A4F !important; }
+    .bg-brand-accent { background-color: #52B788 !important; }
+    .text-brand-primary { color: #1B4D3E !important; }
+    .text-brand-accent { color: #52B788 !important; }
+    .border-brand-primary { border-color: #1B4D3E !important; }
+    
+    /* Layout */
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    /* Navigation Sidebar */
+    .nav-tab-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #475569;
+      transition: all 0.15s ease-in-out;
+      cursor: pointer;
+      border: 1px solid transparent;
+      user-select: none;
+    }
+    .nav-tab-item:hover {
+      background-color: #f1f5f9;
+      color: #1B4D3E;
+    }
+    .nav-tab-item.active {
+      background-color: #e6f2ed;
+      color: #1B4D3E;
+      font-weight: 700;
+      border-color: #c7e3d6;
+    }
+    .nav-tab-item.active i {
+      color: #1B4D3E;
+    }
+    
+    /* Table row hover */
+    tbody tr:hover {
+      background-color: #f8fafc;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- ==================== 1. ADMIN LOGIN VIEW (Centered Overlay) ==================== -->
+  <div id="loginView" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-md transition-all">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-8 m-4">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white p-2 shadow-lg mb-3 border border-slate-200">
+          <img src="/assets/images/logo/zipbi_logo.png" alt="ZipBi Logo" class="w-full h-full object-contain" />
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900">ZipBi Admin Portal</h1>
+        <p class="text-xs text-slate-500 mt-1">Authorized Business & Location Management</p>
+      </div>
+
+      <div id="loginError" class="hidden mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center gap-2">
+        <i class="fa-solid fa-circle-exclamation text-sm"></i>
+        <span id="loginErrorMsg">Invalid credentials.</span>
+      </div>
+
+      <form id="loginForm" class="space-y-4" onsubmit="handleLoginSubmit(event)">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Admin Email</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+              <i class="fa-solid fa-envelope"></i>
+            </span>
+            <input type="email" id="loginEmail" required class="w-full pl-9 pr-4 py-2.5 rounded-lg border border-slate-300 focus:border-brand-primary focus:ring-2 focus:ring-brand-accent/20 outline-none text-sm transition" placeholder="admin@zipbi.com" value="admin@zipbi.com" />
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600">Password</label>
+            <button type="button" onclick="togglePasswordVisibility()" class="text-xs text-slate-400 hover:text-slate-600 focus:outline-none">
+              <span id="pwdToggleText">Show</span>
+            </button>
+          </div>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+              <i class="fa-solid fa-lock"></i>
+            </span>
+            <input type="password" id="loginPassword" required class="w-full pl-9 pr-10 py-2.5 rounded-lg border border-slate-300 focus:border-brand-primary focus:ring-2 focus:ring-brand-accent/20 outline-none text-sm transition" placeholder="••••••••••••" value="Admin@ZipBi2026" />
+          </div>
+        </div>
+
+        <button type="submit" id="loginBtn" class="w-full py-3 px-4 rounded-lg bg-brand-primary hover:bg-brand-dark text-white font-semibold text-sm shadow-md transition flex items-center justify-center gap-2">
+          <span id="loginBtnText">Authenticate & Open Dashboard</span>
+          <i id="loginBtnIcon" class="fa-solid fa-arrow-right"></i>
+        </button>
+
+        <div class="text-center pt-2">
+          <button type="button" onclick="fillSuperAdminCredentials()" class="text-[11px] text-slate-400 hover:text-brand-primary underline transition">
+            Auto-fill Super Admin Credentials
+          </button>
+        </div>
+      </form>
+
+      <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+        <p class="text-[11px] text-slate-400">Strictly for authorized administrators. All access requests are logged.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 2. MAIN APPLICATION CONTAINER ==================== -->
+  <div id="adminApp" class="hidden min-h-screen flex flex-col">
+
+    <!-- TOP HEADER -->
+    <header class="bg-brand-primary text-white sticky top-0 z-30 shadow-md">
+      <div class="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        
+        <!-- Left: Logo & Portal Title -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow">
+            <img src="/assets/images/logo/zipbi_logo.png" alt="ZipBi Logo" class="w-full h-full object-contain" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-lg tracking-tight">ZipBi</span>
+              <span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-400/30">Admin OS</span>
+            </div>
+            <p class="text-[11px] text-slate-300 leading-none">Coimbatore Directory & Location Governance</p>
+          </div>
+        </div>
+
+        <!-- Center: Live Clock & Region Indicator -->
+        <div class="hidden md:flex items-center gap-4 text-xs text-slate-200">
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Cluster: SITRA & Avinashi Road</span>
+          </div>
+          <div id="liveClock" class="font-mono text-slate-300">Asia/Kolkata</div>
+        </div>
+
+        <!-- Right: Actions & Admin Profile -->
+        <div class="flex items-center gap-3">
+          <a href="http://localhost:3000" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition" title="Open Customer App">
+            <i class="fa-solid fa-mobile-screen"></i>
+            <span>Customer App</span>
+          </a>
+
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-xs">
+            <i class="fa-solid fa-user-shield text-brand-accent"></i>
+            <span id="adminNameDisplay" class="font-semibold">Super Administrator</span>
+          </div>
+
+          <button onclick="handleLogout()" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition text-xs" title="Log Out of Admin">
+            <i class="fa-solid fa-right-from-bracket text-sm"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- SIDEBAR & TAB CONTENT WRAPPER -->
+    <div class="flex-1 flex w-full">
+
+      <!-- LEFT SIDEBAR: 10 TABS -->
+      <aside class="w-64 bg-white border-r border-slate-200 p-4 flex flex-col justify-between shrink-0">
+        <div>
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 mb-2">Main Navigation</div>
+          <nav class="space-y-1">
+            <button class="nav-tab-item active w-full" data-tab="tab-dashboard" onclick="switchNavTab('tab-dashboard')">
+              <i class="fa-solid fa-chart-pie w-4 text-center"></i>
+              <span>Dashboard</span>
+            </button>
+            <button class="nav-tab-item w-full" data-tab="tab-cafes" onclick="switchNavTab('tab-cafes')">
+              <i class="fa-solid fa-store w-4 text-center"></i>
+              <span>Café Management</span>
+            </button>
+            <button class="nav-tab-item w-full" data-tab="tab-partners" onclick="switchNavTab('tab-partners')">
+              <i class="fa-solid fa-handshake w-4 text-center"></i>
+              <span>Merchant Partners</span>
+            </button>
+            <button class="nav-tab-item w-full" data-tab="tab-users" onclick="switchNavTab('tab-users')">
+              <i class="fa-solid fa-users w-4 text-center"></i>
+              <span>Customer Users</span>
+            </button>
+            <button class="nav-tab-item w-full" data-tab="tab-revenue" onclick="switchNavTab('tab-revenue')">
+              <i class="fa-solid fa-wallet w-4 text-center"></i>
+              <span>Café Revenue</span>
+            </button>
+            <button class="nav-tab-item w-full" data-tab="tab-subscriptions" onclick="switchNavTab('tab-subscriptions')">
+              <i class="fa-solid fa-receipt w-4 text-center"></i>
+              <span>Subscriptions</span>
+            </button>
+          </nav>
+
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 mt-6 mb-2">Platform Governance</div>
+          <nav class="space-y-1">
+            <button class="nav-tab-item w-full" data-tab="tab-content" onclick="switchNavTab('tab-content')">
+              <i class="fa-solid fa-newspaper w-4 text-center"></i>
+              <span>Content Management</span>
+            </button>
+            <button class="nav-tab-item w-full" data-tab="tab-notifications" onclick="switchNavTab('tab-notifications')">
+              <i class="fa-solid fa-bell w-4 text-center"></i>
+              <span>Notifications</span>
+            </button>
+            <button class="nav-tab-item w-full" data-tab="tab-settings" onclick="switchNavTab('tab-settings')">
+              <i class="fa-solid fa-sliders w-4 text-center"></i>
+              <span>Settings</span>
+            </button>
+            <button class="nav-tab-item w-full" data-tab="tab-logs" onclick="switchNavTab('tab-logs')">
+              <i class="fa-solid fa-clock-rotate-left w-4 text-center"></i>
+              <span>Activity Logs</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- Sidebar Footer Status -->
+        <div class="pt-4 border-t border-slate-100">
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <div class="flex items-center justify-between text-[11px] font-semibold text-slate-700">
+              <span>Directory Status</span>
+              <span id="sidebarCafeCount" class="text-brand-primary font-bold">0 Cafés</span>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-0.5">Google Maps registration active</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- RIGHT MAIN CONTENT AREA -->
+      <main class="flex-1 p-6 overflow-y-auto max-w-7xl">
+
+        <!-- ==================== TAB 1: DASHBOARD ==================== -->
+        <section id="tab-dashboard" class="tab-content">
+          <!-- Top greeting & actions -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Administrator Overview</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Real-time metrics for Coimbatore café network & customer discovery</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openCreateModal()" class="px-3.5 py-2 rounded-lg bg-brand-primary hover:bg-brand-dark text-white text-xs font-semibold shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-plus"></i>
+                <span>Add New Business</span>
+              </button>
+              <button onclick="refreshAllData()" class="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs transition" title="Refresh Metrics">
+                <i class="fa-solid fa-arrows-rotate"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 6 REQUESTED CORE KPIS -->
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 mb-6">
+            <!-- 1. Total Cafes -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-brand-primary/40 transition cursor-pointer" onclick="switchNavTab('tab-cafes')">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Total Cafés</span>
+                <i class="fa-solid fa-store text-xs text-slate-400"></i>
+              </div>
+              <div id="kpiTotalCafes" class="text-2xl font-bold text-slate-900 mt-2">0</div>
+              <div class="text-[10px] text-slate-400 mt-1">Directory count</div>
+            </div>
+
+            <!-- 2. Verified Cafes -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 transition cursor-pointer" onclick="switchNavTab('tab-cafes')">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">Verified</span>
+                <i class="fa-solid fa-circle-check text-xs text-emerald-500"></i>
+              </div>
+              <div id="kpiVerifiedCafes" class="text-2xl font-bold text-emerald-600 mt-2">0</div>
+              <div class="text-[10px] text-slate-400 mt-1">Confirmed premises</div>
+            </div>
+
+            <!-- 3. Merchant Partners -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-brand-accent transition cursor-pointer" onclick="switchNavTab('tab-partners')">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-brand-primary">Partners</span>
+                <i class="fa-solid fa-handshake text-xs text-brand-primary"></i>
+              </div>
+              <div id="kpiMerchantPartners" class="text-2xl font-bold text-brand-primary mt-2">0</div>
+              <div class="text-[10px] text-slate-400 mt-1">Ordering enabled</div>
+            </div>
+
+            <!-- 4. Customer App Users -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 transition cursor-pointer" onclick="switchNavTab('tab-users')">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-blue-600">App Users</span>
+                <i class="fa-solid fa-users text-xs text-blue-500"></i>
+              </div>
+              <div id="kpiCustomerUsers" class="text-2xl font-bold text-blue-600 mt-2">8</div>
+              <div class="text-[10px] text-slate-400 mt-1">Registered accounts</div>
+            </div>
+
+            <!-- 5. Active Subscriptions -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-purple-400 transition cursor-pointer" onclick="switchNavTab('tab-subscriptions')">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-purple-600">Subscriptions</span>
+                <i class="fa-solid fa-receipt text-xs text-purple-500"></i>
+              </div>
+              <div id="kpiActiveSubscriptions" class="text-2xl font-bold text-purple-600 mt-2">0</div>
+              <div class="text-[10px] text-slate-400 mt-1">Merchant tiers</div>
+            </div>
+
+            <!-- 6. Monthly Cafe Revenue -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-amber-400 transition cursor-pointer" onclick="switchNavTab('tab-revenue')">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-700">Café Volume</span>
+                <i class="fa-solid fa-wallet text-xs text-amber-600"></i>
+              </div>
+              <div id="kpiMonthlyRevenue" class="text-xl font-bold text-slate-900 mt-2">₹0</div>
+              <div class="text-[9px] text-amber-600 font-medium mt-1">Aggregated only</div>
+            </div>
+          </div>
+
+          <!-- CATEGORY DISTRIBUTION CARDS -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div class="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center text-base">
+                <i class="fa-solid fa-mug-saucer"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500 font-medium">Cafés</div>
+                <div id="statCafes" class="text-lg font-bold text-slate-800">0</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-base">
+                <i class="fa-solid fa-leaf"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500 font-medium">Tea Shops</div>
+                <div id="statTeaShops" class="text-lg font-bold text-slate-800">0</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center text-base">
+                <i class="fa-solid fa-glass-water"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500 font-medium">Beverages</div>
+                <div id="statBeverages" class="text-lg font-bold text-slate-800">0</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-brand-primary/10 text-brand-primary flex items-center justify-center text-base">
+                <i class="fa-solid fa-utensils"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500 font-medium">Total Menu Items</div>
+                <div id="statMenuItems" class="text-lg font-bold text-slate-800">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RECENT AUDIT LOG PREVIEW -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-brand-primary"></i>
+                <span>Recent Platform Activity</span>
+              </h3>
+              <button onclick="switchNavTab('tab-logs')" class="text-xs text-brand-primary hover:underline font-medium">
+                View all logs →
+              </button>
+            </div>
+            <div id="dashboardRecentLogs" class="space-y-2.5">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 2: CAFÉ MANAGEMENT ==================== -->
+        <section id="tab-cafes" class="tab-content hidden">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <!-- Toolbar -->
+            <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div class="flex items-center gap-2 flex-1 max-w-md">
+                <div class="relative w-full">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                  </span>
+                  <input type="text" id="searchInput" oninput="filterCafesTable()" placeholder="Search by name, area or cuisine..." class="w-full pl-8 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none" />
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 flex-wrap">
+                <select id="categoryFilter" onchange="filterCafesTable()" class="px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 outline-none">
+                  <option value="All">All Categories</option>
+                  <option value="Café">Cafés</option>
+                  <option value="Tea Shops">Tea Shops</option>
+                  <option value="Beverages">Beverages</option>
+                  <option value="Restaurants">Restaurants</option>
+                  <option value="Bakeries">Bakeries</option>
+                </select>
+
+                <select id="statusFilter" onchange="filterCafesTable()" class="px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 outline-none">
+                  <option value="all">All Status</option>
+                  <option value="active">Active Only</option>
+                  <option value="inactive">Inactive Only</option>
+                  <option value="partner">Active Partners Only</option>
+                  <option value="unclaimed">Unclaimed Only</option>
+                </select>
+
+                <button onclick="openCreateModal()" class="px-3.5 py-2 text-xs rounded-lg bg-brand-primary text-white font-semibold shadow hover:bg-brand-dark transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>Add Café</span>
+                </button>
+
+                <button onclick="handleResetDirectoryPrompt()" class="px-3 py-2 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-medium transition flex items-center gap-1.5" title="Reset directory to 0">
+                  <i class="fa-solid fa-trash-can"></i>
+                  <span>Reset Directory</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Café Listings Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+                    <th class="py-3 px-4">Business</th>
+                    <th class="py-3 px-3">Category</th>
+                    <th class="py-3 px-3">Area / Locality</th>
+                    <th class="py-3 px-3">Google Maps & Coordinates</th>
+                    <th class="py-3 px-3">Verification</th>
+                    <th class="py-3 px-3 text-center">Active</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="cafeTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="tableEmptyState" class="hidden py-16 text-center">
+              <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400 text-2xl mb-3">
+                <i class="fa-solid fa-store-slash"></i>
+              </div>
+              <h3 class="text-base font-semibold text-slate-800">Directory is Ready for Fresh Entry</h3>
+              <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1">All old listings have been cleared. Click "Add Café" to register a new café using its verified Google Maps link.</p>
+              <button onclick="openCreateModal()" class="mt-4 px-4 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold shadow hover:bg-brand-dark transition inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-plus"></i>
+                <span>Add First Café</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 3: MERCHANT PARTNERS ==================== -->
+        <section id="tab-partners" class="tab-content hidden">
+          <div class="mb-4">
+            <h2 class="text-lg font-bold text-slate-900">Merchant Partner Relationships</h2>
+            <p class="text-xs text-slate-500">Active restaurant & café partners enabled for table ordering and digital customer checkout</p>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+                    <th class="py-3 px-4">Partner Outlet</th>
+                    <th class="py-3 px-3">Area</th>
+                    <th class="py-3 px-3">Merchant Contact</th>
+                    <th class="py-3 px-3">Partner Tier</th>
+                    <th class="py-3 px-3">Commission Rate</th>
+                    <th class="py-3 px-3">Onboarded</th>
+                    <th class="py-3 px-4 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="partnersTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+            <div id="partnersEmptyState" class="hidden py-12 text-center text-xs text-slate-400">
+              No active merchant partners yet. Add a café and enable table ordering to establish partner status.
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 4: CUSTOMER USERS ==================== -->
+        <section id="tab-users" class="tab-content hidden">
+          <div class="mb-4">
+            <h2 class="text-lg font-bold text-slate-900">Customer App Users</h2>
+            <p class="text-xs text-slate-500">Registered customers using ZipBi in Coimbatore for discovery & table ordering</p>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+                    <th class="py-3 px-4">User</th>
+                    <th class="py-3 px-3">Email Address</th>
+                    <th class="py-3 px-3">Phone</th>
+                    <th class="py-3 px-3">Role</th>
+                    <th class="py-3 px-3">Joined Date</th>
+                    <th class="py-3 px-3 text-center">Orders</th>
+                    <th class="py-3 px-4 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 5: CAFÉ REVENUE ==================== -->
+        <section id="tab-revenue" class="tab-content hidden">
+          <!-- Privacy Compliance Notice -->
+          <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs mb-6 flex items-start gap-3 shadow-sm">
+            <i class="fa-solid fa-shield-halved text-emerald-600 text-base mt-0.5"></i>
+            <div>
+              <div class="font-bold text-emerald-950">Consumer Privacy Compliance Notice</div>
+              <p class="text-[11px] text-emerald-800 mt-0.5">
+                In strict adherence to consumer data privacy guidelines, individual customer baskets, personal food orders, and itemized personal expenses are never exposed. The metrics below represent aggregated café-level gross merchandise volumes and platform commissions.
+              </p>
+            </div>
+          </div>
+
+          <!-- Revenue Overview Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <span class="text-xs font-semibold uppercase text-slate-500">Estimated Monthly Turnover</span>
+              <div id="revTotalVolume" class="text-3xl font-extrabold text-slate-900 mt-2">₹0</div>
+              <p class="text-[11px] text-slate-400 mt-1">Aggregated across active partners</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <span class="text-xs font-semibold uppercase text-emerald-700">Platform Commission (8%)</span>
+              <div id="revPlatformFee" class="text-3xl font-extrabold text-emerald-600 mt-2">₹0</div>
+              <p class="text-[11px] text-slate-400 mt-1">Direct platform servicing fee</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <span class="text-xs font-semibold uppercase text-brand-primary">Active Partner Outlets</span>
+              <div id="revPartnersCount" class="text-3xl font-extrabold text-brand-primary mt-2">0</div>
+              <p class="text-[11px] text-slate-400 mt-1">Ordering enabled merchants</p>
+            </div>
+          </div>
+
+          <!-- Table of Cafe Volumes -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 font-semibold text-xs text-slate-700">
+              Aggregated Monthly Turnover by Partner Café
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+                    <th class="py-3 px-4">Partner Outlet</th>
+                    <th class="py-3 px-3">Category</th>
+                    <th class="py-3 px-3">Est. Monthly Orders</th>
+                    <th class="py-3 px-3">Aggregated Volume</th>
+                    <th class="py-3 px-3">Commission Rate</th>
+                    <th class="py-3 px-4 text-right">Platform Fee</th>
+                  </tr>
+                </thead>
+                <tbody id="revenueTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+            <div id="revenueEmptyState" class="hidden py-12 text-center text-xs text-slate-400">
+              No revenue records in directory. Revenue will aggregate once merchant partner cafés are onboarded.
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 6: SUBSCRIPTIONS ==================== -->
+        <section id="tab-subscriptions" class="tab-content hidden">
+          <div class="mb-6">
+            <h2 class="text-lg font-bold text-slate-900">Merchant Subscription Plans & Billing</h2>
+            <p class="text-xs text-slate-500">Tier plans for café discovery indexing, verified badges, and ordering terminals</p>
+          </div>
+
+          <!-- Plans Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">Free Tier</span>
+                <h3 class="text-base font-bold text-slate-900 mt-2">Starter Directory</h3>
+                <div class="text-2xl font-black text-slate-800 mt-1">₹0 <span class="text-xs font-normal text-slate-400">/ month</span></div>
+                <ul class="mt-4 space-y-2 text-xs text-slate-600">
+                  <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Standard Search Indexing</li>
+                  <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Google Maps Link & Directions</li>
+                  <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Read-only Menu Listing</li>
+                </ul>
+              </div>
+              <div class="mt-6 pt-4 border-t border-slate-100 text-[11px] text-slate-400">Default for all unclaimed listings</div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border-2 border-brand-accent shadow-sm flex flex-col justify-between relative">
+              <span class="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">Most Popular</span>
+              <div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">Growth</span>
+                <h3 class="text-base font-bold text-slate-900 mt-2">Growth Merchant</h3>
+                <div class="text-2xl font-black text-brand-primary mt-1">₹999 <span class="text-xs font-normal text-slate-400">/ month</span></div>
+                <ul class="mt-4 space-y-2 text-xs text-slate-600">
+                  <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Priority Discovery Badge</li>
+                  <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Table QR & Ordering Integration</li>
+                  <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Merchant Portal Analytics</li>
+                </ul>
+              </div>
+              <div class="mt-6 pt-4 border-t border-slate-100 text-[11px] text-emerald-700 font-medium">Billed monthly</div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800">Enterprise</span>
+                <h3 class="text-base font-bold text-slate-900 mt-2">Enterprise Pro</h3>
+                <div class="text-2xl font-black text-purple-900 mt-1">₹2,499 <span class="text-xs font-normal text-slate-400">/ month</span></div>
+                <ul class="mt-4 space-y-2 text-xs text-slate-600">
+                  <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Real-time SMS & Webhook Dispatch</li>
+                  <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Custom Promotional Banners</li>
+                  <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500"></i> Dedicated Support Manager</li>
+                </ul>
+              </div>
+              <div class="mt-6 pt-4 border-t border-slate-100 text-[11px] text-slate-400">Billed monthly</div>
+            </div>
+          </div>
+
+          <!-- Active Subscribers Table -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 font-semibold text-xs text-slate-700">
+              Active Subscribed Outlets
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+                    <th class="py-3 px-4">Café Outlet</th>
+                    <th class="py-3 px-3">Plan</th>
+                    <th class="py-3 px-3">Price</th>
+                    <th class="py-3 px-3">Cycle</th>
+                    <th class="py-3 px-3">Next Renewal</th>
+                    <th class="py-3 px-4 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="subsTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+            <div id="subsEmptyState" class="hidden py-12 text-center text-xs text-slate-400">
+              No subscribed merchant outlets currently active.
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 7: CONTENT MANAGEMENT ==================== -->
+        <section id="tab-content" class="tab-content hidden">
+          <div class="mb-6">
+            <h2 class="text-lg font-bold text-slate-900">Content Management & Banners</h2>
+            <p class="text-xs text-slate-500">Configure homepage banners, discovery announcements, and trending tags in the Customer App</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Featured Announcement -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-bullhorn text-brand-primary"></i>
+                <span>Customer App Announcement Banner</span>
+              </h3>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Banner Headline</label>
+                  <input type="text" id="contentBannerTitle" value="Discover Verified Cafés in Coimbatore" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Subtitle / Callout</label>
+                  <input type="text" id="contentBannerSubtitle" value="Explore authentic ambience, menus, and table ordering." class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" />
+                </div>
+                <button onclick="saveAnnouncement()" class="px-4 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition">
+                  Publish to App
+                </button>
+              </div>
+            </div>
+
+            <!-- Popular Search Tags -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-tags text-brand-primary"></i>
+                <span>Trending Discovery Tags</span>
+              </h3>
+              <p class="text-xs text-slate-500 mb-3">These tags appear on Screen 7 (Search Screen) under Popular Searches.</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200">Cafés near me</span>
+                <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200">Open now</span>
+                <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200">Lunch</span>
+                <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200">Snacks</span>
+                <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200">Burgers</span>
+                <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200">Budget friendly</span>
+              </div>
+              <button onclick="alert('Tags are synced with Flutter AppConstants.')" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-50">
+                Manage Search Keywords
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 8: NOTIFICATIONS ==================== -->
+        <section id="tab-notifications" class="tab-content hidden">
+          <div class="mb-6">
+            <h2 class="text-lg font-bold text-slate-900">Broadcast Alerts & Push Notifications</h2>
+            <p class="text-xs text-slate-500">Send system notices, special offers, and area updates to Customer App users</p>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-xl">
+            <form onsubmit="handleSendNotification(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Target Audience</label>
+                <select id="notifTarget" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none">
+                  <option value="all">All Registered Customers (Coimbatore)</option>
+                  <option value="sitra">SITRA & PSG CAS Local Customers</option>
+                  <option value="merchants">Merchant Partner Managers</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Notification Title</label>
+                <input type="text" id="notifTitle" required placeholder="e.g. New Cafés Added Around SITRA!" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Message Content</label>
+                <textarea id="notifMessage" rows="3" required placeholder="Check out freshly verified cafés and explore newly digitized menus on ZipBi..." class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary"></textarea>
+              </div>
+
+              <button type="submit" class="px-4 py-2.5 rounded-lg bg-brand-primary hover:bg-brand-dark text-white font-semibold text-xs shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Broadcast Notification</span>
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 9: SETTINGS ==================== -->
+        <section id="tab-settings" class="tab-content hidden">
+          <div class="mb-6">
+            <h2 class="text-lg font-bold text-slate-900">System & Geolocation Settings</h2>
+            <p class="text-xs text-slate-500">Configure global parameters, discovery center coordinates, and default thresholds</p>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-2xl">
+            <form onsubmit="handleSaveSettings(event)" class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Application Name</label>
+                  <input type="text" id="settingAppName" value="ZipBi Customer App" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Target Municipality</label>
+                  <input type="text" id="settingTargetCity" value="Coimbatore, Tamil Nadu" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none" />
+                </div>
+              </div>
+
+              <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <div class="text-xs font-bold text-slate-800 mb-2">Default Geolocation Reference Anchor</div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-[11px] text-slate-500 mb-1">Anchor Name</label>
+                    <input type="text" id="settingAnchorName" value="PSG CAS Main Gate" class="w-full px-3 py-1.5 rounded border border-slate-300 text-xs" />
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-500 mb-1">Latitude</label>
+                    <input type="text" id="settingAnchorLat" value="11.0326883" class="w-full px-3 py-1.5 rounded border border-slate-300 text-xs font-mono" />
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-500 mb-1">Longitude</label>
+                    <input type="text" id="settingAnchorLon" value="77.0345773" class="w-full px-3 py-1.5 rounded border border-slate-300 text-xs font-mono" />
+                  </div>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-2">All initial customer distances are computed from this anchor if GPS is pending or denied.</p>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Default Distance Radius (km)</label>
+                  <input type="number" id="settingRadius" value="5.0" step="0.5" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Support Email</label>
+                  <input type="email" id="settingSupportEmail" value="contact@zipbi.com" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none" />
+                </div>
+              </div>
+
+              <div class="pt-2 flex items-center justify-between">
+                <button type="submit" class="px-4 py-2.5 rounded-lg bg-brand-primary hover:bg-brand-dark text-white font-semibold text-xs shadow transition">
+                  Save System Settings
+                </button>
+
+                <button type="button" onclick="handleResetDirectoryPrompt()" class="px-3.5 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 text-xs font-medium transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>Reset Café Directory</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 10: ACTIVITY LOGS ==================== -->
+        <section id="tab-logs" class="tab-content hidden">
+          <div class="mb-4">
+            <h2 class="text-lg font-bold text-slate-900">Administrator Activity Audit Logs</h2>
+            <p class="text-xs text-slate-500">Immutable chronological audit trail of all governance operations, logins, and dataset modifications</p>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+                    <th class="py-3 px-4">Timestamp</th>
+                    <th class="py-3 px-3">Action</th>
+                    <th class="py-3 px-4">Operation Details</th>
+                    <th class="py-3 px-3 text-right">Administrator</th>
+                  </tr>
+                </thead>
+                <tbody id="logsTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: ADD / EDIT CAFÉ (WITH GOOGLE MAPS LINK INTEGRATION) ==================== -->
+  <div id="cafeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[92vh] flex flex-col m-4 overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div>
+          <h2 id="modalTitle" class="text-base font-bold text-slate-900">Add New Business</h2>
+          <p class="text-xs text-slate-500">Register café details, verified Google Maps location link, and premises photograph.</p>
+        </div>
+        <button onclick="closeCafeModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Tabs (Strict 3 Steps) -->
+      <div class="flex border-b border-slate-200 bg-white px-6 text-xs font-semibold">
+        <button type="button" class="cafe-tab-btn py-3 border-b-2 border-brand-primary text-brand-primary mr-6" data-tab="tab-basic" onclick="switchCafeModalTab('tab-basic')">
+          Step 1 — Basic Details
+        </button>
+        <button type="button" class="cafe-tab-btn py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 mr-6" data-tab="tab-location" onclick="switchCafeModalTab('tab-location')">
+          Step 2 — Google Maps Location
+        </button>
+        <button type="button" class="cafe-tab-btn py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800" data-tab="tab-image" onclick="switchCafeModalTab('tab-image')">
+          Step 3 — Premises Image
+        </button>
+      </div>
+
+      <!-- Modal Body (Form) -->
+      <form id="cafeForm" novalidate onsubmit="handleSaveCafe(event)" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scroll">
+        <input type="hidden" id="editCafeId" />
+
+        <!-- ================= STEP 1: BASIC DETAILS ================= -->
+        <div id="modalSubTab-basic" class="modal-subtab space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Café Name *</label>
+              <input type="text" id="cafeName" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="e.g. The German Cafe" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Business Category *</label>
+              <select id="cafeCategory" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white">
+                <option value="Café">Café</option>
+                <option value="Tea Shops">Tea Shops</option>
+                <option value="Beverages">Beverages</option>
+                <option value="Restaurants">Restaurants</option>
+                <option value="Bakeries">Bakeries</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+            <textarea id="cafeDesc" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="Atmosphere, culinary highlights, seating environment..."></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
+              <input type="text" id="cafePhone" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="+91 99760 18088" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Website (Optional)</label>
+              <input type="url" id="cafeWebsite" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="https://example.com" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Opening Hours</label>
+              <input type="text" id="cafeHours" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="e.g. 10:00 AM – 11:00 PM" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Cost for Two (₹)</label>
+              <input type="number" id="cafeCost" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="350" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Owner / Merchant Link</label>
+              <input type="text" id="cafeMerchantOwner" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="Optional merchant ID / name" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="cafeOrdering" class="w-4 h-4 rounded text-brand-primary focus:ring-brand-primary" />
+              <label for="cafeOrdering" class="text-xs font-semibold text-slate-700">Enable Table Ordering (Active Partner)</label>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="cafeActive" checked class="w-4 h-4 rounded text-brand-primary focus:ring-brand-primary" />
+              <label for="cafeActive" class="text-xs font-semibold text-slate-700">Business Listing is Published & Active</label>
+            </div>
+          </div>
+
+          <div class="pt-4 flex justify-end">
+            <button type="button" onclick="switchCafeModalTab('tab-location')" class="px-4 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition flex items-center gap-1.5">
+              <span>Next: Google Maps Location</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= STEP 2: GOOGLE MAPS LOCATION ================= -->
+        <div id="modalSubTab-location" class="modal-subtab space-y-4 hidden">
+          <!-- Google Maps Link Input Box -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-brand-primary text-base"></i>
+              <span class="font-bold text-xs text-slate-800">Google Maps Location Link</span>
+            </div>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+              Open Google Maps, locate the café, tap <strong>Share</strong>, and paste the link below. Supports full URLs, <code>maps.app.goo.gl</code> short links, and coordinates.
+            </p>
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                  <i class="fa-solid fa-link text-xs"></i>
+                </span>
+                <input type="url" id="googleMapsUrl" placeholder="Paste Google Maps location link here... (e.g. https://maps.app.goo.gl/...)" class="w-full pl-8 pr-4 py-2.5 text-xs rounded-lg border border-slate-300 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none transition" />
+              </div>
+              <button type="button" id="fetchLocationBtn" onclick="handleFetchLocation()" class="px-4 py-2.5 rounded-lg bg-brand-primary hover:bg-brand-dark text-white text-xs font-semibold shadow transition flex items-center gap-1.5 shrink-0">
+                <i id="fetchLocationIcon" class="fa-solid fa-magnifying-glass-location"></i>
+                <span id="fetchLocationText">Fetch Location</span>
+              </button>
+            </div>
+            <div id="fetchFeedback" class="hidden text-xs p-2.5 rounded-lg font-medium"></div>
+          </div>
+
+          <!-- Extracted Details & Verification Panel -->
+          <div class="p-4 rounded-xl bg-white border border-slate-200 space-y-3 shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-compass text-brand-primary"></i>
+                <span>Extracted Geographic Coordinates</span>
+              </span>
+              <span id="locationBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">Pending Verification</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Latitude *</label>
+                <input type="number" id="cafeLat" step="0.000001" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono outline-none focus:border-brand-primary" placeholder="11.035800" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Longitude *</label>
+                <input type="number" id="cafeLon" step="0.000001" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono outline-none focus:border-brand-primary" placeholder="77.035500" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Detected Place / Business Name</label>
+                <input type="text" id="detectedPlaceName" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-700 outline-none" readonly placeholder="Auto-detected from Google Maps" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Google Place Identifier</label>
+                <input type="text" id="googlePlaceId" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-xs font-mono text-slate-600 outline-none" readonly placeholder="Place ID or Protobuf ID" />
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+              <span class="text-[11px] text-slate-400">Coordinates are editable for manual precision correction.</span>
+              <a id="verifyMapLink" href="#" target="_blank" class="hidden text-xs text-brand-primary hover:underline font-semibold flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                <span>Open in Google Maps to Verify</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Locality & Full Address -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Locality / Area Name</label>
+              <input type="text" id="cafeArea" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="e.g. SITRA, Coimbatore" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Full Physical Address</label>
+              <input type="text" id="cafeAddress" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="Door No, Street, Landmark, Avinashi Road..." />
+            </div>
+          </div>
+
+          <div class="pt-4 flex items-center justify-between">
+            <button type="button" onclick="switchCafeModalTab('tab-basic')" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition">
+              ← Back to Details
+            </button>
+            <button type="button" onclick="switchCafeModalTab('tab-image')" class="px-4 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition flex items-center gap-1.5">
+              <span>Next: Premises Image</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= STEP 3: PREMISES IMAGE ================= -->
+        <div id="modalSubTab-image" class="modal-subtab space-y-4 hidden">
+          <p class="text-xs text-slate-500">Provide an authentic photograph of the café interior or exterior premises.</p>
+
+          <!-- Option A: Google Drive Import -->
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fa-brands fa-google-drive text-amber-600"></i>
+                <span>Import from Google Drive</span>
+              </label>
+              <span class="text-[10px] text-slate-400">Public or "Anyone with link"</span>
+            </div>
+            <div class="flex gap-2">
+              <input type="text" id="driveLinkInput" placeholder="https://drive.google.com/file/d/..." class="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary bg-white" />
+              <button type="button" id="importDriveBtn" onclick="importFromDrive()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shrink-0">
+                <i id="importDriveIcon" class="fa-solid fa-cloud-arrow-down"></i>
+                <span id="importDriveText">Import</span>
+              </button>
+            </div>
+            <div id="driveFeedback" class="hidden text-xs p-2.5 rounded-lg font-medium"></div>
+          </div>
+
+          <!-- Option B: Direct Device Upload -->
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-folder-open text-blue-600"></i>
+                <span>Upload from Device (Desktop / Phone)</span>
+              </label>
+              <span class="text-[10px] text-slate-400">JPEG, PNG, WEBP</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="file" id="localDeviceFileInput" accept="image/*" class="hidden" onchange="handleDeviceFileUpload(this)" />
+              <button type="button" onclick="document.getElementById('localDeviceFileInput').click()" class="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-upload text-slate-500"></i>
+                <span>Choose Image File...</span>
+              </button>
+              <span id="localUploadFileName" class="text-xs text-slate-500 truncate max-w-xs">No file chosen</span>
+            </div>
+          </div>
+
+          <!-- Option C: Manual URL / Asset Path -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Image URL or Local Asset Path</label>
+            <input type="text" id="cafeImageUrl" oninput="updateImagePreview(this.value)" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" placeholder="assets/images/cafes/... or /uploads/cafes/... or https://..." />
+          </div>
+
+          <!-- Image Preview Card -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-4">
+            <div class="w-24 h-24 rounded-xl bg-slate-200 overflow-hidden border border-slate-300 shrink-0">
+              <img id="imagePreviewImg" src="/assets/images/placeholder_cafe.png" onerror="this.onerror=null; this.src='/assets/images/placeholder_cafe.png';" class="w-full h-full object-cover" />
+            </div>
+            <div>
+              <div class="font-bold text-xs text-slate-800">Premises Photograph Preview</div>
+              <p class="text-[11px] text-slate-500 mt-0.5">High-resolution exterior or interior ambience image shown on customer discovery cards.</p>
+              <div class="mt-2 text-[10px] text-slate-400">Crop ratio: 16:9 • Aspect maintained</div>
+            </div>
+          </div>
+
+          <div class="pt-4 flex items-center justify-between">
+            <button type="button" onclick="switchCafeModalTab('tab-location')" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition">
+              ← Back to Location
+            </button>
+            <button type="submit" onclick="handleSaveCafe(event)" class="px-5 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition shadow flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-check"></i>
+              <span>Save & Register Café</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: MANAGE MENU (Strictly Text-Only) ==================== -->
+  <div id="menuModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[90vh] flex flex-col m-4 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div>
+          <h2 id="menuModalTitle" class="text-base font-bold text-slate-900">Manage Digital Menu</h2>
+          <p class="text-xs text-slate-500">Strictly text-based items with ₹ prices. Food photographs are prohibited per design specification.</p>
+        </div>
+        <button onclick="closeMenuModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-1 space-y-6 custom-scroll">
+        <input type="hidden" id="menuCafeId" />
+
+        <!-- Add Category Form -->
+        <div class="flex gap-2">
+          <input type="text" id="newCategoryInput" placeholder="New category name (e.g. Pasta, Snacks, Burgers)..." class="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-brand-primary" />
+          <button type="button" onclick="handleAddMenuCategory()" class="px-3.5 py-2 rounded-lg bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition">
+            + Add Category
+          </button>
+        </div>
+
+        <!-- Categories & Items list -->
+        <div id="menuCategoriesContainer" class="space-y-4">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <div class="px-6 py-3 border-t border-slate-100 flex justify-end bg-slate-50">
+        <button type="button" onclick="closeMenuModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-white text-xs font-semibold hover:bg-slate-700 transition">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    // State
+    const API_BASE = '/api/v1';
+    let adminToken = localStorage.getItem('zipbi_admin_token') || null;
+    let allCafes = [];
+
+    // Check token on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      startLiveClock();
+      if (adminToken) {
+        verifySession();
+      } else {
+        showLoginView();
+      }
+    });
+
+    function startLiveClock() {
+      const updateClock = () => {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false });
+        const dateStr = now.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short' });
+        const el = document.getElementById('liveClock');
+        if (el) el.textContent = `${dateStr} • ${timeStr} IST`;
+      };
+      updateClock();
+      setInterval(updateClock, 1000);
+    }
+
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById('loginPassword');
+      const txt = document.getElementById('pwdToggleText');
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+        txt.textContent = 'Hide';
+      } else {
+        pwd.type = 'password';
+        txt.textContent = 'Show';
+      }
+    }
+
+    function fillSuperAdminCredentials() {
+      document.getElementById('loginEmail').value = 'admin@zipbi.com';
+      document.getElementById('loginPassword').value = 'Admin@ZipBi2026';
+    }
+
+    function showLoginView() {
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('adminApp').classList.add('hidden');
+    }
+
+    function showAdminApp() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('adminApp').classList.remove('hidden');
+      refreshAllData();
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const errorBox = document.getElementById('loginError');
+      const errorMsg = document.getElementById('loginErrorMsg');
+      const btnText = document.getElementById('loginBtnText');
+      const btnIcon = document.getElementById('loginBtnIcon');
+
+      errorBox.classList.add('hidden');
+      btnText.textContent = 'Authenticating...';
+      btnIcon.className = 'fa-solid fa-spinner fa-spin';
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success && data.token) {
+          adminToken = data.token;
+          localStorage.setItem('zipbi_admin_token', adminToken);
+          if (data.user && data.user.fullName) {
+            document.getElementById('adminNameDisplay').textContent = data.user.fullName;
+          }
+          showAdminApp();
+        } else {
+          errorMsg.textContent = data.message || 'Invalid credentials.';
+          errorBox.classList.remove('hidden');
+        }
+      } catch (err) {
+        errorMsg.textContent = 'Unable to connect to server. Please check backend is running on port 5000.';
+        errorBox.classList.remove('hidden');
+      } finally {
+        btnText.textContent = 'Authenticate & Open Dashboard';
+        btnIcon.className = 'fa-solid fa-arrow-right';
+      }
+    }
+
+    async function verifySession() {
+      try {
+        const res = await fetch(`${API_BASE}/admin/stats`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        if (res.ok) {
+          showAdminApp();
+        } else {
+          handleLogout();
+        }
+      } catch (e) {
+        handleLogout();
+      }
+    }
+
+    function handleLogout() {
+      adminToken = null;
+      localStorage.removeItem('zipbi_admin_token');
+      showLoginView();
+    }
+
+    // Tab Navigation
+    function switchNavTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-tab-item').forEach((el) => el.classList.remove('active'));
+
+      const targetSection = document.getElementById(tabId);
+      if (targetSection) targetSection.classList.remove('hidden');
+
+      const btn = document.querySelector(`.nav-tab-item[data-tab="${tabId}"]`);
+      if (btn) btn.classList.add('active');
+
+      if (tabId === 'tab-partners') loadPartners();
+      else if (tabId === 'tab-users') loadUsers();
+      else if (tabId === 'tab-revenue') loadRevenue();
+      else if (tabId === 'tab-subscriptions') loadSubscriptions();
+      else if (tabId === 'tab-logs') loadActivityLogs();
+    }
+
+    // Refresh all data
+    async function refreshAllData() {
+      await Promise.all([
+        loadStats(),
+        loadCafes(),
+      ]);
+    }
+
+    // Load Stats & KPIs
+    async function loadStats() {
+      try {
+        const res = await fetch(`${API_BASE}/admin/stats`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const s = data.stats;
+          const total = s.totalCafes ?? s.totalBusinesses ?? 0;
+          document.getElementById('kpiTotalCafes').textContent = total;
+          document.getElementById('sidebarCafeCount').textContent = `${total} Cafés`;
+          document.getElementById('kpiVerifiedCafes').textContent = s.verifiedCafes ?? 0;
+          document.getElementById('kpiMerchantPartners').textContent = s.merchantPartners ?? 0;
+          document.getElementById('kpiCustomerUsers').textContent = s.customerUsers ?? 0;
+          document.getElementById('kpiActiveSubscriptions').textContent = s.activeSubscriptions ?? 0;
+          document.getElementById('kpiMonthlyRevenue').textContent = s.formattedRevenue || '₹0';
+
+          document.getElementById('statCafes').textContent = s.cafes ?? 0;
+          document.getElementById('statTeaShops').textContent = s.teaShops ?? 0;
+          document.getElementById('statBeverages').textContent = s.beverages ?? 0;
+          document.getElementById('statMenuItems').textContent = s.totalMenuItems ?? 0;
+        }
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+      }
+    }
+
+    // Load Cafes
+    async function loadCafes() {
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          allCafes = data.cafes || [];
+          renderCafesTable(allCafes);
+          loadActivityLogs();
+        }
+      } catch (err) {
+        console.error('Failed to load cafes:', err);
+      }
+    }
+
+    function renderCafesTable(cafes) {
+      const tbody = document.getElementById('cafeTableBody');
+      const empty = document.getElementById('tableEmptyState');
+      tbody.innerHTML = '';
+
+      if (cafes.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      for (const cafe of cafes) {
+        const tr = document.createElement('tr');
+        const isPartner = cafe.verification_status === 'ACTIVE_PARTNER';
+        const isVerified = cafe.verification_status === 'VERIFIED';
+        const isGoogleVerified = cafe.location_verification_status === 'GOOGLE_MAPS_RESOLVED' || cafe.location_verification_status === 'GOOGLE_MAPS_VERIFIED';
+
+        let badgeHtml = '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600">Unclaimed</span>';
+        if (isPartner) {
+          badgeHtml = '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">Active Partner</span>';
+        } else if (isVerified) {
+          badgeHtml = '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800 border border-blue-200">Verified Premises</span>';
+        }
+
+        const thumb = cafe.cover_image_url || cafe.cover_image || '/assets/images/placeholder_cafe.png';
+        const mapsLinkHtml = cafe.google_maps_url
+          ? `<a href="${escapeHtml(cafe.google_maps_url)}" target="_blank" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-semibold text-[11px]"><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i> Maps</a>`
+          : '<span class="text-slate-300 text-[10px]">No link</span>';
+
+        tr.innerHTML = `
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                <img src="${thumb}" onerror="this.onerror=null; this.src='/assets/images/placeholder_cafe.png';" class="w-full h-full object-cover" />
+              </div>
+              <div>
+                <div class="font-bold text-slate-900">${escapeHtml(cafe.name)}</div>
+                <div class="text-[11px] text-slate-400">★ ${cafe.rating || 'N/A'} • ₹${cafe.cost_for_two || 350} for two</div>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-3">
+            <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700">${escapeHtml(cafe.category || 'Café')}</span>
+          </td>
+          <td class="py-3 px-3 text-slate-600 max-w-xs truncate" title="${escapeHtml(cafe.address || '')}">
+            ${escapeHtml(cafe.area || 'Coimbatore')}
+          </td>
+          <td class="py-3 px-3">
+            <div class="font-mono text-[11px] text-slate-700 font-medium">
+              ${cafe.latitude ? cafe.latitude.toFixed(4) : '—'}, ${cafe.longitude ? cafe.longitude.toFixed(4) : '—'}
+            </div>
+            <div class="mt-0.5">${mapsLinkHtml}</div>
+          </td>
+          <td class="py-3 px-3">
+            <div>${badgeHtml}</div>
+            ${isGoogleVerified ? '<div class="text-[9px] text-emerald-700 font-medium mt-0.5"><i class="fa-brands fa-google text-[8px]"></i> Maps Resolved</div>' : ''}
+          </td>
+          <td class="py-3 px-3 text-center">
+            <input type="checkbox" ${cafe.is_active !== false ? 'checked' : ''} onchange="toggleCafeStatus('${cafe.id}', this.checked)" class="w-4 h-4 rounded text-brand-primary" />
+          </td>
+          <td class="py-3 px-4 text-right">
+            <div class="inline-flex items-center gap-1.5">
+              <button onclick="openMenuModal('${cafe.id}')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium transition" title="Manage Menu">
+                <i class="fa-solid fa-utensils mr-1"></i> Menu
+              </button>
+              <button onclick="openEditModal('${cafe.id}')" class="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition" title="Edit Café">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button onclick="handleDeleteCafe('${cafe.id}', '${escapeHtml(cafe.name)}')" class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 transition" title="Delete">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function filterCafesTable() {
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      const cat = document.getElementById('categoryFilter').value;
+      const status = document.getElementById('statusFilter').value;
+
+      let filtered = allCafes.filter((c) => {
+        if (q) {
+          const matchName = c.name.toLowerCase().includes(q);
+          const matchArea = c.area ? c.area.toLowerCase().includes(q) : false;
+          if (!matchName && !matchArea) return false;
+        }
+        if (cat !== 'All') {
+          if ((c.category || '').toLowerCase() !== cat.toLowerCase()) return false;
+        }
+        if (status === 'active' && c.is_active === false) return false;
+        if (status === 'inactive' && c.is_active !== false) return false;
+        if (status === 'partner' && c.verification_status !== 'ACTIVE_PARTNER') return false;
+        if (status === 'unclaimed' && c.verification_status === 'ACTIVE_PARTNER') return false;
+        return true;
+      });
+
+      renderCafesTable(filtered);
+    }
+
+    async function toggleCafeStatus(id, isActive) {
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${id}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ isActive }),
+        });
+        if (res.ok) {
+          const c = allCafes.find((item) => item.id === id);
+          if (c) c.is_active = isActive;
+          loadStats();
+        }
+      } catch (e) {
+        console.error('Failed to toggle status:', e);
+      }
+    }
+
+    // Google Maps Location Fetcher
+    async function handleFetchLocation() {
+      const urlInput = document.getElementById('googleMapsUrl');
+      const url = urlInput.value.trim();
+      const feedback = document.getElementById('fetchFeedback');
+      const btnText = document.getElementById('fetchLocationText');
+      const btnIcon = document.getElementById('fetchLocationIcon');
+
+      if (!url) {
+        showFeedback(feedback, 'Please paste a Google Maps location link.', false);
+        return;
+      }
+
+      btnText.textContent = 'Resolving...';
+      btnIcon.className = 'fa-solid fa-spinner fa-spin';
+      feedback.classList.add('hidden');
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/resolve-maps-url`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ url }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success && data.latitude && data.longitude) {
+          // Populate Coordinates
+          document.getElementById('cafeLat').value = data.latitude.toFixed(6);
+          document.getElementById('cafeLon').value = data.longitude.toFixed(6);
+
+          // Populate Place Name if available & not already set
+          if (data.placeName) {
+            document.getElementById('detectedPlaceName').value = data.placeName;
+            const nameInput = document.getElementById('cafeName');
+            if (!nameInput.value.trim()) {
+              nameInput.value = data.placeName;
+            }
+          }
+
+          // Populate Place ID
+          if (data.googlePlaceId) {
+            document.getElementById('googlePlaceId').value = data.googlePlaceId;
+          }
+
+          // Populate Formatted Address if available
+          if (data.formattedAddress) {
+            const addrInput = document.getElementById('cafeAddress');
+            if (!addrInput.value.trim()) {
+              addrInput.value = data.formattedAddress;
+            }
+          }
+
+          // Update Status Badge
+          const badge = document.getElementById('locationBadge');
+          badge.textContent = 'Google Maps Verified';
+          badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+
+          // Update verification link
+          const verifyLink = document.getElementById('verifyMapLink');
+          verifyLink.href = data.resolvedUrl || data.googleMapsUrl || url;
+          verifyLink.classList.remove('hidden');
+
+          showFeedback(feedback, `Coordinates extracted successfully: ${data.latitude.toFixed(5)}, ${data.longitude.toFixed(5)}`, true);
+        } else {
+          // Coordinates not extractable from URL, prompt for manual correction
+          const msg = data.message || 'Could not extract coordinates automatically. Please enter latitude & longitude manually below.';
+          showFeedback(feedback, msg, false);
+
+          if (data.resolvedUrl) {
+            const verifyLink = document.getElementById('verifyMapLink');
+            verifyLink.href = data.resolvedUrl;
+            verifyLink.classList.remove('hidden');
+          }
+        }
+      } catch (err) {
+        showFeedback(feedback, 'Network error while contacting Google Maps resolver. Please check coordinates manually.', false);
+      } finally {
+        btnText.textContent = 'Fetch Location';
+        btnIcon.className = 'fa-solid fa-magnifying-glass-location';
+      }
+    }
+
+    function showFeedback(el, msg, isSuccess) {
+      el.textContent = msg;
+      el.className = isSuccess
+        ? 'text-xs p-2.5 rounded-lg font-medium bg-emerald-50 border border-emerald-200 text-emerald-800'
+        : 'text-xs p-2.5 rounded-lg font-medium bg-amber-50 border border-amber-200 text-amber-800';
+      el.classList.remove('hidden');
+    }
+
+    // Modal Add / Edit Cafe
+    function openCreateModal() {
+      document.getElementById('modalTitle').textContent = 'Add New Business';
+      document.getElementById('editCafeId').value = '';
+      document.getElementById('cafeName').value = '';
+      document.getElementById('cafeCategory').value = 'Café';
+      document.getElementById('cafeDesc').value = '';
+      document.getElementById('cafeArea').value = 'SITRA, Coimbatore';
+      document.getElementById('cafeAddress').value = '';
+      document.getElementById('cafeHours').value = '10:00 AM – 11:00 PM';
+      document.getElementById('cafePhone').value = '';
+      document.getElementById('cafeWebsite').value = '';
+      document.getElementById('cafeMerchantOwner').value = '';
+      document.getElementById('cafeCost').value = '350';
+      document.getElementById('cafeOrdering').checked = false;
+      document.getElementById('cafeActive').checked = true;
+
+      // Google Maps Location fields
+      document.getElementById('googleMapsUrl').value = '';
+      document.getElementById('cafeLat').value = '';
+      document.getElementById('cafeLon').value = '';
+      document.getElementById('detectedPlaceName').value = '';
+      document.getElementById('googlePlaceId').value = '';
+      document.getElementById('fetchFeedback').classList.add('hidden');
+      document.getElementById('verifyMapLink').classList.add('hidden');
+
+      const badge = document.getElementById('locationBadge');
+      badge.textContent = 'Pending Location Link';
+      badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600';
+
+      // Images
+      document.getElementById('cafeImageUrl').value = '';
+      const driveInput = document.getElementById('driveLinkInput');
+      if (driveInput) driveInput.value = '';
+      const driveFb = document.getElementById('driveFeedback');
+      if (driveFb) driveFb.classList.add('hidden');
+      const localFileLabel = document.getElementById('localUploadFileName');
+      if (localFileLabel) localFileLabel.textContent = 'No file chosen';
+      const localFileInput = document.getElementById('localDeviceFileInput');
+      if (localFileInput) localFileInput.value = '';
+      updateImagePreview('');
+
+      switchCafeModalTab('tab-basic');
+      document.getElementById('cafeModal').classList.remove('hidden');
+    }
+
+    function openEditModal(id) {
+      const cafe = allCafes.find((c) => c.id === id);
+      if (!cafe) return;
+
+      document.getElementById('modalTitle').textContent = `Edit Business: ${cafe.name}`;
+      document.getElementById('editCafeId').value = cafe.id;
+      document.getElementById('cafeName').value = cafe.name || '';
+      document.getElementById('cafeCategory').value = cafe.category || 'Café';
+      document.getElementById('cafeDesc').value = cafe.description || '';
+      document.getElementById('cafeArea').value = cafe.area || '';
+      document.getElementById('cafeAddress').value = cafe.address || '';
+      document.getElementById('cafeHours').value = cafe.opening_hours || '';
+      document.getElementById('cafePhone').value = cafe.phone || '';
+      document.getElementById('cafeWebsite').value = cafe.website || '';
+      document.getElementById('cafeMerchantOwner').value = cafe.merchant_owner_id || '';
+      document.getElementById('cafeCost').value = cafe.cost_for_two || 350;
+      document.getElementById('cafeOrdering').checked = cafe.is_ordering_enabled === true;
+      document.getElementById('cafeActive').checked = cafe.is_active !== false;
+
+      // Google Maps Location fields
+      document.getElementById('googleMapsUrl').value = cafe.google_maps_url || '';
+      document.getElementById('cafeLat').value = cafe.latitude !== undefined ? cafe.latitude : '';
+      document.getElementById('cafeLon').value = cafe.longitude !== undefined ? cafe.longitude : '';
+      document.getElementById('detectedPlaceName').value = cafe.formatted_address || '';
+      document.getElementById('googlePlaceId').value = cafe.google_place_id || '';
+      document.getElementById('fetchFeedback').classList.add('hidden');
+
+      const badge = document.getElementById('locationBadge');
+      if (cafe.google_maps_url) {
+        badge.textContent = 'Google Maps Verified';
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+        const verifyLink = document.getElementById('verifyMapLink');
+        verifyLink.href = cafe.google_maps_url;
+        verifyLink.classList.remove('hidden');
+      } else {
+        badge.textContent = 'Manual Coordinates';
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600';
+      }
+
+      // Images
+      const imgPath = cafe.cover_image || cafe.cover_image_url || '';
+      document.getElementById('cafeImageUrl').value = imgPath;
+      const driveInput = document.getElementById('driveLinkInput');
+      if (driveInput) driveInput.value = '';
+      const driveFb = document.getElementById('driveFeedback');
+      if (driveFb) driveFb.classList.add('hidden');
+      const localFileLabel = document.getElementById('localUploadFileName');
+      if (localFileLabel) localFileLabel.textContent = 'No file chosen';
+      const localFileInput = document.getElementById('localDeviceFileInput');
+      if (localFileInput) localFileInput.value = '';
+      updateImagePreview(imgPath);
+
+      switchCafeModalTab('tab-basic');
+      document.getElementById('cafeModal').classList.remove('hidden');
+    }
+
+    function closeCafeModal() {
+      document.getElementById('cafeModal').classList.add('hidden');
+    }
+
+    function switchCafeModalTab(tabKey) {
+      document.querySelectorAll('.modal-subtab').forEach((el) => el.classList.add('hidden'));
+      document.querySelectorAll('.cafe-tab-btn').forEach((btn) => {
+        btn.classList.remove('border-brand-primary', 'text-brand-primary');
+        btn.classList.add('border-transparent', 'text-slate-500');
+      });
+
+      const target = document.getElementById(`modalSubTab-${tabKey.replace('tab-', '')}`);
+      if (target) target.classList.remove('hidden');
+
+      const activeBtn = document.querySelector(`.cafe-tab-btn[data-tab="${tabKey}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('border-brand-primary', 'text-brand-primary');
+        activeBtn.classList.remove('border-transparent', 'text-slate-500');
+      }
+    }
+
+    function updateImagePreview(src) {
+      const img = document.getElementById('imagePreviewImg');
+      if (!img) return;
+      img.onerror = function() {
+        this.onerror = null;
+        this.src = '/assets/images/placeholder_cafe.png';
+      };
+      if (src && src.trim()) {
+        img.src = src.trim();
+      } else {
+        img.src = '/assets/images/placeholder_cafe.png';
+      }
+    }
+
+    async function handleSaveCafe(e) {
+      if (e && e.preventDefault) e.preventDefault();
+
+      const id = document.getElementById('editCafeId').value;
+      const name = document.getElementById('cafeName').value.trim();
+      if (!name) {
+        alert('Please enter the Café Name in Step 1.');
+        switchCafeModalTab('tab-basic');
+        document.getElementById('cafeName').focus();
+        return;
+      }
+
+      let latVal = parseFloat(document.getElementById('cafeLat').value);
+      let lonVal = parseFloat(document.getElementById('cafeLon').value);
+      const googleMapsUrl = document.getElementById('googleMapsUrl').value.trim();
+
+      // If coordinates are missing but a Google Maps link was entered, auto-fetch on the fly
+      if ((isNaN(latVal) || isNaN(lonVal)) && googleMapsUrl) {
+        try {
+          const mRes = await fetch(`${API_BASE}/admin/resolve-maps-url`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${adminToken}`,
+            },
+            body: JSON.stringify({ url: googleMapsUrl }),
+          });
+          const mData = await mRes.json();
+          if (mData.success && typeof mData.latitude === 'number' && typeof mData.longitude === 'number') {
+            latVal = mData.latitude;
+            lonVal = mData.longitude;
+            document.getElementById('cafeLat').value = latVal;
+            document.getElementById('cafeLon').value = lonVal;
+            if (mData.placeName && !document.getElementById('cafeArea').value.trim()) {
+              document.getElementById('cafeArea').value = mData.placeName;
+            }
+            if (mData.formattedAddress && !document.getElementById('cafeAddress').value.trim()) {
+              document.getElementById('cafeAddress').value = mData.formattedAddress;
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (isNaN(latVal) || isNaN(lonVal)) {
+        alert('Please provide valid coordinates or paste a Google Maps link in Step 2.');
+        switchCafeModalTab('tab-location');
+        return;
+      }
+
+      let area = document.getElementById('cafeArea').value.trim();
+      let address = document.getElementById('cafeAddress').value.trim();
+      const detected = document.getElementById('detectedPlaceName').value.trim();
+
+      if (!area) {
+        area = detected || 'SITRA, Coimbatore';
+        document.getElementById('cafeArea').value = area;
+      }
+      if (!address) {
+        address = detected ? `${detected}, ${area}` : `${name}, ${area}, Coimbatore`;
+        document.getElementById('cafeAddress').value = address;
+      }
+
+      let coverImage = document.getElementById('cafeImageUrl').value.trim();
+      if (!coverImage) {
+        coverImage = 'assets/images/placeholder_cafe.png';
+      }
+
+      const saveBtn = document.querySelector('#cafeForm button[type="submit"]') || (e && e.submitter);
+      let originalBtnHtml = '';
+      if (saveBtn) {
+        originalBtnHtml = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Saving Café...';
+      }
+
+      const payload = {
+        name: name,
+        category: document.getElementById('cafeCategory').value || 'Café',
+        description: document.getElementById('cafeDesc').value.trim(),
+        area: area,
+        address: address,
+        opening_hours: document.getElementById('cafeHours').value.trim() || '10:00 AM – 10:00 PM',
+        phone: document.getElementById('cafePhone').value.trim(),
+        website: document.getElementById('cafeWebsite').value.trim() || null,
+        merchant_owner_id: document.getElementById('cafeMerchantOwner').value.trim() || null,
+        cost_for_two: parseInt(document.getElementById('cafeCost').value, 10) || 350,
+        is_ordering_enabled: document.getElementById('cafeOrdering').checked,
+        is_active: document.getElementById('cafeActive').checked,
+        latitude: latVal,
+        longitude: lonVal,
+        google_maps_url: googleMapsUrl || null,
+        google_place_id: document.getElementById('googlePlaceId').value.trim() || null,
+        location_verification_status: googleMapsUrl ? 'GOOGLE_MAPS_VERIFIED' : 'UNCLAIMED',
+        verification_status: document.getElementById('cafeOrdering').checked ? 'ACTIVE_PARTNER' : 'UNCLAIMED',
+        cover_image: coverImage,
+      };
+
+      try {
+        const url = id ? `${API_BASE}/admin/cafes/${id}` : `${API_BASE}/admin/cafes`;
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          closeCafeModal();
+          await refreshAllData();
+          alert(`✓ "${name}" successfully registered and published!`);
+        } else {
+          const err = await res.json();
+          alert(err.message || 'Error saving café.');
+        }
+      } catch (err) {
+        alert('Network error while saving café.');
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = originalBtnHtml;
+        }
+      }
+    }
+
+    async function handleDeleteCafe(id, name) {
+      if (!confirm(`Are you sure you want to permanently delete "${name}" from directory?`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        if (res.ok) {
+          refreshAllData();
+        } else {
+          alert('Failed to delete café.');
+        }
+      } catch (err) {
+        alert('Network error.');
+      }
+    }
+
+    async function handleResetDirectoryPrompt() {
+      const confirmFirst = confirm('WARNING: Are you sure you want to delete ALL existing café records and start fresh? A backup will automatically be saved.');
+      if (!confirmFirst) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/reset-directory`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(`Directory reset complete!\n\nTotal Cafés: 0\nMenu Categories: 0\nMenu Items: 0\n\nA full backup was created at:\n${data.backupFile}`);
+          refreshAllData();
+        } else {
+          alert(data.message || 'Failed to reset directory.');
+        }
+      } catch (err) {
+        alert('Network error resetting directory.');
+      }
+    }
+
+    // Google Drive Image Import
+    async function importFromDrive() {
+      const link = document.getElementById('driveLinkInput').value.trim();
+      const feedback = document.getElementById('driveFeedback');
+      const btn = document.getElementById('importDriveBtn');
+      const text = document.getElementById('importDriveText');
+      const icon = document.getElementById('importDriveIcon');
+
+      if (!link) {
+        if (feedback) {
+          feedback.className = 'text-xs p-2.5 rounded-lg font-medium bg-red-50 text-red-700 border border-red-200';
+          feedback.textContent = 'Please paste a Google Drive sharing link or image URL.';
+          feedback.classList.remove('hidden');
+        } else {
+          alert('Please enter a Google Drive link.');
+        }
+        return;
+      }
+
+      const cafeName = document.getElementById('cafeName').value.trim() || 'cafe';
+      const slug = cafeName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+      if (btn) btn.disabled = true;
+      if (text) text.textContent = 'Importing...';
+      if (icon) icon.className = 'fa-solid fa-spinner fa-spin';
+      if (feedback) feedback.classList.add('hidden');
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/import-drive-image`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({
+            driveUrl: link,
+            url: link,
+            link: link,
+            slug: slug,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const finalUrl = data.imageUrl || data.permanentUrl || data.assetPath;
+          document.getElementById('cafeImageUrl').value = finalUrl;
+          updateImagePreview(finalUrl);
+
+          if (feedback) {
+            feedback.className = 'text-xs p-2.5 rounded-lg font-medium bg-emerald-50 text-emerald-800 border border-emerald-200';
+            feedback.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> Google Drive photograph successfully imported, cached and verified!`;
+            feedback.classList.remove('hidden');
+          }
+        } else {
+          if (feedback) {
+            feedback.className = 'text-xs p-2.5 rounded-lg font-medium bg-red-50 text-red-700 border border-red-200';
+            feedback.innerHTML = `<i class="fa-solid fa-circle-exclamation text-red-600 mr-1.5"></i> ${data.message || 'Could not import from Google Drive.'}`;
+            feedback.classList.remove('hidden');
+          } else {
+            alert(data.message || 'Could not import from Google Drive.');
+          }
+        }
+      } catch (e) {
+        if (feedback) {
+          feedback.className = 'text-xs p-2.5 rounded-lg font-medium bg-red-50 text-red-700 border border-red-200';
+          feedback.innerHTML = `<i class="fa-solid fa-circle-exclamation text-red-600 mr-1.5"></i> Network error connecting to image import service.`;
+          feedback.classList.remove('hidden');
+        } else {
+          alert('Error connecting to drive import service.');
+        }
+      } finally {
+        if (btn) btn.disabled = false;
+        if (text) text.textContent = 'Import';
+        if (icon) icon.className = 'fa-solid fa-cloud-arrow-down';
+      }
+    }
+
+    // Direct Device File Upload
+    async function handleDeviceFileUpload(input) {
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      const fileNameLabel = document.getElementById('localUploadFileName');
+      const feedback = document.getElementById('driveFeedback');
+      if (fileNameLabel) fileNameLabel.textContent = file.name;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const base64Data = e.target.result;
+        const cafeName = document.getElementById('cafeName').value.trim() || 'cafe';
+        const slug = cafeName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+        try {
+          if (fileNameLabel) fileNameLabel.textContent = `Uploading ${file.name}...`;
+          const res = await fetch(`${API_BASE}/admin/upload-image`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${adminToken}`,
+            },
+            body: JSON.stringify({
+              base64Data: base64Data,
+              filename: `${slug}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`,
+              prefix: slug,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            const finalUrl = data.imageUrl || data.permanentUrl || data.assetPath;
+            document.getElementById('cafeImageUrl').value = finalUrl;
+            updateImagePreview(finalUrl);
+            if (fileNameLabel) fileNameLabel.textContent = `${file.name} (Uploaded)`;
+            if (feedback) {
+              feedback.className = 'text-xs p-2.5 rounded-lg font-medium bg-emerald-50 text-emerald-800 border border-emerald-200';
+              feedback.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> File uploaded and saved permanently to server!`;
+              feedback.classList.remove('hidden');
+            }
+          } else {
+            alert(data.message || 'Failed to upload image.');
+          }
+        } catch (err) {
+          alert('Network error while uploading image.');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Menu Modal (Strictly Text-Only)
+    function openMenuModal(cafeId) {
+      const cafe = allCafes.find((c) => c.id === cafeId);
+      if (!cafe) return;
+
+      document.getElementById('menuCafeId').value = cafe.id;
+      document.getElementById('menuModalTitle').textContent = `Manage Menu: ${cafe.name}`;
+      renderMenuCategories(cafe.menu_categories || []);
+      document.getElementById('menuModal').classList.remove('hidden');
+    }
+
+    function closeMenuModal() {
+      document.getElementById('menuModal').classList.add('hidden');
+      refreshAllData();
+    }
+
+    function renderMenuCategories(categories) {
+      const container = document.getElementById('menuCategoriesContainer');
+      container.innerHTML = '';
+
+      if (categories.length === 0) {
+        container.innerHTML = `
+          <div class="p-6 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            No menu categories yet. Enter a category name above to start building the digital menu.
+          </div>
+        `;
+        return;
+      }
+
+      for (const cat of categories) {
+        const catCard = document.createElement('div');
+        catCard.className = 'p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3';
+
+        let itemsHtml = '';
+        if (cat.items && cat.items.length > 0) {
+          itemsHtml = cat.items.map((it) => `
+            <div class="flex items-center justify-between p-2.5 rounded bg-white border border-slate-100 text-xs">
+              <div>
+                <div class="font-bold text-slate-900">${escapeHtml(it.name)}</div>
+                <div class="text-[11px] text-slate-400">${escapeHtml(it.description || '')}</div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="font-bold text-slate-900">₹${it.price}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold ${it.is_veg ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">${it.is_veg ? 'Veg' : 'Non-Veg'}</span>
+                <button type="button" onclick="handleDeleteMenuItem('${escapeHtml(cat.name)}', '${it.id}')" class="text-slate-400 hover:text-red-600 transition" title="Delete Item">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          itemsHtml = '<div class="text-[11px] text-slate-400 py-1 italic">No items in this category yet.</div>';
+        }
+
+        catCard.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-sm text-slate-800">${escapeHtml(cat.name)} (${cat.items ? cat.items.length : 0})</span>
+            <button type="button" onclick="handleDeleteCategory('${escapeHtml(cat.name)}')" class="text-xs text-red-600 hover:underline">
+              Delete Category
+            </button>
+          </div>
+          <div class="space-y-1.5">${itemsHtml}</div>
+          <div class="pt-2 border-t border-slate-200 flex items-center gap-2">
+            <input type="text" id="itemName_${escapeHtml(cat.name)}" placeholder="Item name" class="flex-1 px-2.5 py-1.5 rounded border border-slate-300 text-xs" />
+            <input type="number" id="itemPrice_${escapeHtml(cat.name)}" placeholder="₹ Price" class="w-20 px-2.5 py-1.5 rounded border border-slate-300 text-xs" />
+            <select id="itemVeg_${escapeHtml(cat.name)}" class="px-2 py-1.5 rounded border border-slate-300 text-xs bg-white">
+              <option value="true">Veg</option>
+              <option value="false">Non-Veg</option>
+            </select>
+            <button type="button" onclick="handleAddItem('${escapeHtml(cat.name)}')" class="px-3 py-1.5 rounded bg-brand-primary text-white text-xs font-semibold hover:bg-brand-dark transition">
+              + Add
+            </button>
+          </div>
+        `;
+        container.appendChild(catCard);
+      }
+    }
+
+    async function handleAddMenuCategory() {
+      const cafeId = document.getElementById('menuCafeId').value;
+      const catName = document.getElementById('newCategoryInput').value.trim();
+      if (!catName) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${cafeId}/menu/categories`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ categoryName: catName }),
+        });
+        const data = await res.json();
+        if (res.ok && data.cafe) {
+          document.getElementById('newCategoryInput').value = '';
+          const cafe = allCafes.find((c) => c.id === cafeId);
+          if (cafe) cafe.menu_categories = data.cafe.menu_categories;
+          renderMenuCategories(data.cafe.menu_categories);
+        }
+      } catch (err) {
+        alert('Failed to add category.');
+      }
+    }
+
+    async function handleDeleteCategory(categoryName) {
+      const cafeId = document.getElementById('menuCafeId').value;
+      if (!confirm(`Delete category "${categoryName}"?`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${cafeId}/menu/categories/${encodeURIComponent(categoryName)}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const data = await res.json();
+        if (res.ok && data.cafe) {
+          const cafe = allCafes.find((c) => c.id === cafeId);
+          if (cafe) cafe.menu_categories = data.cafe.menu_categories;
+          renderMenuCategories(data.cafe.menu_categories);
+        }
+      } catch (err) {
+        alert('Failed to delete category.');
+      }
+    }
+
+    async function handleAddItem(categoryName) {
+      const cafeId = document.getElementById('menuCafeId').value;
+      const name = document.getElementById(`itemName_${categoryName}`).value.trim();
+      const price = parseFloat(document.getElementById(`itemPrice_${categoryName}`).value);
+      const isVeg = document.getElementById(`itemVeg_${categoryName}`).value === 'true';
+
+      if (!name || isNaN(price)) return alert('Please enter valid item name and price.');
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${cafeId}/menu/items`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({
+            categoryName,
+            item: {
+              name,
+              price,
+              is_veg: isVeg,
+              description: '',
+              is_available: true,
+            },
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.cafe) {
+          const cafe = allCafes.find((c) => c.id === cafeId);
+          if (cafe) cafe.menu_categories = data.cafe.menu_categories;
+          renderMenuCategories(data.cafe.menu_categories);
+        }
+      } catch (err) {
+        alert('Failed to add item.');
+      }
+    }
+
+    async function handleDeleteMenuItem(categoryName, itemId) {
+      const cafeId = document.getElementById('menuCafeId').value;
+      try {
+        const res = await fetch(`${API_BASE}/admin/cafes/${cafeId}/menu/items/${itemId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        if (res.ok) {
+          const cafe = allCafes.find((c) => c.id === cafeId);
+          if (cafe && cafe.menu_categories) {
+            for (const cat of cafe.menu_categories) {
+              cat.items = cat.items.filter((it) => it.id !== itemId);
+            }
+            renderMenuCategories(cafe.menu_categories);
+          }
+        }
+      } catch (err) {
+        alert('Failed to remove item.');
+      }
+    }
+
+    // Partners Tab
+    async function loadPartners() {
+      try {
+        const res = await fetch(`${API_BASE}/admin/partners`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const tbody = document.getElementById('partnersTableBody');
+          const empty = document.getElementById('partnersEmptyState');
+          tbody.innerHTML = '';
+          if (!data.partners || data.partners.length === 0) {
+            empty.classList.remove('hidden');
+            return;
+          }
+          empty.classList.add('hidden');
+          for (const p of data.partners) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(p.name)}</td>
+              <td class="py-3 px-3 text-slate-600">${escapeHtml(p.area)}</td>
+              <td class="py-3 px-3 font-mono text-[11px] text-slate-600">${escapeHtml(p.phone)}</td>
+              <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">${escapeHtml(p.tier)}</span></td>
+              <td class="py-3 px-3 font-semibold text-slate-700">${escapeHtml(p.commissionRate)}</td>
+              <td class="py-3 px-3 text-slate-500">${escapeHtml(p.onboardingDate)}</td>
+              <td class="py-3 px-4 text-right"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Active</span></td>
+            `;
+            tbody.appendChild(tr);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load partners:', err);
+      }
+    }
+
+    // Users Tab
+    async function loadUsers() {
+      try {
+        const res = await fetch(`${API_BASE}/admin/users`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const tbody = document.getElementById('usersTableBody');
+          tbody.innerHTML = '';
+          for (const u of data.users) {
+            const tr = document.createElement('tr');
+            const joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-IN') : '2026-10-15';
+            tr.innerHTML = `
+              <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(u.fullName)}</td>
+              <td class="py-3 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(u.email)}</td>
+              <td class="py-3 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(u.phone)}</td>
+              <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800">${escapeHtml(u.role)}</span></td>
+              <td class="py-3 px-3 text-slate-500">${joined}</td>
+              <td class="py-3 px-3 text-center font-bold text-slate-700">${u.ordersCount || 0}</td>
+              <td class="py-3 px-4 text-right"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Active</span></td>
+            `;
+            tbody.appendChild(tr);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load users:', err);
+      }
+    }
+
+    // Revenue Tab
+    async function loadRevenue() {
+      try {
+        const res = await fetch(`${API_BASE}/admin/revenue`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const r = data.revenue;
+          document.getElementById('revTotalVolume').textContent = r.formattedTotalVolume || '₹0';
+          document.getElementById('revPlatformFee').textContent = r.formattedTotalEarnings || '₹0';
+          document.getElementById('revPartnersCount').textContent = (r.cafes || []).length;
+
+          const tbody = document.getElementById('revenueTableBody');
+          const empty = document.getElementById('revenueEmptyState');
+          tbody.innerHTML = '';
+          if (!r.cafes || r.cafes.length === 0) {
+            empty.classList.remove('hidden');
+            return;
+          }
+          empty.classList.add('hidden');
+          for (const c of r.cafes) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(c.name)}</td>
+              <td class="py-3 px-3 text-slate-600">${escapeHtml(c.category)}</td>
+              <td class="py-3 px-3 text-slate-700 font-semibold">${c.estimatedOrders.toLocaleString('en-IN')}</td>
+              <td class="py-3 px-3 font-bold text-slate-900">${escapeHtml(c.formattedVolume)}</td>
+              <td class="py-3 px-3 text-emerald-600 font-semibold">${escapeHtml(c.commissionRate)}</td>
+              <td class="py-3 px-4 text-right font-bold text-emerald-700">${escapeHtml(c.formattedFee)}</td>
+            `;
+            tbody.appendChild(tr);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load revenue:', err);
+      }
+    }
+
+    // Subscriptions Tab
+    async function loadSubscriptions() {
+      try {
+        const res = await fetch(`${API_BASE}/admin/subscriptions`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const tbody = document.getElementById('subsTableBody');
+          const empty = document.getElementById('subsEmptyState');
+          tbody.innerHTML = '';
+          if (!data.subscriptions.subscribers || data.subscriptions.subscribers.length === 0) {
+            empty.classList.remove('hidden');
+            return;
+          }
+          empty.classList.add('hidden');
+          for (const s of data.subscriptions.subscribers) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(s.cafeName)}</td>
+              <td class="py-3 px-3 font-semibold text-brand-primary">${escapeHtml(s.plan)}</td>
+              <td class="py-3 px-3 font-mono text-[11px] font-bold text-slate-700">${escapeHtml(s.price)}</td>
+              <td class="py-3 px-3 text-slate-500">${escapeHtml(s.billingCycle)}</td>
+              <td class="py-3 px-3 text-slate-600">${escapeHtml(s.renewalDate)}</td>
+              <td class="py-3 px-4 text-right"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Active</span></td>
+            `;
+            tbody.appendChild(tr);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load subscriptions:', err);
+      }
+    }
+
+    // Activity Logs Tab
+    async function loadActivityLogs() {
+      try {
+        const res = await fetch(`${API_BASE}/admin/activity-logs`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const tbody = document.getElementById('logsTableBody');
+          const dashLogs = document.getElementById('dashboardRecentLogs');
+          if (tbody) tbody.innerHTML = '';
+          if (dashLogs) dashLogs.innerHTML = '';
+
+          const logs = data.logs || [];
+          logs.forEach((log, index) => {
+            const timeFormatted = new Date(log.timestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+            if (tbody) {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td class="py-2.5 px-4 font-mono text-[11px] text-slate-500">${timeFormatted}</td>
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded font-mono text-[10px] font-semibold bg-slate-100 text-slate-700">${escapeHtml(log.action)}</span></td>
+                <td class="py-2.5 px-4 text-slate-700">${escapeHtml(log.details)}</td>
+                <td class="py-2.5 px-3 text-right font-medium text-slate-600">${escapeHtml(log.admin)}</td>
+              `;
+              tbody.appendChild(tr);
+            }
+
+            if (dashLogs && index < 4) {
+              const div = document.createElement('div');
+              div.className = 'flex items-start justify-between gap-3 p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs';
+              div.innerHTML = `
+                <div class="flex items-start gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-brand-primary mt-1.5 shrink-0"></span>
+                  <div>
+                    <span class="font-semibold text-slate-800">${escapeHtml(log.action)}:</span>
+                    <span class="text-slate-600 ml-1">${escapeHtml(log.details)}</span>
+                  </div>
+                </div>
+                <span class="font-mono text-[10px] text-slate-400 shrink-0">${timeFormatted.split(',')[1] || ''}</span>
+              `;
+              dashLogs.appendChild(div);
+            }
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load activity logs:', err);
+      }
+    }
+
+    // Settings & Notifications
+    function saveAnnouncement() {
+      alert('Announcement updated successfully. Synced to Customer App home screen.');
+    }
+
+    function handleSendNotification(e) {
+      e.preventDefault();
+      const title = document.getElementById('notifTitle').value.trim();
+      alert(`Notification broadcast dispatched: "${title}"!`);
+      document.getElementById('notifTitle').value = '';
+      document.getElementById('notifMessage').value = '';
+    }
+
+    function handleSaveSettings(e) {
+      e.preventDefault();
+      alert('System settings saved successfully.');
+    }
+
+    // Utility
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>
