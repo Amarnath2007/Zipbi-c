@@ -7,15 +7,34 @@ const baseUrl = 'http://localhost:5000/api/v1';
 
 let adminToken = '';
 let testCafeId = '';
-let cafesBackupForTests = null;
-
-test('0. Setup: Authenticate Admin & Backup Directory', async () => {
-  // Backup cafes
+function getFiveCafesSnapshot() {
   const dataPath = path.resolve(__dirname, '../../data/cafes.json');
   if (fs.existsSync(dataPath)) {
-    cafesBackupForTests = fs.readFileSync(dataPath, 'utf8');
+    try {
+      const d = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+      if (Array.isArray(d.cafes) && d.cafes.length === 5) {
+        return JSON.stringify({ reference_point: d.reference_point, cafes: d.cafes }, null, 2);
+      }
+    } catch (_) {}
   }
+  const backupDir = path.resolve(__dirname, '../../data/backups');
+  if (fs.existsSync(backupDir)) {
+    const files = fs.readdirSync(backupDir).filter((f) => f.endsWith('.json')).sort().reverse();
+    for (const f of files) {
+      try {
+        const d = JSON.parse(fs.readFileSync(path.join(backupDir, f), 'utf8'));
+        if (Array.isArray(d.cafes) && d.cafes.length === 5) {
+          return JSON.stringify({ reference_point: d.reference_point, cafes: d.cafes }, null, 2);
+        }
+      } catch (_) {}
+    }
+  }
+  return null;
+}
 
+const verifiedFiveCafes = getFiveCafesSnapshot();
+
+test('0. Setup: Authenticate Admin & Backup Directory', async () => {
   const loginRes = await fetch(`${baseUrl}/admin/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -249,7 +268,8 @@ test('6. Danger Zone Directory Reset: Execution generates backup, logs audit, an
     assert.ok(usersData.users.length >= 2, 'User accounts must remain completely intact');
   } finally {
     // Restore backup
-    if (cafesBackupForTests) {
+    const snapshotToRestore = verifiedFiveCafes || getFiveCafesSnapshot();
+    if (snapshotToRestore) {
       const pathsToRestore = [
         path.resolve(__dirname, '../../data/cafes.json'),
         path.resolve(__dirname, '../data/cafes.json'),
@@ -257,7 +277,7 @@ test('6. Danger Zone Directory Reset: Execution generates backup, logs audit, an
       ];
       for (const p of pathsToRestore) {
         try {
-          fs.writeFileSync(p, cafesBackupForTests, 'utf8');
+          fs.writeFileSync(p, snapshotToRestore, 'utf8');
         } catch (_) {}
       }
       try {

@@ -132,14 +132,34 @@ test('4. POST /api/v1/admin/resolve-maps-url: Endpoint Verification', async () =
 
 const fs = require('fs');
 const path = require('path');
-let cafesBackupForTests = null;
-
-test('5. Directory Reset: POST /api/v1/admin/reset-directory returns 0 counts', async () => {
-  // Back up existing directory state before running reset test
+function getFiveCafesSnapshot() {
   const dataPath = path.resolve(__dirname, '../../data/cafes.json');
   if (fs.existsSync(dataPath)) {
-    cafesBackupForTests = fs.readFileSync(dataPath, 'utf8');
+    try {
+      const d = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+      if (Array.isArray(d.cafes) && d.cafes.length === 5) {
+        return JSON.stringify({ reference_point: d.reference_point, cafes: d.cafes }, null, 2);
+      }
+    } catch (_) {}
   }
+  const backupDir = path.resolve(__dirname, '../../data/backups');
+  if (fs.existsSync(backupDir)) {
+    const files = fs.readdirSync(backupDir).filter((f) => f.endsWith('.json')).sort().reverse();
+    for (const f of files) {
+      try {
+        const d = JSON.parse(fs.readFileSync(path.join(backupDir, f), 'utf8'));
+        if (Array.isArray(d.cafes) && d.cafes.length === 5) {
+          return JSON.stringify({ reference_point: d.reference_point, cafes: d.cafes }, null, 2);
+        }
+      } catch (_) {}
+    }
+  }
+  return null;
+}
+
+const verifiedFiveCafes = getFiveCafesSnapshot();
+
+test('5. Directory Reset: POST /api/v1/admin/reset-directory returns 0 counts', async () => {
 
   const resetRes = await fetch(`${baseUrl}/admin/reset-directory`, {
     method: 'POST',
@@ -234,7 +254,8 @@ test('6. Fresh Café Registration with Google Maps Link & Verified Distance', as
     assert.strictEqual(finalData.count, 0);
   } finally {
     // Restore original cafes after test completion
-    if (cafesBackupForTests) {
+    const snapshotToRestore = verifiedFiveCafes || getFiveCafesSnapshot();
+    if (snapshotToRestore) {
       const pathsToRestore = [
         path.resolve(__dirname, '../../data/cafes.json'),
         path.resolve(__dirname, '../data/cafes.json'),
@@ -242,7 +263,7 @@ test('6. Fresh Café Registration with Google Maps Link & Verified Distance', as
       ];
       for (const p of pathsToRestore) {
         try {
-          fs.writeFileSync(p, cafesBackupForTests, 'utf8');
+          fs.writeFileSync(p, snapshotToRestore, 'utf8');
         } catch (_) {}
       }
       try {
