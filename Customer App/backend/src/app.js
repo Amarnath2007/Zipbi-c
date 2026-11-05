@@ -46,6 +46,11 @@ app.get('/admin*', (req, res, next) => {
   res.sendFile(path.join(adminStaticDir, 'index.html'));
 });
 
+// Redirect root to Admin Dashboard
+app.get('/', (req, res) => {
+  res.redirect('/admin/');
+});
+
 // Request logger
 app.use((req, res, next) => {
   const start = Date.now();
